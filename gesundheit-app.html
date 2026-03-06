@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gesundheit">
+<title>Gesundheitsprotokoll</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#1a202c;min-height:100vh;padding-bottom:85px}
+.header{background:linear-gradient(135deg,#0284c7,#0ea5e9);color:white;padding:14px 20px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.header h1{font-size:19px;font-weight:700}
+.header p{font-size:13px;opacity:.85;margin-top:2px}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e2e8f0;display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:100}
+.nav-btn{flex:1;padding:10px 8px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:#94a3b8;transition:color .2s}
+.nav-btn.active{color:#0284c7}
+.nav-btn svg{width:22px;height:22px}
+.page{display:none;padding:14px}
+.page.active{display:block}
+.card{background:white;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card-title{font-size:14px;font-weight:600;color:#0284c7;margin-bottom:10px}
+.severity-row{margin-bottom:10px}
+.sev-label{font-size:13px;color:#64748b;margin-bottom:5px}
+.sev-btns{display:flex;gap:5px}
+.sev-btn{flex:1;padding:7px 2px;border:2px solid #e2e8f0;border-radius:8px;background:white;font-size:12px;cursor:pointer;font-weight:500;transition:all .15s}
+.sev-btn[data-val="keine"].sel{background:#dcfce7;border-color:#16a34a;color:#16a34a}
+.sev-btn[data-val="leicht"].sel{background:#fef9c3;border-color:#ca8a04;color:#ca8a04}
+.sev-btn[data-val="mittel"].sel{background:#fed7aa;border-color:#ea580c;color:#ea580c}
+.sev-btn[data-val="stark"].sel{background:#fee2e2;border-color:#dc2626;color:#dc2626}
+.check-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
+.check-item:last-child{border-bottom:none}
+.check-item input[type="checkbox"]{width:20px;height:20px;cursor:pointer;accent-color:#0284c7;flex-shrink:0}
+.check-item label{font-size:14px;cursor:pointer;flex:1}
+.inp-label{font-size:12px;color:#64748b;margin-bottom:3px}
+.inp-row{margin-bottom:10px}
+input[type="text"],input[type="number"],input[type="time"],textarea{width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;background:#f8fafc;outline:none;transition:border-color .2s}
+input:focus,textarea:focus{border-color:#0284c7;background:white}
+textarea{resize:none;min-height:70px}
+.two-col{display:flex;gap:10px}
+.two-col>*{flex:1}
+.range-row{margin-bottom:12px}
+.range-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.range-lbl{font-size:13px;color:#64748b}
+.range-val{font-size:18px;font-weight:700;color:#0284c7;min-width:28px;text-align:right}
+input[type="range"]{width:100%;accent-color:#0284c7;height:4px}
+.range-sub{display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-top:2px}
+.save-btn{width:100%;padding:15px;background:linear-gradient(135deg,#0284c7,#0ea5e9);color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:6px;box-shadow:0 4px 12px rgba(2,132,199,.3)}
+.toast{position:fixed;bottom:95px;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:11px 22px;border-radius:24px;font-size:14px;font-weight:500;z-index:200;opacity:0;transition:opacity .3s;white-space:nowrap}
+.toast.show{opacity:1}
+.entry-card{background:white;border-radius:12px;padding:13px 15px;margin-bottom:9px;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.entry-date{font-size:14px;font-weight:600}
+.entry-sum{font-size:12px;color:#64748b;margin-top:3px}
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:600;margin-right:3px}
+.b-keine{background:#dcfce7;color:#16a34a}
+.b-leicht{background:#fef9c3;color:#ca8a04}
+.b-mittel{background:#fed7aa;color:#ea580c}
+.b-stark{background:#fee2e2;color:#dc2626}
+.back-btn{padding:7px 12px;background:#e2e8f0;border:none;border-radius:8px;cursor:pointer;font-size:14px}
+.det-hdr{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.det-hdr strong{font-size:15px;flex:1}
+.edit-btn{padding:7px 14px;background:#0284c7;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600}
+.exp-btn{width:100%;padding:13px;border:2px solid #0284c7;color:#0284c7;background:white;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px}
+.exp-btn.green{border-color:#16a34a;color:#16a34a}
+.exp-out{background:white;border-radius:12px;padding:14px;font-size:11px;line-height:1.6;white-space:pre-wrap;font-family:monospace;color:#1a202c;max-height:50vh;overflow-y:auto;border:1px solid #e2e8f0}
+.empty{text-align:center;padding:40px 20px;color:#94a3b8;font-size:15px}
+.today-tag{text-align:center;margin-bottom:10px}
+.today-tag span{display:inline-block;padding:3px 14px;background:#dbeafe;color:#1d4ed8;border-radius:20px;font-size:12px;font-weight:600}
+.edit-banner{background:#fff7ed;border:2px solid #f97316;border-radius:10px;padding:10px 14px;margin-bottom:10px;display:none;text-align:center;font-size:13px;font-weight:600;color:#c2410c}
+.edit-banner.show{display:block}
+.edit-banner button{margin-left:8px;padding:4px 12px;background:#f97316;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🩺 Gesundheitsprotokoll</h1>
+  <p id="hdrDate">Lade...</p>
+</div>
+
+<!-- HEUTE -->
+<div class="page active" id="page-heute">
+  <div class="today-tag"><span id="todayTag">Heute</span></div>
+  <div class="edit-banner" id="edit-banner">✏️ Du bearbeitest: <span id="edit-banner-date"></span><button onclick="resetToToday()">Zurück zu Heute</button></div>
+
+  <div class="card">
+    <div class="card-title">😊 Allgemeinbefinden</div>
+    <div class="range-row">
+      <div class="range-hdr"><span class="range-lbl">Gesamtzustand</span><span class="range-val" id="v-gesamt">5</span></div>
+      <input type="range" min="1" max="10" value="5" id="sl-gesamt" oninput="document.getElementById('v-gesamt').textContent=this.value">
+      <div class="range-sub"><span>Sehr schlecht</span><span>Sehr gut</span></div>
+    </div>
+    <div class="range-row">
+      <div class="range-hdr"><span class="range-lbl">Stresslevel</span><span class="range-val" id="v-stress">3</span></div>
+      <input type="range" min="1" max="10" value="3" id="sl-stress" oninput="document.getElementById('v-stress').textContent=this.value">
+      <div class="range-sub"><span>Kein Stress</span><span>Sehr viel</span></div>
+    </div>
+    <div class="two-col">
+      <div class="inp-row"><div class="inp-label">Schlaf (h)</div><input type="number" id="schlaf" placeholder="7" min="0" max="24" step="0.5"></div>
+      <div class="inp-row"><div class="inp-label">Gewicht (kg)</div><input type="number" id="gewicht" placeholder="90.0" step="0.1"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔥 Symptome</div>
+    <div class="severity-row">
+      <div class="sev-label">Halsenge / Engegefühl</div>
+      <div class="sev-btns" data-field="halsenge">
+        <button class="sev-btn" data-val="keine">Keine</button>
+        <button class="sev-btn" data-val="leicht">Leicht</button>
+        <button class="sev-btn" data-val="mittel">Mittel</button>
+        <button class="sev-btn" data-val="stark">Stark</button>
+      </div>
+    </div>
+    <div class="severity-row">
+      <div class="sev-label">Brennen im Hals / Magen</div>
+      <div class="sev-btns" data-field="brennen">
+        <button class="sev-btn" data-val="keine">Keine</button>
+        <button class="sev-btn" data-val="leicht">Leicht</button>
+        <button class="sev-btn" data-val="mittel">Mittel</button>
+        <button class="sev-btn" data-val="stark">Stark</button>
+      </div>
+    </div>
+    <div class="severity-row">
+      <div class="sev-label">Sodbrennen</div>
+      <div class="sev-btns" data-field="sodbrennen">
+        <button class="sev-btn" data-val="keine">Keine</button>
+        <button class="sev-btn" data-val="leicht">Leicht</button>
+        <button class="sev-btn" data-val="mittel">Mittel</button>
+        <button class="sev-btn" data-val="stark">Stark</button>
+      </div>
+    </div>
+    <div class="severity-row">
+      <div class="sev-label">Aufstoßen</div>
+      <div class="sev-btns" data-field="aufstossen">
+        <button class="sev-btn" data-val="keine">Keine</button>
+        <button class="sev-btn" data-val="leicht">Leicht</button>
+        <button class="sev-btn" data-val="mittel">Mittel</button>
+        <button class="sev-btn" data-val="stark">Stark</button>
+      </div>
+    </div>
+    <div class="inp-row" style="margin-top:8px">
+      <div class="inp-label">Wann am stärksten?</div>
+      <input type="text" id="wann" placeholder="z.B. abends ab 18 Uhr">
+    </div>
+    <div class="inp-row">
+      <div class="inp-label">Bemerkungen zu Symptomen</div>
+      <textarea id="sym-bem" placeholder="z.B. nach Kaffee stärker, weniger nach Bewegung..."></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💊 Medikamente</div>
+    <div class="check-item"><input type="checkbox" id="m-du-mo"><label for="m-du-mo">Durotiv 40mg — Morgens</label></div>
+    <div class="check-item"><input type="checkbox" id="m-du-ab"><label for="m-du-ab">Durotiv 40mg — Abends</label></div>
+    <div class="check-item"><input type="checkbox" id="m-su-mi"><label for="m-su-mi">Sucralan 1G/5ml — Mittags</label></div>
+    <div class="check-item"><input type="checkbox" id="m-su-na"><label for="m-su-na">Sucralan 1G/5ml — Nachts</label></div>
+    <div class="check-item"><input type="checkbox" id="m-gav"><label for="m-gav">Gaviscon — bei Bedarf</label></div>
+    <div class="check-item"><input type="checkbox" id="m-ren"><label for="m-ren">Rennie — bei Bedarf</label></div>
+    <div class="inp-row" style="margin-top:8px">
+      <div class="inp-label">Sonstiges</div>
+      <input type="text" id="m-son" placeholder="Anderes Medikament...">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🌅 Frühstück</div>
+    <div class="inp-row"><div class="inp-label">Uhrzeit</div><input type="time" id="fr-zeit"></div>
+    <div class="check-item"><input type="checkbox" id="fr-hafer"><label for="fr-hafer">Haferschleim</label></div>
+    <div class="check-item"><input type="checkbox" id="fr-kamille"><label for="fr-kamille">Kamillentee</label></div>
+    <div class="check-item"><input type="checkbox" id="fr-ht-sch"><label for="fr-ht-sch">Hotoast mit Putenschinken</label></div>
+    <div class="check-item"><input type="checkbox" id="fr-ht-mar"><label for="fr-ht-mar">Hotoast mit Marmelade</label></div>
+    <div class="inp-row" style="margin-top:8px">
+      <div class="inp-label">Sonstiges</div>
+      <input type="text" id="fr-son" placeholder="Anderes...">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🍽️ Mittagessen</div>
+    <div class="inp-row"><div class="inp-label">Uhrzeit</div><input type="time" id="mi-zeit"></div>
+    <div class="check-item"><input type="checkbox" id="mi-huhn"><label for="mi-huhn">Gedünstetes Hühnerfleisch mit Gemüse</label></div>
+    <div class="check-item"><input type="checkbox" id="mi-lachs"><label for="mi-lachs">Gedünsteter Lachs mit Gemüse</label></div>
+    <div class="check-item"><input type="checkbox" id="mi-karotten"><label for="mi-karotten">Gemüse: Karotten</label></div>
+    <div class="check-item"><input type="checkbox" id="mi-zucchini"><label for="mi-zucchini">Gemüse: Zucchini</label></div>
+    <div class="check-item"><input type="checkbox" id="mi-karfiol"><label for="mi-karfiol">Gemüse: Karfiol</label></div>
+    <div class="check-item"><input type="checkbox" id="mi-kartoffel"><label for="mi-kartoffel">Gemüse: Kartoffel</label></div>
+    <div class="check-item"><input type="checkbox" id="mi-reis"><label for="mi-reis">Reis</label></div>
+    <div class="check-item"><input type="checkbox" id="mi-strudel"><label for="mi-strudel">Gemüsestrudel mit Joghurt-Rahm-Soße</label></div>
+    <div class="inp-row" style="margin-top:8px">
+      <div class="inp-label">Sonstiges</div>
+      <input type="text" id="mi-son" placeholder="Anderes...">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🌙 Abendessen</div>
+    <div class="inp-row"><div class="inp-label">Uhrzeit</div><input type="time" id="ab-zeit"></div>
+    <div class="inp-row"><div class="inp-label">Was gegessen?</div><textarea id="ab-was" placeholder="z.B. Joghurt, Haferschleim..."></textarea></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🍎 Snacks / Zwischenmahlzeiten</div>
+    <textarea id="snacks" placeholder="z.B. Banane um 10 Uhr, Joghurt um 15 Uhr..."></textarea>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💧 Getränke</div>
+    <div class="two-col">
+      <div class="inp-row"><div class="inp-label">Wasser (ml)</div><input type="number" id="gt-wasser" placeholder="1500" step="100"></div>
+      <div class="inp-row"><div class="inp-label">Kaffee (Tassen)</div><input type="number" id="gt-kaffee" placeholder="0" min="0" max="10"></div>
+    </div>
+    <div class="inp-row"><div class="inp-label">Kaffee Uhrzeit(en)</div><input type="text" id="gt-kaf-zeit" placeholder="z.B. 08:00, 10:30"></div>
+    <div class="check-item"><input type="checkbox" id="gt-alk"><label for="gt-alk">Alkohol konsumiert</label></div>
+    <div class="inp-row" style="margin-top:8px"><div class="inp-label">Was / Wieviel (Alkohol)</div><input type="text" id="gt-alk-was" placeholder="z.B. 1 Bier"></div>
+    <div class="inp-row"><div class="inp-label">Sonstiges</div><input type="text" id="gt-son" placeholder="z.B. Kräutertee, Limo..."></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🕐 Letztes Essen vor dem Schlafen</div>
+    <div class="two-col">
+      <div class="inp-row"><div class="inp-label">Uhrzeit</div><input type="time" id="le-zeit"></div>
+      <div class="inp-row"><div class="inp-label">Was</div><input type="text" id="le-was" placeholder="z.B. Joghurt"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📝 Notizen &amp; Besonderheiten</div>
+    <textarea id="notizen" placeholder="Besondere Ereignisse, Stress, Beobachtungen..."></textarea>
+  </div>
+
+  <button class="save-btn" onclick="saveEntry()">✓ Tag speichern</button>
+</div>
+
+<!-- VERLAUF -->
+<div class="page" id="page-verlauf">
+  <div id="vl-list"></div>
+  <div id="vl-detail" style="display:none"></div>
+</div>
+
+<!-- ARZT-BERICHT -->
+<div class="page" id="page-export">
+  <div class="card">
+    <div class="card-title">📋 Arzt-Bericht für 25.03.2026</div>
+    <p style="font-size:13px;color:#64748b;margin-bottom:12px">Ordensklinikum Linz — Zwerchfellbruch &amp; Sodbrennen</p>
+    <button class="exp-btn" onclick="generateExport()">Bericht generieren</button>
+    <button class="exp-btn green" onclick="copyExport()">Bericht kopieren (für E-Mail / WhatsApp)</button>
+  </div>
+  <div id="exp-out"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="bottom-nav">
+  <button class="nav-btn active" id="nav-heute" onclick="gotoPage('heute')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Heute
+  </button>
+  <button class="nav-btn" id="nav-verlauf" onclick="gotoPage('verlauf')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Verlauf
+  </button>
+  <button class="nav-btn" id="nav-export" onclick="gotoPage('export')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Arzt-Bericht
+  </button>
+</div>
+
+<script>
+const TODAY_KEY = new Date().toISOString().split('T')[0];
+const TODAY_DISPLAY = new Date().toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+let sev = {halsenge:'',brennen:'',sodbrennen:'',aufstossen:''};
+let editingKey = TODAY_KEY;
+let editingDisplay = TODAY_DISPLAY;
+
+document.getElementById('hdrDate').textContent = TODAY_DISPLAY;
+document.getElementById('todayTag').textContent = new Date().toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long'});
+
+document.querySelectorAll('.sev-btns').forEach(grp => {
+  grp.querySelectorAll('.sev-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const f = grp.dataset.field;
+      grp.querySelectorAll('.sev-btn').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+      sev[f] = btn.dataset.val;
+    });
+  });
+});
+
+function gotoPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if (name === 'verlauf') renderVerlauf();
+}
+
+function g(id) { return document.getElementById(id); }
+function gv(id) { return g(id).value; }
+function gc(id) { return g(id).checked; }
+
+function collectData() {
+  return {
+    date: editingKey,
+    dateDisplay: editingDisplay,
+    befinden: { gesamt: gv('sl-gesamt'), stress: gv('sl-stress'), schlaf: gv('schlaf') },
+    gewicht: gv('gewicht'),
+    symptome: { halsenge: sev.halsenge, brennen: sev.brennen, sodbrennen: sev.sodbrennen, aufstossen: sev.aufstossen, wann: gv('wann'), bem: gv('sym-bem') },
+    med: { duMo: gc('m-du-mo'), duAb: gc('m-du-ab'), suMi: gc('m-su-mi'), suNa: gc('m-su-na'), gav: gc('m-gav'), ren: gc('m-ren'), son: gv('m-son') },
+    fr: { zeit: gv('fr-zeit'), hafer: gc('fr-hafer'), kamille: gc('fr-kamille'), htSch: gc('fr-ht-sch'), htMar: gc('fr-ht-mar'), son: gv('fr-son') },
+    mi: { zeit: gv('mi-zeit'), huhn: gc('mi-huhn'), lachs: gc('mi-lachs'), karotten: gc('mi-karotten'), zucchini: gc('mi-zucchini'), karfiol: gc('mi-karfiol'), kartoffel: gc('mi-kartoffel'), reis: gc('mi-reis'), strudel: gc('mi-strudel'), son: gv('mi-son') },
+    ab: { zeit: gv('ab-zeit'), was: gv('ab-was') },
+    snacks: gv('snacks'),
+    gt: { wasser: gv('gt-wasser'), kaffee: gv('gt-kaffee'), kafZeit: gv('gt-kaf-zeit'), alk: gc('gt-alk'), alkWas: gv('gt-alk-was'), son: gv('gt-son') },
+    le: { zeit: gv('le-zeit'), was: gv('le-was') },
+    notizen: gv('notizen')
+  };
+}
+
+function saveEntry() {
+  const data = collectData();
+  const entries = JSON.parse(localStorage.getItem('hpro') || '{}');
+  entries[editingKey] = data;
+  localStorage.setItem('hpro', JSON.stringify(entries));
+  showToast('Tag gespeichert! ✓');
+}
+
+function fillForm(d) {
+  if (!d) return;
+  sev = {halsenge:'',brennen:'',sodbrennen:'',aufstossen:''};
+  document.querySelectorAll('.sev-btn').forEach(b => b.classList.remove('sel'));
+  g('sl-gesamt').value = d.befinden.gesamt; g('v-gesamt').textContent = d.befinden.gesamt;
+  g('sl-stress').value = d.befinden.stress; g('v-stress').textContent = d.befinden.stress;
+  g('schlaf').value = d.befinden.schlaf;
+  g('gewicht').value = d.gewicht;
+  ['halsenge','brennen','sodbrennen','aufstossen'].forEach(f => {
+    if (d.symptome[f]) {
+      sev[f] = d.symptome[f];
+      const grp = document.querySelector(`.sev-btns[data-field="${f}"]`);
+      if (grp) { const b = grp.querySelector(`[data-val="${d.symptome[f]}"]`); if(b) b.classList.add('sel'); }
+    }
+  });
+  g('wann').value = d.symptome.wann || '';
+  g('sym-bem').value = d.symptome.bem || '';
+  g('m-du-mo').checked = d.med.duMo; g('m-du-ab').checked = d.med.duAb;
+  g('m-su-mi').checked = d.med.suMi; g('m-su-na').checked = d.med.suNa;
+  g('m-gav').checked = d.med.gav; g('m-ren').checked = d.med.ren;
+  g('m-son').value = d.med.son || '';
+  g('fr-zeit').value = d.fr.zeit || ''; g('fr-hafer').checked = d.fr.hafer;
+  g('fr-kamille').checked = d.fr.kamille; g('fr-ht-sch').checked = d.fr.htSch;
+  g('fr-ht-mar').checked = d.fr.htMar; g('fr-son').value = d.fr.son || '';
+  g('mi-zeit').value = d.mi.zeit || ''; g('mi-huhn').checked = d.mi.huhn;
+  g('mi-lachs').checked = d.mi.lachs; g('mi-karotten').checked = d.mi.karotten;
+  g('mi-zucchini').checked = d.mi.zucchini; g('mi-karfiol').checked = d.mi.karfiol;
+  g('mi-kartoffel').checked = d.mi.kartoffel; g('mi-reis').checked = d.mi.reis;
+  g('mi-strudel').checked = d.mi.strudel; g('mi-son').value = d.mi.son || '';
+  g('ab-zeit').value = d.ab.zeit || ''; g('ab-was').value = d.ab.was || '';
+  g('snacks').value = d.snacks || '';
+  g('gt-wasser').value = d.gt.wasser || ''; g('gt-kaffee').value = d.gt.kaffee || '';
+  g('gt-kaf-zeit').value = d.gt.kafZeit || ''; g('gt-alk').checked = d.gt.alk;
+  g('gt-alk-was').value = d.gt.alkWas || ''; g('gt-son').value = d.gt.son || '';
+  g('le-zeit').value = d.le.zeit || ''; g('le-was').value = d.le.was || '';
+  g('notizen').value = d.notizen || '';
+}
+
+function loadToday() {
+  const entries = JSON.parse(localStorage.getItem('hpro') || '{}');
+  fillForm(entries[TODAY_KEY]);
+}
+
+function editEntry(k) {
+  const entries = JSON.parse(localStorage.getItem('hpro') || '{}');
+  const e = entries[k];
+  if (!e) return;
+  editingKey = k;
+  editingDisplay = e.dateDisplay || k;
+  fillForm(e);
+  closeDetail();
+  gotoPage('heute');
+  g('edit-banner-date').textContent = editingDisplay;
+  g('edit-banner').classList.add('show');
+  g('todayTag').textContent = editingDisplay;
+  window.scrollTo(0, 0);
+  showToast('Eintrag zum Bearbeiten geladen');
+}
+
+function resetToToday() {
+  editingKey = TODAY_KEY;
+  editingDisplay = TODAY_DISPLAY;
+  g('edit-banner').classList.remove('show');
+  g('todayTag').textContent = new Date().toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long'});
+  const entries = JSON.parse(localStorage.getItem('hpro') || '{}');
+  if (entries[TODAY_KEY]) {
+    fillForm(entries[TODAY_KEY]);
+  } else {
+    sev = {halsenge:'',brennen:'',sodbrennen:'',aufstossen:''};
+    document.querySelectorAll('.sev-btn').forEach(b => b.classList.remove('sel'));
+  }
+}
+
+function sevScore(s) { return {keine:0,leicht:1,mittel:2,stark:3}[s]||0; }
+function maxSym(sym) {
+  const vals = [sym.halsenge,sym.brennen,sym.sodbrennen,sym.aufstossen].filter(Boolean);
+  if (!vals.length) return 'keine';
+  return vals.sort((a,b)=>sevScore(b)-sevScore(a))[0];
+}
+
+function renderVerlauf() {
+  const entries = JSON.parse(localStorage.getItem('hpro') || '{}');
+  const keys = Object.keys(entries).sort().reverse();
+  const list = g('vl-list');
+  g('vl-detail').style.display = 'none';
+  list.style.display = 'block';
+  if (!keys.length) { list.innerHTML = '<div class="empty">Noch keine Einträge.<br>Starte heute!</div>'; return; }
+  list.innerHTML = keys.map(k => {
+    const e = entries[k];
+    const ms = maxSym(e.symptome);
+    const meals = [e.fr.hafer&&'Haferschleim', e.mi.huhn&&'Huhn', e.mi.lachs&&'Lachs'].filter(Boolean).join(', ');
+    return `<div class="entry-card" onclick="showDetail('${k}')">
+      <div>
+        <div class="entry-date">${e.dateDisplay||k}</div>
+        <div class="entry-sum"><span class="badge b-${ms}">${ms.charAt(0).toUpperCase()+ms.slice(1)}</span>${e.gewicht?e.gewicht+'kg':''} ${meals?'• '+meals:''}</div>
+      </div><span style="color:#cbd5e1;font-size:22px">›</span>
+    </div>`;
+  }).join('');
+}
+
+function showDetail(k) {
+  const e = JSON.parse(localStorage.getItem('hpro')||'{}')[k];
+  if (!e) return;
+  g('vl-list').style.display = 'none';
+  const det = g('vl-detail');
+  det.style.display = 'block';
+  const s = e.symptome, m = e.med, fr = e.fr, mi = e.mi;
+  const frT = [fr.hafer&&'Haferschleim',fr.kamille&&'Kamillentee',fr.htSch&&'Hotoast Schinken',fr.htMar&&'Hotoast Marmelade',fr.son].filter(Boolean).join(', ');
+  const miT = [mi.huhn&&'Hühnerfleisch',mi.lachs&&'Lachs',mi.karotten&&'Karotten',mi.zucchini&&'Zucchini',mi.karfiol&&'Karfiol',mi.kartoffel&&'Kartoffel',mi.reis&&'Reis',mi.strudel&&'Gemüsestrudel',mi.son].filter(Boolean).join(', ');
+  const medT = [m.duMo&&'Durotiv Mo',m.duAb&&'Durotiv Ab',m.suMi&&'Sucralan Mi',m.suNa&&'Sucralan Na',m.gav&&'Gaviscon',m.ren&&'Rennie',m.son].filter(Boolean).join(', ');
+  det.innerHTML = `
+    <div class="det-hdr">
+      <button class="back-btn" onclick="closeDetail()">← Zurück</button>
+      <strong>${e.dateDisplay||k}</strong>
+      <button class="edit-btn" onclick="editEntry('${k}')">✏️ Bearbeiten</button>
+    </div>
+    <div class="card"><div class="card-title">😊 Befinden</div>Zustand: ${e.befinden.gesamt}/10 | Stress: ${e.befinden.stress}/10 | Schlaf: ${e.befinden.schlaf}h | Gewicht: ${e.gewicht||'–'}kg</div>
+    <div class="card"><div class="card-title">🔥 Symptome</div>
+      Halsenge: <span class="badge b-${s.halsenge||'keine'}">${s.halsenge||'–'}</span>
+      Brennen: <span class="badge b-${s.brennen||'keine'}">${s.brennen||'–'}</span>
+      Sodbrennen: <span class="badge b-${s.sodbrennen||'keine'}">${s.sodbrennen||'–'}</span>
+      Aufstoßen: <span class="badge b-${s.aufstossen||'keine'}">${s.aufstossen||'–'}</span>
+      ${s.wann?'<br>Wann: '+s.wann:''}${s.bem?'<br>Hinweis: '+s.bem:''}
+    </div>
+    <div class="card"><div class="card-title">💊 Medikamente</div>${medT||'Keine genommen'}</div>
+    <div class="card"><div class="card-title">🌅 Frühstück</div>${fr.zeit||''} ${frT||'–'}</div>
+    <div class="card"><div class="card-title">🍽️ Mittagessen</div>${mi.zeit||''} ${miT||'–'}</div>
+    <div class="card"><div class="card-title">🌙 Abendessen</div>${e.ab.zeit||''} ${e.ab.was||'–'}</div>
+    ${e.snacks?`<div class="card"><div class="card-title">🍎 Snacks</div>${e.snacks}</div>`:''}
+    <div class="card"><div class="card-title">💧 Getränke</div>Wasser: ${e.gt.wasser||'–'}ml | Kaffee: ${e.gt.kaffee||'0'} Tassen ${e.gt.kafZeit?'('+e.gt.kafZeit+')':''}${e.gt.alk?'<br>Alkohol: '+e.gt.alkWas:''}${e.gt.son?'<br>'+e.gt.son:''}</div>
+    <div class="card"><div class="card-title">🕐 Letztes Essen</div>${e.le.zeit||'–'} ${e.le.was||''}</div>
+    ${e.notizen?`<div class="card"><div class="card-title">📝 Notizen</div>${e.notizen}</div>`:''}`;
+}
+
+function closeDetail() {
+  g('vl-list').style.display = 'block';
+  g('vl-detail').style.display = 'none';
+}
+
+function generateExport() {
+  const entries = JSON.parse(localStorage.getItem('hpro') || '{}');
+  const keys = Object.keys(entries).sort();
+  if (!keys.length) { g('exp-out').innerHTML='<div class="card"><p style="color:#64748b">Noch keine Einträge.</p></div>'; return; }
+
+  let t = `GESUNDHEITSPROTOKOLL
+Patient: Mario Zittmayr, geb. 26.04.1977
+Adresse: Ipfbachstraße 10A, 4481 Asten
+
+DIAGNOSEN (aus Befunden):
+- Kleine Hiatushernie (Zwerchfellbruch)
+- Refluxösophagitis Grad I
+- Geringgradige Antrumgastritis
+- Sonographie Oberbauch (16.02.2026): unauffällig
+- Blutbild (11.02.2026): alle Werte im Normbereich
+
+AKTUELLE MEDIKATION (ab 20.01.2026):
+- Durotiv 40mg: morgens + abends
+- Sucralan 1G/5ml: mittags + nachts
+- Gaviscon Erdbeer: bei Bedarf
+
+Dokumentationszeitraum: ${keys[0]} bis ${keys[keys.length-1]}
+Protokollierte Tage: ${keys.length}
+
+${'='.repeat(52)}
+TÄGLICHE ÜBERSICHT
+${'='.repeat(52)}\n`;
+
+  keys.forEach(k => {
+    const e = entries[k];
+    const s = e.symptome, m = e.med, fr = e.fr, mi = e.mi;
+    const frT = [fr.hafer&&'Haferschleim',fr.kamille&&'Kamillentee',fr.htSch&&'Hotoast Schinken',fr.htMar&&'Hotoast Marmelade',fr.son].filter(Boolean).join(', ');
+    const miT = [mi.huhn&&'Hühnerfleisch m.Gemüse',mi.lachs&&'Lachs m.Gemüse',mi.karotten&&'Karotten',mi.zucchini&&'Zucchini',mi.karfiol&&'Karfiol',mi.kartoffel&&'Kartoffel',mi.reis&&'Reis',mi.strudel&&'Gemüsestrudel',mi.son].filter(Boolean).join(', ');
+    const medT = [m.duMo&&'Durotiv Mo',m.duAb&&'Durotiv Ab',m.suMi&&'Sucralan Mi',m.suNa&&'Sucralan Na',m.gav&&'Gaviscon',m.ren&&'Rennie',m.son].filter(Boolean).join(', ');
+    t += `\n${'-'.repeat(40)}
+DATUM: ${e.dateDisplay||k}
+Befinden: ${e.befinden.gesamt}/10 | Stress: ${e.befinden.stress}/10 | Schlaf: ${e.befinden.schlaf}h | Gewicht: ${e.gewicht||'–'}kg
+Symptome:
+  Halsenge:   ${s.halsenge||'–'}
+  Brennen:    ${s.brennen||'–'}
+  Sodbrennen: ${s.sodbrennen||'–'}
+  Aufstoßen:  ${s.aufstossen||'–'}${s.wann?'\n  Wann: '+s.wann:''}${s.bem?'\n  Hinweis: '+s.bem:''}
+Medikamente: ${medT||'Keine genommen'}
+Frühstück:   ${fr.zeit||''} ${frT||'–'}
+Mittagessen: ${mi.zeit||''} ${miT||'–'}
+Abendessen:  ${e.ab.zeit||''} ${e.ab.was||'–'}${e.snacks?'\nSnacks: '+e.snacks:''}
+Getränke:    ${e.gt.wasser||'–'}ml Wasser, ${e.gt.kaffee||'0'} Kaffee${e.gt.kafZeit?' ('+e.gt.kafZeit+')':''}${e.gt.alk?' | Alkohol: '+e.gt.alkWas:''}
+Letztes Essen: ${e.le.zeit||'–'} ${e.le.was||''}${e.notizen?'\nNotizen: '+e.notizen:''}\n`;
+  });
+
+  const symF = ['halsenge','brennen','sodbrennen','aufstossen'];
+  const symN = ['Halsenge','Brennen','Sodbrennen','Aufstoßen'];
+  t += `\n${'='.repeat(52)}\nSTATISTIK (${keys.length} Tage)\n${'='.repeat(52)}\n\n`;
+  symF.forEach((f,i) => {
+    const c = {keine:0,leicht:0,mittel:0,stark:0};
+    keys.forEach(k => { const v = entries[k].symptome[f]; if(v) c[v]++; });
+    t += `${symN[i]}: Keine ${c.keine}x | Leicht ${c.leicht}x | Mittel ${c.mittel}x | Stark ${c.stark}x\n`;
+  });
+  const weights = keys.map(k=>parseFloat(entries[k].gewicht)).filter(Boolean);
+  if (weights.length>1) t += `\nGewichtsverlauf: Start ${weights[0]}kg → Aktuell ${weights[weights.length-1]}kg (${(weights[weights.length-1]-weights[0]).toFixed(1)}kg)\n`;
+  const kafAvg = (keys.map(k=>parseInt(entries[k].gt.kaffee)||0).reduce((a,b)=>a+b,0)/keys.length).toFixed(1);
+  t += `Kaffee Durchschnitt: ${kafAvg} Tassen/Tag\n`;
+  const alkTage = keys.filter(k=>entries[k].gt.alk).length;
+  t += `Alkohol: ${alkTage} von ${keys.length} Tagen\n`;
+  const duCompliance = keys.filter(k=>entries[k].med.duMo&&entries[k].med.duAb).length;
+  t += `Durotiv beide Dosen: ${duCompliance}/${keys.length} Tagen\n`;
+  t += `\n${'='.repeat(52)}\nErstellt: ${new Date().toLocaleDateString('de-AT')}\n`;
+
+  window._expText = t;
+  g('exp-out').innerHTML = `<div class="exp-out">${t}</div>`;
+  showToast('Bericht generiert!');
+}
+
+function copyExport() {
+  if (!window._expText) { generateExport(); setTimeout(copyExport, 300); return; }
+  navigator.clipboard.writeText(window._expText)
+    .then(()=>showToast('Kopiert! ✓'))
+    .catch(()=>showToast('Bitte Text manuell markieren'));
+}
+
+function showToast(msg) {
+  const t = g('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+window.addEventListener('load', loadToday);
+</script>
+</body>
+</html>
