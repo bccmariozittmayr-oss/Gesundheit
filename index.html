@@ -274,6 +274,7 @@ table.bf td:first-child{font-weight:600}
       <canvas id="chart"></canvas>
       <div class="legend" style="margin-top:8px"><span><i class="dot" style="background:#c0392b"></i>Hals</span><span><i class="dot" style="background:#c98a00"></i>Bauch</span><span><i class="dot" style="background:#6b7c77"></i>Stress/3</span></div>
     </div>
+    <div class="card"><h2>Einnahme je Präparat <small>letzte 30 Tage</small></h2><div id="med-stats"></div></div>
     <div class="card">
       <h2>Letzte Tage</h2>
       <div id="entries"></div>
@@ -640,6 +641,10 @@ function renderVerlauf(){
     line('stress','#6b7c77',0.3);line('bauch','#c98a00',1);line('hals','#c0392b',1);
     x.fillStyle='#6b7c77';x.font='11px sans-serif';[0,Math.floor((n-1)/2),n-1].forEach(i=>{const [y,m,d]=keys[i].split('-');x.fillText(d+'.'+m+'.',pad.l+i/(n-1)*pw-14,H-6);});
   }
+  // Einnahme je Präparat: geplant vs. abgehakt
+  const per={};keys.forEach(k=>{const pl=log[k].medsPlanned||[];const m=log[k].meds||{};pl.forEach(key=>{const id=key.split('_')[0];per[id]=per[id]||{t:0,d:0};per[id].t++;if(m[key])per[id].d++;})});
+  const nameOf=id=>(plan?.praeparate.find(m=>m.id===id)||{}).name||id;
+  $('med-stats').innerHTML=Object.keys(per).length?Object.entries(per).sort((x,y)=>y[1].t-x[1].t).map(([id,v])=>{const q=Math.round(v.d/v.t*100);return `<div class="ex"><div class="n"><b>${esc(nameOf(id))}</b><span>${v.d} von ${v.t} Einnahmen</span></div><span class="badge ${q>=90?'ok':q>=60?'warn':'bad'}">${q} %</span></div>`}).join(''):'<div class="empty">Erscheint, sobald Tabletten auf „Heute" abgehakt werden.</div>';
   const sev=['keine','leicht','mittel','stark'];
   $('entries').innerHTML=keys.slice().reverse().slice(0,14).map(k=>{const e=log[k];const [y,m,d]=k.split('-');const m2=Object.values(e.meds||{});const parts=[e.hals!=null?'Hals '+sev[e.hals]:null,e.bauch!=null?'Bauch '+sev[e.bauch]:null,e.stress!=null?'Stress '+e.stress:null,e.schlaf?e.schlaf+' h':null,e.gewicht?e.gewicht+' kg':null,m2.length?m2.filter(Boolean).length+'/'+m2.length+' Tabl.':null,e.sport?'Sport':null].filter(Boolean);return `<div class="ent"><span class="d">${d}.${m}.</span><span class="s">${parts.join(' · ')||'–'}${e.notiz?'<br>'+e.notiz:''}</span></div>`}).join('')||'<div class="empty">Noch keine Einträge.</div>';
 }
@@ -808,7 +813,7 @@ function gotoPage(p){
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
 document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.09.06-9';
+const APP_VERSION='v2026.09.06-10';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 renderHeute();
 if(!plan)setTimeout(()=>toast('Tipp: unter „Mehr" deinen Plan laden'),800);
