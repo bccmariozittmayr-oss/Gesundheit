@@ -1,6 +1,6 @@
 /* Service Worker: macht die App offline nutzbar und zeigt Benachrichtigungen an.
    Bei jeder Änderung an den App-Dateien die VERSION hochzählen, sonst bleibt die alte Fassung im Cache. */
-const VERSION = 'v2026.09.06-5';
+const VERSION = 'v2026.09.06-6';
 const FILES = ['./', './index.html', './daten.js', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
