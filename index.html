@@ -180,11 +180,28 @@ table.bf td:first-child{font-weight:600}
     <button class="on" data-sub="ampel">Ampel</button>
     <button data-sub="woche">Wochenplan</button>
     <button data-sub="einkauf">Einkauf</button>
+    <button data-sub="scan">Scan</button>
     <button data-sub="tipps">Tipps</button>
     <button data-sub="regeln">Regeln</button>
   </div>
 
   <div class="sub" id="s-tipps"><div id="tipps"></div></div>
+
+  <div class="sub" id="s-scan">
+    <div class="card">
+      <h2>Verpackung prüfen</h2>
+      <div class="hint" style="margin-bottom:10px">Strichcode scannen – die Zutatenliste kommt aus der offenen Lebensmittel-Datenbank (Open Food Facts) und wird gegen deine Regeln geprüft: Gluten, Laktose, Zwiebel/Knoblauch, Fruktose, Sorbit, Paprika u.a.</div>
+      <video id="scan-video" playsinline muted style="width:100%;border-radius:12px;background:#000;display:none;max-height:260px;object-fit:cover"></video>
+      <div style="display:flex;gap:8px;margin-top:6px"><button class="btn" id="scan-start" style="flex:1">📷 Strichcode scannen</button><button class="btn sec" id="scan-stop">Stopp</button></div>
+      <div class="row" style="margin-top:10px"><label>oder Strichcode eintippen</label><input type="text" id="scan-code" inputmode="numeric" placeholder="z.B. 4008400402222" style="width:170px"></div>
+      <button class="btn sec full" id="scan-lookup">Nachschlagen</button>
+      <div class="lbl-sm" style="margin-top:12px">oder Zutatenliste abtippen / einfügen</div>
+      <textarea id="scan-text" placeholder="Zutaten: Haferflocken, Zucker, Molkenpulver, Emulgator …"></textarea>
+      <button class="btn sec full" id="scan-check">Zutaten prüfen</button>
+      <div id="scan-result" style="margin-top:12px"></div>
+      <div class="hint" style="margin-top:8px">Ohne Gewähr: Die Prüfung erkennt Schlagwörter. Fehlt ein Produkt in der Datenbank, Zutaten abtippen. Foto-Erkennung mit KI gibt es bewusst nicht – das würde Bilder an einen externen Dienst schicken und pro Bild kosten.</div>
+    </div>
+  </div>
 
   <div class="sub on" id="s-ampel">
     <div class="card">
@@ -243,6 +260,7 @@ table.bf td:first-child{font-weight:600}
 <section class="page" id="p-verlauf">
   <div class="tabs">
     <button class="on" data-sub="chart">Verlauf</button>
+    <button data-sub="plan">Mein Plan</button>
     <button data-sub="befunde">Befunde</button>
     <button data-sub="termine">Termine</button>
   </div>
@@ -257,6 +275,7 @@ table.bf td:first-child{font-weight:600}
       <div id="entries"></div>
     </div>
   </div>
+  <div class="sub" id="s-plan"><div id="planview"></div></div>
   <div class="sub" id="s-befunde"><div id="befunde"></div></div>
   <div class="sub" id="s-termine"><div id="termine"></div></div>
 </section>
@@ -432,8 +451,9 @@ function renderHeute(){
   // Training heute
   const wd=String(new Date().getDay());const tr=(plan?.training?.woche||{})[wd]||[];
   $('train-card').style.display=plan?'':'none';
-  $('train-list').innerHTML=tr.length?tr.map((t,i)=>{const k='t'+i;const d=!!(e.training||{})[k];return `<div class="chk ${d?'done':''}" data-k="${k}"><div class="box">${d?'✓':''}</div><div class="lbl"><b>${t.name}</b><span>${[t.zeit,t.dauer].filter(Boolean).join(' · ')}${t.info?' – '+t.info:''}</span></div></div>`+pulsKarte(t)}).join('')+'<div class="hint" style="margin-top:6px">Dazu 5× am Tag 10–20 Sekunden Puls hochjagen (Stiegen, kurzer Sprint).</div>':'<div class="empty">Kein Training geplant – 10.000 Schritte reichen heute.</div>'+pulsKarte({zone:'A',sportart:'auto'});
-  $('train-list').querySelectorAll('.chk').forEach(el=>el.onclick=()=>{e.training=e.training||{};e.training[el.dataset.k]=!e.training[el.dataset.k];if(e.training[el.dataset.k])e.sport=true;saveLog();renderHeute();});
+  $('train-list').innerHTML=tr.length?tr.map((t,i)=>{const k='t'+i;const d=!!(e.training||{})[k];const min=(e.trainingMin||{})[k]||'';return `<div class="chk ${d?'done':''}" data-k="${k}"><div class="box">${d?'✓':''}</div><div class="lbl"><b>${esc(t.name)}</b><span>${[t.zeit,t.dauer].filter(Boolean).map(esc).join(' · ')}${t.info?' – '+esc(t.info):''}</span></div><input type="number" class="tmin" data-k="${k}" value="${min}" placeholder="Min." min="0" style="width:70px"></div>`+pulsKarte(t)}).join('')+'<div class="hint" style="margin-top:6px">Dazu 5× am Tag 10–20 Sekunden Puls hochjagen (Stiegen, kurzer Sprint).</div>':'<div class="empty">Kein Training geplant – 10.000 Schritte reichen heute.</div>'+pulsKarte({zone:'A',sportart:'auto'});
+  $('train-list').querySelectorAll('.chk').forEach(el=>el.onclick=ev=>{if(ev.target.classList.contains('tmin'))return;e.training=e.training||{};e.training[el.dataset.k]=!e.training[el.dataset.k];if(e.training[el.dataset.k])e.sport=true;saveLog();renderHeute();});
+  $('train-list').querySelectorAll('.tmin').forEach(i=>{i.onclick=ev=>ev.stopPropagation();i.onchange=()=>{e.trainingMin=e.trainingMin||{};e.trainingMin[i.dataset.k]=+i.value||0;if(+i.value>0){e.training=e.training||{};e.training[i.dataset.k]=true;e.sport=true;}saveLog();renderHeute();};});
   $('train-list').querySelectorAll('[data-sa]').forEach(b=>b.onclick=()=>{set.sportart=b.dataset.sa;saveSet();renderHeute();});
   // Medikamente
   const meds=medsToday();
@@ -592,7 +612,8 @@ function renderVerlauf(){
   const avg=(f)=>{const v=keys.map(k=>log[k][f]).filter(x=>x!=null);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):null};
   const medQ=(()=>{let t=0,d=0;keys.forEach(k=>{const m=log[k].meds||{};Object.values(m).forEach(v=>{t++;if(v)d++;})});return t?Math.round(d/t*100):null})();
   const halsFree=keys.filter(k=>log[k].hals===0).length;
-  $('stats').innerHTML=`<div><b>${n}</b><span>Tage erfasst</span></div><div><b>${halsFree}</b><span>Tage ohne Halsgefühl</span></div><div><b>${avg('hals')!=null?avg('hals').toFixed(1):'–'}</b><span>Ø Hals (0–3)</span></div><div><b>${medQ!=null?medQ+'%':'–'}</b><span>Tabletten genommen</span></div>`;
+  const wk=mondayOf(TK);const wkKeys=Object.keys(log).filter(k=>k>=wk&&k<=TK);const trN=wkKeys.reduce((a,k)=>a+Object.values(log[k].training||{}).filter(Boolean).length,0);const trMin=wkKeys.reduce((a,k)=>a+Object.values(log[k].trainingMin||{}).reduce((x,y)=>x+y,0),0);const atemN=wkKeys.reduce((a,k)=>a+Object.values(log[k].atmen||{}).filter(Boolean).length,0);
+  $('stats').innerHTML=`<div><b>${trN}</b><span>Trainings diese Woche${trMin?' · '+trMin+' Min.':''}</span></div><div><b>${atemN}/${wkKeys.length*3}</b><span>Atemübungen diese Woche</span></div><div><b>${n}</b><span>Tage erfasst</span></div><div><b>${halsFree}</b><span>Tage ohne Halsgefühl</span></div><div><b>${avg('hals')!=null?avg('hals').toFixed(1):'–'}</b><span>Ø Hals (0–3)</span></div><div><b>${medQ!=null?medQ+'%':'–'}</b><span>Tabletten genommen</span></div>`;
   // Chart
   const c=$('chart');const dpr=window.devicePixelRatio||1;const W=c.clientWidth||320,H=200;c.width=W*dpr;c.height=H*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);
   x.clearRect(0,0,W,H);
@@ -622,6 +643,61 @@ function renderTermine(){
   if(!plan||!plan.termine){$('termine').innerHTML='<div class="card"><div class="empty">Plan laden.</div></div>';return;}
   $('termine').innerHTML='<div class="card"><h2>Termine & Kontrollen</h2>'+plan.termine.map(t=>`<div class="ex"><div class="n"><b>${esc(t.name)}</b><span>${esc(t.rhythmus||'')}${t.datum?' · '+t.datum:''}${t.details?'<br>'+t.details:''}</span></div></div>`).join('')+'</div>';
 }
+
+/* ---------- VERLAUF: Mein Plan ---------- */
+function renderPlan(){
+  if(!plan){$('planview').innerHTML='<div class="card"><div class="empty">Plan laden (Mehr → Plan laden).</div></div>';return;}
+  const slotName={nu:'nüchtern',m:'morgens',mi:'mittags',a:'abends',n:'vor dem Schlafen'};
+  const doseTxt=p=>['nu','m','mi','a','n'].filter(s=>p[s]>0).map(s=>p[s]+' '+slotName[s]).join(', ')||'Pause';
+  const anchorOf=m=>m.anker==='kur'?set.kurStart:((!m.anker||m.anker==='plan')?plan.anker?.plan:m.anker);
+  let h='<div class="card"><h2>Meine Präparate <small>'+esc(plan.quelle||'')+'</small></h2>';
+  plan.praeparate.forEach(m=>{const ph=medPhase(m);const an=anchorOf(m);const ov=set.medOverride[m.id]||{};
+    h+='<div class="medit"><div class="n">'+esc(m.name)+(ov.aus?' <span class="badge">aus</span>':'')+'</div><div class="hint">'+esc(m.hinweis||'')+(m.offen?' · ⚠️ '+esc(m.offen):'')+'</div>';
+    m.phasen.forEach(p=>{const cur=ph===p;const from=an?fmtDate(addDays(an,p.abTag)):'Kur-Tag '+(p.abTag+1);const to=an?(p.bisTag==null?'dauerhaft':'bis '+fmtDate(addDays(an,p.bisTag))):(p.bisTag==null?'dauerhaft':'bis Kur-Tag '+(p.bisTag+1));
+      h+='<div style="font-size:13.5px;padding:3px 0 3px 8px;border-left:3px solid '+(cur?'var(--ok)':'var(--line)')+';margin:3px 0">'+(cur?'<b>jetzt:</b> ':'')+'<b>'+doseTxt(p)+' '+esc(m.einheit||'')+'</b> · '+from+' '+to+(p.notiz?'<br><span class="hint">'+esc(p.notiz)+'</span>':'')+'</div>';});
+    h+='</div>';});
+  h+='</div>';
+  if(plan.bedarf)h+='<div class="card"><h2>Bei Bedarf</h2>'+plan.bedarf.map(b=>'<div class="ex"><div class="n"><b>'+esc(b.name)+' '+esc(b.dosis||'')+'</b><span>'+esc(b.wann)+'</span></div></div>').join('')+'</div>';
+  if(plan.sport)h+='<div class="card"><h2>Bei Sport</h2>'+plan.sport.map(b=>'<div class="ex"><div class="n"><b>'+esc(b.name)+'</b><span>'+esc(b.wann)+(b.dosis?' · '+esc(b.dosis):'')+'</span></div></div>').join('')+'</div>';
+  if(plan.persoenlich)h+='<div class="card"><h2>Meine Kostform</h2><div style="font-size:14.5px">'+(plan.persoenlich.kost||[]).map(esc).join(' · ')+'</div>'+(plan.persoenlich.meiden||[]).map(p=>'<div class="ex"><div class="n"><b>'+esc(p.name)+'</b><span>'+esc(p.grund)+'</span></div></div>').join('')+'</div>';
+  h+='<div class="card"><h2>Darmkur</h2><div class="hint">'+(set.kurStart?'Start '+fmtDate(set.kurStart):'Noch nicht gestartet – Startdatum unter Mehr.')+'</div><div style="font-size:14px;margin-top:6px">Tag 1–2 Reduzieren · Tag 3–6 Darmdetox (7 Shakes, alle anderen Präparate pausieren) · Tag 7–8 Aufbau · bis Tag 67 Monat 1–2 · bis Tag 128 Monat 3–4 · danach Erhaltung</div></div>';
+  $('planview').innerHTML=h;
+}
+
+/* ---------- ESSEN: Scan / Zutaten-Check ---------- */
+let scanStream=null,scanTimer=null,zx=null;
+function scanResult(r,info){
+  const col={ok:'ok',mass:'warn',no:'bad'}[r.verdict];const txt={ok:'✅ Passt',mass:'⚠️ Vorsicht',no:'❌ Passt nicht'}[r.verdict];
+  $('scan-result').innerHTML='<div class="banner '+col+'"><b style="font-size:17px">'+txt+'</b>'+(info?'<br>'+esc(info):'')+(r.no.length?'<br><b>Nicht:</b> '+r.no.map(x=>esc(x.why)+' ('+x.found.map(esc).join(', ')+')').join(' · '):'')+(r.mass.length?'<br><b>Vorsicht:</b> '+r.mass.map(x=>esc(x.why)+' ('+x.found.map(esc).join(', ')+')').join(' · '):'')+(r.lf?'<br>laktosefrei gekennzeichnet':'')+(r.gf?'<br>glutenfrei gekennzeichnet':'')+'</div>';
+}
+async function lookupCode(code){
+  code=(code||'').replace(/\D/g,'');if(!code){toast('Kein Code');return;}
+  $('scan-result').innerHTML='<div class="hint">Suche '+code+' …</div>';
+  try{const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+code+'.json?fields=product_name,brands,ingredients_text_de,ingredients_text,allergens,labels');const j=await r.json();
+    if(!j.product){$('scan-result').innerHTML='<div class="banner warn">Produkt nicht in der Datenbank. Zutaten unten abtippen.</div>';return;}
+    const p=j.product;const ing=p.ingredients_text_de||p.ingredients_text||'';$('scan-text').value=ing;
+    if(!ing){$('scan-result').innerHTML='<div class="banner warn">'+esc((p.brands?p.brands+' ':'')+(p.product_name||''))+': keine Zutatenliste hinterlegt – bitte abtippen.</div>';return;}
+    scanResult(zutatenCheck(ing+' '+(p.labels||'')+' '+(p.allergens||'')),(p.brands?p.brands+' – ':'')+(p.product_name||''));
+  }catch(e){$('scan-result').innerHTML='<div class="banner warn">Datenbank nicht erreichbar (offline?). Zutaten unten abtippen.</div>';}
+}
+function stopScan(){clearInterval(scanTimer);scanTimer=null;if(zx){try{zx.reset()}catch(e){}zx=null;}if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}$('scan-video').style.display='none';}
+async function startScan(){
+  stopScan();const v=$('scan-video');v.style.display='block';
+  try{
+    if('BarcodeDetector' in window){
+      const det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e']});
+      scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});v.srcObject=scanStream;await v.play();
+      scanTimer=setInterval(async()=>{try{const codes=await det.detect(v);if(codes.length){const c=codes[0].rawValue;stopScan();$('scan-code').value=c;lookupCode(c);}}catch(e){}},400);
+    }else{
+      if(!window.ZXing){await new Promise((ok,err)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';s.onload=ok;s.onerror=err;document.head.appendChild(s);});}
+      zx=new ZXing.BrowserMultiFormatReader();
+      zx.decodeFromVideoDevice(undefined,v,(res)=>{if(res){const c=res.getText();stopScan();$('scan-code').value=c;lookupCode(c);}});
+    }
+  }catch(e){stopScan();$('scan-result').innerHTML='<div class="banner warn">Kamera nicht verfügbar – Code eintippen oder Zutaten abtippen.</div>';}
+}
+$('scan-start').onclick=startScan;$('scan-stop').onclick=stopScan;
+$('scan-lookup').onclick=()=>lookupCode($('scan-code').value);
+$('scan-check').onclick=()=>{const t=$('scan-text').value.trim();if(!t){toast('Zutaten eingeben');return;}scanResult(zutatenCheck(t));};
 
 /* ---------- MEHR ---------- */
 function renderMehr(){
@@ -686,13 +762,13 @@ setInterval(()=>{const nk=todayKey();if(nk!==TK){TK=nk;renderHeute();}checkRemin
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){const nk=todayKey();if(nk!==TK){TK=nk;renderHeute();}checkReminders();}});
 
 /* ---------- Navigation ---------- */
-const PAGES={heute:renderHeute,essen:()=>{renderAmpel();renderWoche();renderEinkauf();renderTipps();renderRegeln();},atmen:renderExList,verlauf:()=>{renderVerlauf();renderBefunde();renderTermine();},mehr:renderMehr};
+const PAGES={heute:renderHeute,essen:()=>{renderAmpel();renderWoche();renderEinkauf();renderTipps();renderRegeln();},atmen:renderExList,verlauf:()=>{renderVerlauf();renderPlan();renderBefunde();renderTermine();},mehr:renderMehr};
 const TITLES={heute:'Heute',essen:'Essen',atmen:'Atmen',verlauf:'Verlauf',mehr:'Mehr'};
 function gotoPage(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.toggle('on',x.id==='p-'+p));
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
   $('hd-title').textContent=TITLES[p];$('hd-sub').textContent=p==='heute'?new Date().toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long'}):'';
-  PAGES[p]();window.scrollTo(0,0);
+  if(p!=='essen')stopScan();PAGES[p]();window.scrollTo(0,0);
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
 document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));

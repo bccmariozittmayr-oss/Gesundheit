@@ -48,15 +48,15 @@ const Z=(n,kat)=>({n,kat});
 const G='Gemüse',O='Obst',E='Eiweiß',M='Milchprodukte',K='Getreide & Beilagen',N='Nüsse & Samen',OE='Öle & Gewürze',GT='Getränke';
 const REZEPTE=[
  // Frühstück
- {id:'f1',typ:'f',name:'Porridge mit Beeren und Chiasamen',zutaten:[Z('Haferflocken',K),Z('Laktosefreie Milch oder Mandelmilch',M),Z('Heidelbeeren / Himbeeren',O),Z('Chiasamen',N),Z('Walnüsse',N)]},
+ {id:'f1',typ:'f',name:'Porridge mit Wasser, Beeren und Chiasamen',zutaten:[Z('Haferflocken (zertifiziert glutenfrei)',K),Z('Heidelbeeren / Himbeeren',O),Z('Chiasamen',N),Z('Walnüsse',N)]},
  {id:'f2',typ:'f',name:'Rührei mit Tomaten und Basilikum',zutaten:[Z('Eier',E),Z('Tomaten',G),Z('Basilikum',OE),Z('Olivenöl',OE),Z('Glutenfreies Brot (Buchweizen/Reis)',K)]},
  {id:'f3',typ:'f',name:'Buchweizenbrot mit Butter, laktosefreiem Topfen und Schnittlauch',zutaten:[Z('Buchweizenbrot (glutenfrei)',K),Z('Butter',M),Z('Laktosefreier Topfen',M),Z('Schnittlauch',G)]},
  {id:'f4',typ:'f',name:'Laktosefreies Joghurt mit Kiwi, Erdbeeren und Haferflocken',zutaten:[Z('Laktosefreies Joghurt',M),Z('Kiwi',O),Z('Erdbeeren',O),Z('Haferflocken',K),Z('Leinsamen geschrotet',N)]},
  {id:'f5',typ:'f',name:'Spanisches Omelette mit Kürbis und Kartoffelwürfeln',zutaten:[Z('Eier',E),Z('Kürbis',G),Z('Kartoffeln',G),Z('Olivenöl',OE),Z('Fenchel',G)]},
  {id:'f6',typ:'f',name:'Buchweizenbrot (glutenfrei) mit Hartkäse und Trauben',zutaten:[Z('Buchweizenbrot (glutenfrei)',K),Z('Hartkäse (Bergkäse)',M),Z('Trauben',O),Z('Butter',M)]},
- {id:'f7',typ:'f',name:'Haferschleim mit Banane (unreif) und Zimt',zutaten:[Z('Haferflocken',K),Z('Laktosefreie Milch oder Mandelmilch',M),Z('Banane (unreif)',O),Z('Zimt',OE)]},
+ {id:'f7',typ:'f',name:'Haferschleim mit Wasser, Banane (unreif) und Zimt',zutaten:[Z('Haferflocken (zertifiziert glutenfrei)',K),Z('Banane (unreif)',O),Z('Zimt',OE)]},
  {id:'f8',typ:'f',name:'Skyr-Bowl mit Himbeeren, Haferflocken und Kürbiskernen',zutaten:[Z('Skyr laktosefrei',M),Z('Himbeeren',O),Z('Haferflocken',K),Z('Kürbiskerne',N)]},
- {id:'f9',typ:'f',name:'Haferschleim mit Wasser, Ahornsirup und Ei oder Skyr, dazu Kamillentee',zutaten:[Z('Haferflocken (zertifiziert glutenfrei)',K),Z('Ahornsirup',OE),Z('Eier',E),Z('Skyr laktosefrei',M),Z('Kamillentee',GT)],tags:['schnell','tm'],tipp:'TM: 300 ml Wasser + 40 g Hafer, 6 Min/90°/Stufe 1. Eiweiß dazu: 1–2 weiche Eier oder 150 g Skyr – ohne Eiweiß hält das Frühstück nicht bis Mittag.'},
+ {id:'f9',typ:'f',name:'Haferschleim mit Wasser und Ananas, dazu Ei oder Skyr und Kamillentee',zutaten:[Z('Haferflocken (zertifiziert glutenfrei)',K),Z('Ananas (oder Erdbeeren, Kiwi, Heidelbeeren)',O),Z('Eier',E),Z('Skyr laktosefrei',M),Z('Kamillentee',GT)],tags:['schnell','tm'],tipp:'TM: 300 ml Wasser + 40 g Hafer, 6 Min/90°/Stufe 1. Süße kommt vom Obst (Ananas, Beeren, Kiwi – FODMAP-arm). Eiweiß dazu: 1–2 weiche Eier oder 150 g Skyr – ohne Eiweiß hält das Frühstück nicht bis Mittag.'},
  // Mittag
  {id:'m1',typ:'m',name:'Grillgemüse (Zucchini, Fenchel, Aubergine) mit Hühnerbrust',fleisch:true,zutaten:[Z('Hühnerbrust',E),Z('Zucchini',G),Z('Fenchel',G),Z('Aubergine',G),Z('Olivenöl',OE),Z('Reis',K)]},
  {id:'m2',typ:'m',name:'Gedünsteter Lachs mit Karotten, Zucchini und Kartoffeln',zutaten:[Z('Lachsfilet',E),Z('Karotten',G),Z('Zucchini',G),Z('Kartoffeln',G),Z('Zitrone',O),Z('Dille',OE)]},
@@ -110,7 +110,7 @@ const REGELN_STANDARD=[
 
 /* Kochtipps je Rezept: tags = schnell (≤ 15 Min.), tm (Thermomix), buero (Büro/unterwegs), vorkochen */
 const REZEPT_TIPPS={
- f1:{tags:['schnell','tm'],tipp:'TM: 250 ml Milch + 50 g Hafer, 7 Min/90°/Stufe 1. Beeren erst am Schluss. Im Büro: Overnight-Oats im Glas.'},
+ f1:{tags:['schnell','tm'],tipp:'TM: 250 ml Wasser + 50 g Hafer, 7 Min/90°/Stufe 1. Beeren erst am Schluss. Im Büro: Overnight-Oats im Glas.'},
  f2:{tags:['schnell'],tipp:'Tomaten kurz in Olivenöl, Eier drüber, Basilikum am Schluss. 8 Minuten.'},
  f3:{tags:['schnell','buero'],tipp:'Kein Kochen. Topfen mit Schnittlauch verrühren – hält 2 Tage im Kühlschrank.'},
  f4:{tags:['schnell','buero'],tipp:'Alles ins Glas schichten, Deckel drauf, mitnehmen.'},
@@ -172,3 +172,32 @@ const ATEM_VIDEOS={
  'stille':[{t:'Vagusnerv-Meditation – Nervensystem beruhigen (deutsch)',u:'https://www.youtube.com/watch?v=MoRUOUpNsGM'}]
 };
 ATEM.forEach(x=>x.videos=ATEM_VIDEOS[x.id]||[]);
+
+
+/* Zutaten-Check: Schlagwörter auf Zutatenlisten von Verpackungen. s: no = passt nicht, mass = Vorsicht */
+const ZUTATEN_CHECK=[
+ {k:['weizen','dinkel','roggen','gerste','kamut','gluten','grieß','bulgur','couscous','seitan','malz'],s:'no',why:'Gluten'},
+ {k:['hafer'],s:'mass',why:'Hafer – nur zertifiziert glutenfrei'},
+ {k:['milch','molke','laktose','lactose','sahne','rahm','joghurt','topfen','quark','magermilchpulver','süßmolke','buttermilch'],s:'no',why:'Laktose (außer ausdrücklich laktosefrei)'},
+ {k:['zwiebel','knoblauch','lauch','porree','schalotte'],s:'no',why:'Fruktane (Zwiebel/Knoblauch)'},
+ {k:['honig','agavendicksaft','agavensirup','fruktose','fructose','fruktosesirup','glukose-fruktose','fructose-glucose','isoglukose','apfel','birne','mango','wassermelone'],s:'no',why:'Fruktose'},
+ {k:['sorbit','sorbitol','e420','mannit','mannitol','e421','xylit','xylitol','e967','maltit','maltitol','e965','isomalt','e953','erythrit'],s:'no',why:'Polyole / Sorbit'},
+ {k:['inulin','chicorée','zichorie','oligofruktose','fos','gos','topinambur'],s:'no',why:'Inulin/Oligosaccharide'},
+ {k:['bohnen','kichererbse','linsen','soja','erbsen','edamame'],s:'no',why:'Hülsenfrüchte / Soja'},
+ {k:['cashew','pistazie'],s:'no',why:'FODMAP-reiche Nüsse'},
+ {k:['paprika'],s:'no',why:'Paprika (persönlich)'},
+ {k:['blumenkohl','karfiol','rosenkohl','rotkohl','wirsing','weißkohl','kraut'],s:'mass',why:'Kohl'},
+ {k:['sonnenblumenöl','margarine','kokosöl','palmöl','distelöl','maiskeimöl','sojaöl'],s:'mass',why:'ungünstiges Fett'},
+ {k:['aroma','konservierungsstoff','emulgator','farbstoff','süßungsmittel','aspartam','sucralose','acesulfam','e4','e3','e2','e1'],s:'mass',why:'Zusatzstoffe'},
+ {k:['zucker','saccharose','dextrose','traubenzucker','glukosesirup','glucosesirup','sirup'],s:'mass',why:'Zucker – kleine Mengen ok'},
+ {k:['schwein','speck','schinken','salami','wurst'],s:'mass',why:'Schwein / Verarbeitetes'}
+];
+function zutatenCheck(text){
+  const t=(text||'').toLowerCase();const hits=[];
+  const lf=/laktosefrei|lactosefrei|lactose-free|laktose-frei/.test(t);const gf=/glutenfrei|gluten-free|sans gluten|senza glutine/.test(t);
+  ZUTATEN_CHECK.forEach(r=>{const f=r.k.filter(k=>t.includes(k));if(!f.length)return;
+    if(r.why.startsWith('Laktose')&&lf)return; if(r.why==='Gluten'&&gf)return; if(r.why.startsWith('Hafer')&&gf)return;
+    hits.push({why:r.why,s:r.s,found:[...new Set(f)].slice(0,4)});});
+  const no=hits.filter(h=>h.s==='no'),mass=hits.filter(h=>h.s==='mass');
+  return {verdict:no.length?'no':mass.length?'mass':'ok',no,mass,lf,gf};
+}
