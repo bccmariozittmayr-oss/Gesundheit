@@ -290,9 +290,13 @@ table.bf td:first-child{font-weight:600}
   <div class="card">
     <h2>Mein Plan <small id="plan-stand"></small></h2>
     <div id="plan-status" class="hint" style="margin-bottom:8px"></div>
+    <div class="lbl-sm">Passwort (steht in deiner Datei PLAN-PASSWORT.txt)</div>
+    <input type="password" id="plan-pw" autocomplete="off" placeholder="Wort-Wort-Wort-Wort-Zahl">
+    <button class="btn full" id="plan-unlock">🔓 Plan entsperren</button>
+    <div class="hint" style="margin-top:8px">Der Plan liegt verschlüsselt in der App und wird nur mit deinem Passwort auf diesem Gerät lesbar. Das Passwort wird nicht gespeichert.</div>
+    <details style="margin-top:10px"><summary class="hint" style="font-weight:400">Alternativ: Datei laden</summary>
     <input type="file" id="plan-file" accept=".json,application/json" style="display:none">
-    <button class="btn full" id="plan-load">📂 Plan laden (mein-plan.json)</button>
-    <div class="hint" style="margin-top:8px">Die Datei liegt nur auf deinem OneDrive und bleibt nur auf diesem Gerät. Nichts davon ist im Internet.</div>
+    <button class="btn sec full" id="plan-load">📂 mein-plan.json laden</button></details>
   </div>
   <div class="card">
     <h2>Darmkur</h2>
@@ -455,7 +459,7 @@ function renderHeute(){
   const e=entry(TK);
   // Banner
   let b='';
-  if(!plan)b='<div class="banner warn">Noch kein Plan geladen. Unter <b>Mehr → Plan laden</b> die Datei <b>mein-plan.json</b> vom OneDrive auswählen.</div>';
+  if(!plan)b='<div class="banner warn">Noch kein Plan. Unter <b>Mehr → Plan entsperren</b> dein Passwort eingeben – dann erscheinen hier deine Präparate.</div>';
   const kp=kurPhase();
   if(kp)b+=`<div class="banner ${kp.detox?'bad':'info'}"><b>Darmkur Tag ${kp.tag}: ${kp.name}</b><br>${kp.txt}</div>`;
   else if(plan&&!set.kurStart)b+='<div class="banner info">Darmkur noch nicht gestartet – Startdatum unter <b>Mehr</b> eintragen, sobald es losgeht.</div>';
@@ -761,7 +765,23 @@ function renderMehr(){
 }
 $('kur-start').onchange=()=>{set.kurStart=$('kur-start').value||null;set.medOverride={};saveSet();renderMehr();toast(set.kurStart?'Darmkur-Start gesetzt':'Darmkur-Start entfernt');};
 $('plan-load').onclick=()=>$('plan-file').click();
-$('plan-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const p=JSON.parse(r.result);const err=planFehler(p);if(err)throw new Error(err);plan=p;LS.set('gp_plan',plan);set.medOverride={};saveSet();if(week&&!week.days.every(x=>['f','m','a'].every(t=>rezOk(REZ(x[t]))))){week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});}toast('Plan geladen ✓');renderMehr();}catch(e){toast('Plan nicht übernommen: '+(e.message||'ungültige Datei'));}};r.readAsText(f);ev.target.value='';};
+// Plan entschlüsseln (AES-256-GCM, Schlüssel aus Passwort per PBKDF2) – Gegenstück zu werkzeuge/plan-verschluesseln.js
+function uebernehmePlan(p){const err=planFehler(p);if(err)throw new Error(err);plan=p;LS.set('gp_plan',plan);set.medOverride={};saveSet();if(week&&!week.days.every(x=>['f','m','a'].every(t=>rezOk(REZ(x[t]))))){week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});}}
+$('plan-unlock').onclick=async()=>{
+  const pw=$('plan-pw').value.trim();if(!pw){toast('Passwort eingeben');return;}
+  const btn=$('plan-unlock');btn.disabled=true;btn.textContent='Entschlüssle …';
+  try{
+    const r=await fetch('plan.enc.json?v='+Date.now());if(!r.ok)throw new Error('plan.enc.json fehlt');const f=await r.json();
+    const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));const enc=new TextEncoder();
+    const base=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);
+    const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(f.salt),iterations:f.iterations,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(f.iv)},key,b64(f.data));
+    uebernehmePlan(JSON.parse(new TextDecoder().decode(pt)));
+    $('plan-pw').value='';toast('Plan entsperrt ✓ (Stand '+(f.stand||'')+')');renderMehr();
+  }catch(e){toast(/OperationError|decrypt/i.test(String(e))||e.name==='OperationError'?'Passwort falsch':'Fehlgeschlagen: '+(e.message||e));}
+  btn.disabled=false;btn.textContent='🔓 Plan entsperren';
+};
+$('plan-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{uebernehmePlan(JSON.parse(r.result));toast('Plan geladen ✓');renderMehr();}catch(e){toast('Plan nicht übernommen: '+(e.message||'ungültige Datei'));}};r.readAsText(f);ev.target.value='';};
 $('notif-sw').onclick=async()=>{
   if(!('Notification' in window)){toast('Nicht unterstützt');return;}
   if(set.notif){set.notif=false;saveSet();renderMehr();return;}
@@ -813,10 +833,10 @@ function gotoPage(p){
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
 document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.09.06-10';
+const APP_VERSION='v2026.09.06-11';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 renderHeute();
-if(!plan)setTimeout(()=>toast('Tipp: unter „Mehr" deinen Plan laden'),800);
+if(!plan)setTimeout(()=>toast('Tipp: unter „Mehr" den Plan entsperren'),800);
 </script>
 </body>
 </html>

@@ -15,6 +15,8 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 | `daten.js` | allgemeine Listen: FODMAP (168 Lebensmittel), 30 Rezepte mit Kochtipps, Vorrat, Atemübungen, Tipps, Standard-Regeln |
 | `sw.js` | Offline-Cache – VERSION bei jeder Änderung hochzählen |
 | `mein-plan.beispiel.json` | Struktur der privaten Plan-Datei ohne echte Werte |
+| `plan.enc.json` | der echte Plan, AES-verschlüsselt – nach jeder Planänderung mit `werkzeuge/plan-verschluesseln.js` neu erzeugen |
+| OneDrive … `/Gesundheits-App/PLAN-PASSWORT.txt` | Passwort dazu – nie ins Repo, nie in den Chat |
 | OneDrive `Mario - Dokumente/Privat/Arzt/Die Fitmacher/Gesundheits-App/mein-plan.json` | **Master der privaten Daten** (Präparate, Phasen, Befunde, Termine, Trainingswoche, Puls) |
 | OneDrive … `/Gesundheits-App/befund-extrakt.md` | Volltext-Extrakt aller 13 Befund-PDFs (Quelle für den Plan) |
 | OneDrive `13 Claude Sicherung/Claude Code/BCC-Zentrale/03_Privat/Gesundheit/` | Kopie der PDFs + Plan |

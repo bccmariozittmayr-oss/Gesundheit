@@ -20,11 +20,21 @@ Alles Persönliche (Präparate, Dosierungen, Befunde, Termine) steht in **`mein-
 
 `mein-plan.beispiel.json` zeigt die Struktur ohne echte Werte.
 
+## Plan in die App bringen (verschlüsselt)
+
+Damit kein Handy-Dateizugriff nötig ist, liegt der Plan zusätzlich **verschlüsselt** im Repo (`plan.enc.json`, AES-256-GCM, Schlüssel aus einem Passwort per PBKDF2 mit 300.000 Runden). Die App entschlüsselt ihn unter **Mehr → Plan entsperren** nur mit dem Passwort auf dem Gerät; das Passwort wird nicht gespeichert und steht nirgends im Repo.
+
+Nach jeder Änderung an `mein-plan.json`:
+
+    node werkzeuge/plan-verschluesseln.js <Pfad/mein-plan.json> <Pfad/PLAN-PASSWORT.txt>
+
+dann committen. Beide Eingabedateien bleiben außerhalb des Repos.
+
 ## Installation am Handy
 
 1. Seite im Browser öffnen (GitHub Pages).
 2. iPhone: Teilen → „Zum Home-Bildschirm". Android: Menü → „App installieren".
-3. In der App: Mehr → Plan laden → `mein-plan.json` aus OneDrive wählen.
+3. In der App: Mehr → Plan entsperren → Passwort eingeben (alternativ: `mein-plan.json` als Datei laden).
 4. Mehr → „In Kalender übernehmen" → .ics importieren. Dann erinnert der Kalender täglich, auch wenn die App geschlossen ist. (Browser-Benachrichtigungen funktionieren nur, solange die App offen ist.)
 
 ## Plan ändern
