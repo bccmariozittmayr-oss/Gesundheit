@@ -12,7 +12,7 @@ const FODMAP=[
   {n:'Artischocke',s:'no'},{n:'Blumenkohl / Karfiol',s:'no',why:'Kohlgemüse – häufig schlecht verträglich'},{n:'Bohnen (außer grüne)',s:'no',why:'Hülsenfrucht'},{n:'Chicorée',s:'no'},{n:'Edamame',s:'no'},{n:'Erbsen',s:'no'},{n:'Frühlingszwiebel (weißer Teil)',s:'no',why:'Zwiebelgewächs'},{n:'Kaiserschote / Zuckerschote',s:'no'},{n:'Kichererbsen',s:'no'},{n:'Knoblauch',s:'no',why:'Fruktane'},{n:'Lauch / Porree',s:'no'},{n:'Linsen',s:'no'},{n:'Pilze / Champignons',s:'no'},{n:'Radicchio',s:'no'},{n:'Rosenkohl / Kohlsprossen',s:'no',why:'Kohl'},{n:'Rote Bete / Rote Rüben',s:'no'},{n:'Rotkohl / Blaukraut',s:'no',why:'Kohl'},{n:'Schalotten',s:'no'},{n:'Schwarzwurzel',s:'no'},{n:'Sellerie',s:'no'},{n:'Soja',s:'no'},{n:'Spargel',s:'no'},{n:'Süßkartoffel',s:'no'},{n:'Topinambur',s:'no'},{n:'Wirsing',s:'no',why:'Kohl'},{n:'Zuckermais (Dose)',s:'no'},{n:'Zwiebel',s:'no',why:'Fruktane'}
  ]},
  {name:'Getreide & Beilagen',items:[
-  {n:'Amaranth',s:'ok'},{n:'Buchweizen',s:'ok'},{n:'Chiasamen',s:'ok'},{n:'Flohsamen(schalen)',s:'ok'},{n:'Glutenfreie Produkte',s:'ok'},{n:'Hafer / Haferflocken / Haferschleim',s:'ok'},{n:'Hirse / Teff',s:'ok'},{n:'Kartoffelmehl',s:'ok'},{n:'Polenta / Maisgrieß',s:'ok'},{n:'Quinoa',s:'ok'},{n:'Reis (alle Sorten)',s:'ok'},{n:'Sauerteigbrot (Dinkel/Roggen, lang geführt)',s:'ok',why:'handschriftlich als erlaubt ergänzt'},
+  {n:'Amaranth',s:'ok'},{n:'Buchweizen',s:'ok'},{n:'Chiasamen',s:'ok'},{n:'Flohsamen(schalen)',s:'ok'},{n:'Glutenfreie Produkte',s:'ok'},{n:'Glutenfreies Brot (Buchweizen, Reis, Teff, Mais)',s:'ok',why:'Ersatz für Dinkel-/Weizentoast'},{n:'Hafer / Haferflocken / Haferschleim',s:'ok',why:'bei Glutenverzicht nur als „zertifiziert glutenfrei" kaufen'},{n:'Hirse / Teff',s:'ok'},{n:'Kartoffelmehl',s:'ok'},{n:'Polenta / Maisgrieß',s:'ok'},{n:'Quinoa',s:'ok'},{n:'Reis (alle Sorten)',s:'ok'},{n:'Sauerteigbrot (Dinkel/Roggen, lang geführt)',s:'mass',why:'FODMAP-arm, aber glutenhaltig'},
   {n:'Weizen (Brot, Semmeln, Nudeln, Gebäck)',s:'no',why:'häufiger Auslöser für Blähungen'},{n:'Dinkel (außer Sauerteig)',s:'no'},{n:'Gerste',s:'no'},{n:'Kamut',s:'no'},{n:'Roggen (außer Sauerteig)',s:'no'}
  ]},
  {name:'Milchprodukte & Ersatz',items:[
@@ -29,7 +29,7 @@ const FODMAP=[
  ]},
  {name:'Süßes & Sonstiges',items:[
   {n:'Haushaltszucker',s:'mass',why:'geringe Mengen'},{n:'Traubenzucker / Dextrose',s:'mass'},{n:'Ahornsirup',s:'mass'},{n:'Zuckerrübensirup',s:'mass'},{n:'Dunkle Schokolade (ab 70 %)',s:'mass',why:'kleine Menge, laktosearm'},
-  {n:'Honig',s:'no',why:'Fruktose'},{n:'Agavensirup',s:'no'},{n:'Fruktosesirup / Glukose-Fruktose-Sirup',s:'no'},{n:'Zuckerfreie Kaugummis / Bonbons',s:'no',why:'Polyole = Sorbit, Xylit, Mannit'},{n:'Diabetiker-Lebensmittel',s:'no',why:'Polyole'},{n:'Light-Produkte mit Süßstoff',s:'no'}
+  {n:'Honig',s:'no',why:'Fruktose – im Haferschleim durch Ahornsirup ersetzen'},{n:'Agavensirup',s:'no'},{n:'Fruktosesirup / Glukose-Fruktose-Sirup',s:'no'},{n:'Zuckerfreie Kaugummis / Bonbons',s:'no',why:'Polyole = Sorbit, Xylit, Mannit'},{n:'Diabetiker-Lebensmittel',s:'no',why:'Polyole'},{n:'Light-Produkte mit Süßstoff',s:'no'}
  ]},
  {name:'Fette & Öle',items:[
   {n:'Olivenöl',s:'ok'},{n:'Rapsöl',s:'ok'},{n:'Leinöl',s:'ok'},{n:'Walnussöl',s:'ok'},{n:'Butter',s:'ok'},
@@ -56,6 +56,7 @@ const REZEPTE=[
  {id:'f6',typ:'f',name:'Buchweizenbrot mit Hartkäse und Trauben',zutaten:[Z('Haferbrot / Buchweizenbrot',K),Z('Hartkäse (Bergkäse)',M),Z('Trauben',O),Z('Butter',M)]},
  {id:'f7',typ:'f',name:'Haferschleim mit Banane (unreif) und Zimt',zutaten:[Z('Haferflocken',K),Z('Laktosefreie Milch oder Mandelmilch',M),Z('Banane (unreif)',O),Z('Zimt',OE)]},
  {id:'f8',typ:'f',name:'Skyr-Bowl mit Himbeeren, Haferflocken und Kürbiskernen',zutaten:[Z('Skyr laktosefrei',M),Z('Himbeeren',O),Z('Haferflocken',K),Z('Kürbiskerne',N)]},
+ {id:'f9',typ:'f',name:'Haferschleim mit Wasser, Ahornsirup und Ei oder Skyr, dazu Kamillentee',zutaten:[Z('Haferflocken (zertifiziert glutenfrei)',K),Z('Ahornsirup',OE),Z('Eier',E),Z('Skyr laktosefrei',M),Z('Kamillentee',GT)],tags:['schnell','tm'],tipp:'TM: 300 ml Wasser + 40 g Hafer, 6 Min/90°/Stufe 1. Eiweiß dazu: 1–2 weiche Eier oder 150 g Skyr – ohne Eiweiß hält das Frühstück nicht bis Mittag.'},
  // Mittag
  {id:'m1',typ:'m',name:'Grillgemüse mit Hühnerbrust',fleisch:true,zutaten:[Z('Hühnerbrust',E),Z('Zucchini',G),Z('Paprika',G),Z('Aubergine',G),Z('Olivenöl',OE),Z('Reis',K)]},
  {id:'m2',typ:'m',name:'Gedünsteter Lachs mit Karotten, Zucchini und Kartoffeln',zutaten:[Z('Lachsfilet',E),Z('Karotten',G),Z('Zucchini',G),Z('Kartoffeln',G),Z('Zitrone',O),Z('Dille',OE)]},

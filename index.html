@@ -506,15 +506,18 @@ function pick(pool,used,filter){let c=pool.filter(r=>!used.includes(r.id)&&(!fil
 function genWeek(){
   const w={monday:mondayOf(TK),days:[]};const used=[];let meat=0;
   for(let i=0;i<7;i++){
-    const f=pick(REZEPTE.filter(r=>r.typ==='f'),used);used.push(f);
+    const f=(plan?.fruehstueckFix&&REZ(plan.fruehstueckFix).id===plan.fruehstueckFix)?plan.fruehstueckFix:pick(pool('f'),used);if(!plan?.fruehstueckFix)used.push(f);
     const mFilter=r=>!(r.fleisch&&meat>=2);
-    const m=pick(REZEPTE.filter(r=>r.typ==='m'),used,mFilter);used.push(m);if(REZ(m).fleisch)meat++;
-    const a=pick(REZEPTE.filter(r=>r.typ==='a'),used,mFilter);used.push(a);if(REZ(a).fleisch)meat++;
+    const m=pick(pool('m'),used,mFilter);used.push(m);if(REZ(m).fleisch)meat++;
+    const a=pick(pool('a'),used,mFilter);used.push(a);if(REZ(a).fleisch)meat++;
     w.days.push({f,m,a});
   }
   return w;
 }
 const REZ=id=>REZEPTE.find(r=>r.id===id)||REZEPTE[0];
+// Rezepte mit persönlich gemiedenen Zutaten (aus dem Plan) fallen aus dem Wochenplan
+const rezOk=r=>!r.zutaten.some(z=>persMeiden().some(p=>(p.treffer||[]).some(t=>z.n.toLowerCase().includes(t.toLowerCase()))));
+const pool=t=>{const p=REZEPTE.filter(r=>r.typ===t&&rezOk(r));return p.length?p:REZEPTE.filter(r=>r.typ===t)};
 let week=LS.get('gp_week',null);
 function ensureWeek(){ if(!week||week.monday!==mondayOf(TK)){week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});} }
 function renderWoche(){
@@ -522,7 +525,7 @@ function renderWoche(){
   $('woche-info').textContent='ab '+fmtDate(week.monday)+' · Fleisch '+week.days.flatMap(x=>[x.f,x.m,x.a]).filter(id=>REZ(id).fleisch).length+'×';
   const todayIdx=daysBetween(week.monday,TK);
   $('woche').innerHTML=week.days.map((d,i)=>`<div class="day"><h3>${DAYS[i]}${i===todayIdx?' · heute':''}</h3>${['f','m','a'].map(t=>{const r=REZ(d[t]);return `<div class="meal"><span class="k">${{f:'Früh',m:'Mittag',a:'Abend'}[t]}</span><div class="n">${r.name} ${(r.tags||[]).map(x=>`<span class="badge" style="font-size:10px">${{schnell:'⚡ schnell',tm:'TM',buero:'🏢 Büro',vorkochen:'🥡 vorkochen'}[x]||x}</span>`).join(' ')}<small>${r.zutaten.map(z=>z.n).join(', ')}</small>${r.tipp?`<small style="color:var(--p)">👨‍🍳 ${r.tipp}</small>`:''}</div><button data-d="${i}" data-t="${t}">↻</button></div>`}).join('')}</div>`).join('');
-  $('woche').querySelectorAll('.meal button').forEach(b=>b.onclick=()=>{const di=+b.dataset.d,t=b.dataset.t;const d=week.days[di];const used=week.days.flatMap(x=>[x.f,x.m,x.a]);const meat=week.days.flatMap((x,i)=>['f','m','a'].filter(tt=>!(i===di&&tt===t)).map(tt=>x[tt])).filter(id=>REZ(id).fleisch).length;d[t]=pick(REZEPTE.filter(r=>r.typ===t),used,r=>!(r.fleisch&&meat>=2));LS.set('gp_week',week);renderWoche();renderEinkauf();});
+  $('woche').querySelectorAll('.meal button').forEach(b=>b.onclick=()=>{const di=+b.dataset.d,t=b.dataset.t;const d=week.days[di];const used=week.days.flatMap(x=>[x.f,x.m,x.a]);const meat=week.days.flatMap((x,i)=>['f','m','a'].filter(tt=>!(i===di&&tt===t)).map(tt=>x[tt])).filter(id=>REZ(id).fleisch).length;d[t]=pick(pool(t),used,r=>!(r.fleisch&&meat>=2));LS.set('gp_week',week);renderWoche();renderEinkauf();});
 }
 $('woche-neu').onclick=()=>{week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});renderWoche();renderEinkauf();toast('Neue Woche gemischt');};
 
