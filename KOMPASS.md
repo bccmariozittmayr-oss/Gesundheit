@@ -2,7 +2,7 @@
 
 **Was:** Persönliche Alltags-App (PWA, eine Seite) – Tabletten-Checkliste mit Phasen, Atemübungen, FODMAP-Ampel, Wochenplan + Einkaufsliste, Puls-Zonen, Verlauf.
 **Live:** https://bccmariozittmayr-oss.github.io/Gesundheit/ (GitHub Pages, Repo ÖFFENTLICH).
-**Stand:** Umbau 06.09.2026 auf Basis der Fitmacher-Befunde (Einnahmeplan 04.09.2026).
+**Stand:** Umbau 06.09.2026 auf Basis der ärztlichen Befunde (Details nur im privaten Plan).
 
 ## Grundsatz
 Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Persönliche steht in
@@ -20,7 +20,7 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 | OneDrive `13 Claude Sicherung/Claude Code/BCC-Zentrale/03_Privat/Gesundheit/` | Kopie der PDFs + Plan |
 
 ## Plan-Logik (mein-plan.json)
-- `anker.plan` = Plandatum (04.09.2026). Präparate mit `anker:"plan"` zählen Tage ab dort, `anker:"kur"` ab dem Darmkur-Start (in der App eingetragen).
+- `anker.plan` = Plandatum. Präparate mit `anker:"plan"` zählen Tage ab dort, `anker:"kur"` ab dem Darmkur-Start (in der App eingetragen).
 - `phasen[]` mit `abTag`/`bisTag` (Tag 0 = Anker) und Slots `nu` (nüchtern), `m`, `mi`, `a`, `n` (vor dem Schlafen).
 - Darmkur: Tag 1–2 Reduzieren, 3–6 Detox (alle anderen Präparate pausiert), 7–8 Aufbau, bis 67 Monat 1–2, bis 128 Monat 3–4, danach Erhaltung.
 - Dosis-Korrekturen in der App (Mehr → Dosierung) überschreiben nur die laufende Phase; Änderungen am Plan gehören in die JSON.
@@ -28,8 +28,6 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 ## Test
 `test/smoke-test.js` (Playwright aus dbcc-360-crm; Aufruf: `node test/smoke-test.js <Ausgabeordner>`) – lädt den echten Plan, klickt alle Seiten, prüft Phasen an 8 Stichtagen. Vor jedem Merge laufen lassen.
 
-## Offen (Stand 06.09.2026)
-- Darmkur-Startdatum (Mario trägt es in der App ein). Achtung: Detox-Tage pausieren ALLE Präparate – nicht in die Vitamin-D-Hochdosis (18.–24.09.) legen.
-- Vitamin D Hochdosis 7 Tage vs. handschriftlich „10 Wo" – beim Arzt bestätigen.
-- Omega 3+ Kapseln: sobald geliefert, Eintrag `omega` in der JSON anpassen.
-- Vagus-Vit-/IHHT-Termine nachtragen.
+## Offen
+Offene Behandlungs- und Dosisfragen stehen NICHT hier (öffentliches Repo), sondern in
+`OneDrive …/Gesundheits-App/NOTIZEN-offen.md` neben der mein-plan.json.

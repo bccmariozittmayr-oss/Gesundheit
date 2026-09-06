@@ -303,7 +303,7 @@ table.bf td:first-child{font-weight:600}
   </div>
   <div class="card">
     <h2>Dosierung anpassen</h2>
-    <div class="hint" style="margin-bottom:6px">Nur die aktuell laufende Phase. Reihenfolge: morgens – mittags – abends – nachts. Präparat aus = wird nicht angezeigt.</div>
+    <div class="hint" style="margin-bottom:6px">Nur die aktuell laufende Phase. Reihenfolge: nüchtern – morgens – mittags – abends – vor dem Schlafen. Präparat aus = wird nicht angezeigt.</div>
     <div id="med-edit"></div>
   </div>
   <div class="card">
@@ -377,6 +377,16 @@ let TK=todayKey();
 })();
 
 /* ---------- Plan-Logik ---------- */
+function planFehler(p){ // liefert Text bei ungültigem Plan, sonst null
+  if(!p||typeof p!=='object')return 'kein Objekt';
+  if(!Array.isArray(p.praeparate)||!p.praeparate.length)return 'praeparate fehlt';
+  if(!p.anker||!/^\d{4}-\d{2}-\d{2}$/.test(p.anker.plan||''))return 'anker.plan fehlt (JJJJ-MM-TT)';
+  const ids=new Set();
+  for(const m of p.praeparate){ if(!m.id||!m.name)return 'Präparat ohne id/name'; if(ids.has(m.id))return 'doppelte id '+m.id; ids.add(m.id);
+    if(!Array.isArray(m.phasen)||!m.phasen.length)return m.name+': phasen fehlt';
+    for(const ph of m.phasen){ if(typeof ph.abTag!=='number')return m.name+': abTag fehlt'; if(ph.bisTag!=null&&typeof ph.bisTag!=='number')return m.name+': bisTag ungültig'; for(const s of ['nu','m','mi','a','n']) if(ph[s]!=null&&(typeof ph[s]!=='number'||ph[s]<0))return m.name+': Dosis '+s+' ungültig'; } }
+  return null;
+}
 function kurTag(){ // Tag 1 = Startdatum; null wenn nicht gestartet
   if(!set.kurStart)return null;
   const d=daysBetween(set.kurStart,TK)+1;
@@ -395,7 +405,7 @@ function kurPhase(){
 function medPhase(m){ // aktive Phase eines Präparats heute, oder null
   // anker: "kur" = Darmkur-Start, "plan"/leer = Plandatum, sonst ein festes Datum JJJJ-MM-TT
   let anchor=m.anker==='kur'?set.kurStart:((!m.anker||m.anker==='plan')?plan?.anker?.plan:m.anker);
-  if(!anchor)return m.anker==='kur'?null:(m.phasen[0]||null);
+  if(!anchor)return null; // ohne Datum keine Freigabe
   const day=daysBetween(anchor,TK);
   for(const p of m.phasen){ if(day>=p.abTag && (p.bisTag==null||day<=p.bisTag)) return p; }
   return null;
@@ -428,7 +438,7 @@ function pulsKarte(t){
   if(!plan?.training?.puls||t.zone==='kraft'||!t.zone)return t.zone==='kraft'?'<div class="hint" style="padding:4px 6px 8px">Kraft: Puls egal – sauber und langsam, 2–3 Sätze, letzte Wiederholungen schwer. Zwischen den Sätzen 5-5 atmen.</div>':'';
   const sel=(set.sportart&&t.sportart==='auto')?set.sportart:(t.sportart==='auto'?'rad':t.sportart);
   const z=zonen(sel);const names={rad:'Rad',gehen:'Wandern/Walking',laufen:'Laufen',schwimmen:'Schwimmen'};
-  const ziel=t.zone==='A'?`<b style="color:var(--ok)">unter ${z.vt1}</b> – locker, Nasenatmung, keine Spitzen`:t.zone==='AB'?`<b style="color:var(--ok)">${z.vt1-10}–${z.vt2}</b> – überwiegend locker, Anstiege bis max. ${z.vt2}`:t.zone==='B'?`<b style="color:var(--warn)">${z.vt1}–${z.vt2}</b>`:`<b style="color:var(--bad)">über ${z.vt2}</b> nur kurz`;
+  const ziel=String(t.zone)==='A'?`<b style="color:var(--ok)">unter ${z.vt1}</b> – locker, Nasenatmung, keine Spitzen`:t.zone==='AB'?`<b style="color:var(--ok)">${z.vt1-10}–${z.vt2}</b> – überwiegend locker, Anstiege bis max. ${z.vt2}`:t.zone==='B'?`<b style="color:var(--warn)">${z.vt1}–${z.vt2}</b>`:`<b style="color:var(--bad)">über ${z.vt2}</b> nur kurz`;
   const chips=Object.keys(plan.training.puls.offsets||{}).map(k=>`<button class="btn ${k===sel?'':'sec'} sm" data-sa="${k}" style="padding:4px 9px;font-size:12px">${names[k]||k}</button>`).join(' ');
   return `<div class="banner info" style="margin:4px 0 8px;font-size:13.5px"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">${t.sportart==='auto'?chips:''}</div>❤️ Ziel heute: ${ziel}<div class="hint" style="margin-top:4px">Zonen ${names[sel]||sel}: A &lt; ${z.vt1} · B ${z.vt1}–${z.vt2} · C &gt; ${z.vt2} · max. ${z.max}</div></div>`;
 }
@@ -470,7 +480,7 @@ function renderHeute(){
       html+='</div>';
     });
     list.innerHTML=html;
-    const tot=meds.filter(m=>!m.paused).length;$('med-count').textContent=done+' / '+tot;
+    const tot=meds.filter(m=>!m.paused).length;e.medsPlanned=meds.filter(m=>!m.paused).map(m=>m.id+'_'+m.slot);saveLog();$('med-count').textContent=done+' / '+tot;
     $('med-prog').style.width=(tot?Math.round(done/tot*100):0)+'%';
     list.querySelectorAll('.chk').forEach(el=>el.onclick=()=>{if(el.classList.contains('paused')){toast('Heute pausiert (Darmdetox)');return;}const k=el.dataset.k;e.meds[k]=!e.meds[k];saveLog();renderHeute();});
   }
@@ -507,12 +517,12 @@ function foodTags(item){ // persönliche Marker aus dem Plan
 function renderAmpel(){
   const q=($('food-q').value||'').trim().toLowerCase();
   const pm=persMeiden();
-  $('food-pers').innerHTML=pm.length?`<div class="banner warn" style="font-size:13px"><b>Persönlich meiden:</b> ${pm.map(p=>p.name+' ('+p.grund+')').join(' · ')}</div>`:'';
+  $('food-pers').innerHTML=pm.length?`<div class="banner warn" style="font-size:13px"><b>Persönlich meiden:</b> ${pm.map(p=>esc(p.name)+' ('+esc(p.grund)+')').join(' · ')}</div>`:'';
   let html='';
   FODMAP.forEach(cat=>{
     const items=cat.items.filter(i=>!q||i.n.toLowerCase().includes(q)||(i.why||'').toLowerCase().includes(q));
     if(!items.length)return;
-    const rows=items.map(i=>`<div class="food"><i class="dot ${i.s}"></i><div class="n">${i.n}${i.why?`<div class="why">${i.why}</div>`:''}</div>${foodTags(i).map(t=>`<span class="tag">${t}</span>`).join('')}</div>`).join('');
+    const rows=items.map(i=>`<div class="food"><i class="dot ${i.s}"></i><div class="n">${i.n}${i.why?`<div class="why">${i.why}</div>`:''}</div>${foodTags(i).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`).join('');
     html+=q?`<div class="lbl-sm">${cat.name}</div>${rows}`:`<details ${cat.open?'open':''}><summary>${cat.name} <small class="hint">(${items.length})</small></summary>${rows}</details>`;
   });
   $('food-list').innerHTML=html||'<div class="empty">Nichts gefunden. Grundregel: Alles was nicht auf der Liste steht → in kleiner Menge probieren und im Kurz-Check notieren.</div>';
@@ -522,30 +532,31 @@ $('food-q').oninput=renderAmpel;
 /* ---------- ESSEN: Wochenplan ---------- */
 const DAYS=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
 function mondayOf(k){const d=new Date(k+'T00:00:00');const wd=(d.getDay()+6)%7;d.setDate(d.getDate()-wd);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function pick(pool,used,filter){let c=pool.filter(r=>!used.includes(r.id)&&(!filter||filter(r)));if(!c.length)c=pool.filter(r=>!filter||filter(r));if(!c.length)c=pool;return c[Math.floor(Math.random()*c.length)].id}
+function pick(pool,used,filter){let c=pool.filter(r=>!used.includes(r.id)&&(!filter||filter(r)));if(!c.length)c=pool.filter(r=>!filter||filter(r));if(!c.length)return null;return c[Math.floor(Math.random()*c.length)].id}
 function genWeek(){
   const w={monday:mondayOf(TK),days:[]};const used=[];let meat=0;
   for(let i=0;i<7;i++){
-    const f=(plan?.fruehstueckFix&&REZ(plan.fruehstueckFix).id===plan.fruehstueckFix)?plan.fruehstueckFix:pick(pool('f'),used);if(!plan?.fruehstueckFix)used.push(f);
+    const fx=plan?.fruehstueckFix;const f=(fx&&REZ(fx).id===fx&&rezOk(REZ(fx)))?fx:pick(pool('f'),used);if(!plan?.fruehstueckFix)used.push(f);
     const mFilter=r=>!(r.fleisch&&meat>=2);
-    const m=pick(pool('m'),used,mFilter);used.push(m);if(REZ(m).fleisch)meat++;
-    const a=pick(pool('a'),used,mFilter);used.push(a);if(REZ(a).fleisch)meat++;
+    const m=pick(pool('m'),used,mFilter);used.push(m);if(m&&REZ(m).fleisch)meat++;
+    const a=pick(pool('a'),used,mFilter);used.push(a);if(a&&REZ(a).fleisch)meat++;
     w.days.push({f,m,a});
   }
   return w;
 }
-const REZ=id=>REZEPTE.find(r=>r.id===id)||REZEPTE[0];
+const LEER={id:null,name:'– kein passendes Rezept –',zutaten:[],tags:[]};
+const REZ=id=>REZEPTE.find(r=>r.id===id)||LEER;
 // Rezepte mit persönlich gemiedenen Zutaten (aus dem Plan) fallen aus dem Wochenplan
-const rezOk=r=>!r.zutaten.some(z=>persMeiden().some(p=>(p.treffer||[]).some(t=>z.n.toLowerCase().includes(t.toLowerCase()))));
-const pool=t=>{const p=REZEPTE.filter(r=>r.typ===t&&rezOk(r));return p.length?p:REZEPTE.filter(r=>r.typ===t)};
+const rezOk=r=>r.id!=null&&!r.zutaten.some(z=>persMeiden().some(p=>(p.treffer||[]).some(t=>z.n.toLowerCase().includes(t.toLowerCase()))));
+const pool=t=>REZEPTE.filter(r=>r.typ===t&&rezOk(r));
 let week=LS.get('gp_week',null);
 function ensureWeek(){ if(!week||week.monday!==mondayOf(TK)){week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});} }
 function renderWoche(){
   ensureWeek();
-  $('woche-info').textContent='ab '+fmtDate(week.monday)+' · Fleisch '+week.days.flatMap(x=>[x.f,x.m,x.a]).filter(id=>REZ(id).fleisch).length+'×';
+  $('woche-info').textContent='ab '+fmtDate(week.monday)+' · Fleisch '+week.days.flatMap(x=>[x.f,x.m,x.a]).filter(id=>id&&REZ(id).fleisch).length+'×';
   const todayIdx=daysBetween(week.monday,TK);
   $('woche').innerHTML=week.days.map((d,i)=>`<div class="day"><h3>${DAYS[i]}${i===todayIdx?' · heute':''}</h3>${['f','m','a'].map(t=>{const r=REZ(d[t]);return `<div class="meal"><span class="k">${{f:'Früh',m:'Mittag',a:'Abend'}[t]}</span><div class="n">${r.name} ${(r.tags||[]).map(x=>`<span class="badge" style="font-size:10px">${{schnell:'⚡ schnell',tm:'TM',buero:'🏢 Büro',vorkochen:'🥡 vorkochen'}[x]||x}</span>`).join(' ')}<small>${r.zutaten.map(z=>z.n).join(', ')}</small>${r.tipp?`<small style="color:var(--p)">👨‍🍳 ${r.tipp}</small>`:''}</div><button data-d="${i}" data-t="${t}">↻</button></div>`}).join('')}</div>`).join('');
-  $('woche').querySelectorAll('.meal button').forEach(b=>b.onclick=()=>{const di=+b.dataset.d,t=b.dataset.t;const d=week.days[di];const used=week.days.flatMap(x=>[x.f,x.m,x.a]);const meat=week.days.flatMap((x,i)=>['f','m','a'].filter(tt=>!(i===di&&tt===t)).map(tt=>x[tt])).filter(id=>REZ(id).fleisch).length;d[t]=pick(pool(t),used,r=>!(r.fleisch&&meat>=2));LS.set('gp_week',week);renderWoche();renderEinkauf();});
+  $('woche').querySelectorAll('.meal button').forEach(b=>b.onclick=()=>{const di=+b.dataset.d,t=b.dataset.t;const d=week.days[di];const used=week.days.flatMap(x=>[x.f,x.m,x.a]);const meat=week.days.flatMap((x,i)=>['f','m','a'].filter(tt=>!(i===di&&tt===t)).map(tt=>x[tt])).filter(id=>id&&REZ(id).fleisch).length;const nx=pick(pool(t),used,r=>!(r.fleisch&&meat>=2));if(nx===null){toast('Kein weiteres passendes Rezept');return;}d[t]=nx;LS.set('gp_week',week);renderWoche();renderEinkauf();});
 }
 $('woche-neu').onclick=()=>{week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});renderWoche();renderEinkauf();toast('Neue Woche gemischt');};
 
@@ -554,7 +565,7 @@ function renderEinkauf(){
   ensureWeek();
   const shop=LS.get('gp_shop',{});
   const agg={};
-  week.days.forEach(d=>['f','m','a'].forEach(t=>REZ(d[t]).zutaten.forEach(z=>{const k=z.n;if(!agg[k])agg[k]={n:z.n,kat:z.kat||'Sonstiges',cnt:0};agg[k].cnt++;})));
+  week.days.forEach(d=>['f','m','a'].forEach(t=>d[t]&&REZ(d[t]).zutaten.forEach(z=>{const k=z.n;if(!agg[k])agg[k]={n:z.n,kat:z.kat||'Sonstiges',cnt:0};agg[k].cnt++;})));
   VORRAT.forEach(v=>{if(!agg[v.n])agg[v.n]={n:v.n,kat:v.kat,cnt:0,vorrat:true}});
   const cats={};Object.values(agg).forEach(i=>{(cats[i.kat]=cats[i.kat]||[]).push(i)});
   const order=['Gemüse','Obst','Eiweiß','Milchprodukte','Getreide & Beilagen','Nüsse & Samen','Öle & Gewürze','Getränke','Sonstiges','Vorrat / Präparate'];
@@ -610,7 +621,7 @@ function renderVerlauf(){
   const keys=Object.keys(log).sort().slice(-30);
   const n=keys.length;
   const avg=(f)=>{const v=keys.map(k=>log[k][f]).filter(x=>x!=null);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):null};
-  const medQ=(()=>{let t=0,d=0;keys.forEach(k=>{const m=log[k].meds||{};Object.values(m).forEach(v=>{t++;if(v)d++;})});return t?Math.round(d/t*100):null})();
+  const medQ=(()=>{let t=0,d=0;keys.forEach(k=>{const pl=log[k].medsPlanned;if(!pl)return;const m=log[k].meds||{};pl.forEach(key=>{t++;if(m[key])d++;})});return t?Math.round(d/t*100):null})();
   const halsFree=keys.filter(k=>log[k].hals===0).length;
   const wk=mondayOf(TK);const wkKeys=Object.keys(log).filter(k=>k>=wk&&k<=TK);const trN=wkKeys.reduce((a,k)=>a+Object.values(log[k].training||{}).filter(Boolean).length,0);const trMin=wkKeys.reduce((a,k)=>a+Object.values(log[k].trainingMin||{}).reduce((x,y)=>x+y,0),0);const atemN=wkKeys.reduce((a,k)=>a+Object.values(log[k].atmen||{}).filter(Boolean).length,0);
   $('stats').innerHTML=`<div><b>${trN}</b><span>Trainings diese Woche${trMin?' · '+trMin+' Min.':''}</span></div><div><b>${atemN}/${wkKeys.length*3}</b><span>Atemübungen diese Woche</span></div><div><b>${n}</b><span>Tage erfasst</span></div><div><b>${halsFree}</b><span>Tage ohne Halsgefühl</span></div><div><b>${avg('hals')!=null?avg('hals').toFixed(1):'–'}</b><span>Ø Hals (0–3)</span></div><div><b>${medQ!=null?medQ+'%':'–'}</b><span>Tabletten genommen</span></div>`;
@@ -634,7 +645,7 @@ function renderBefunde(){
   if(plan.diagnosen)h+=`<div class="card"><h2>Diagnosen <small>Arztbrief ${plan.arztbriefDatum||''}</small></h2><ul style="margin:0;padding-left:18px;font-size:14.5px">${plan.diagnosen.map(d=>`<li>${esc(d)}</li>`).join('')}</ul></div>`;
   if(plan.befunde){const st={hoch:'bad',niedrig:'warn',normal:'ok'};h+=`<div class="card"><h2>Auffällige Werte</h2><table class="bf">${plan.befunde.map(b=>`<tr><td>${esc(b.name)}<br><small class="hint">${esc(b.datum||'')}</small></td><td>${esc(b.wert)}<br><small class="hint">Ref. ${esc(b.ref)}</small></td><td><span class="badge ${st[b.status]||''}">${esc(b.status)}</span><br><small class="hint">${esc(b.bedeutung||'')}</small></td></tr>`).join('')}</table></div>`;}
   if(plan.training){const p=plan.training.puls;const sa=['rad','gehen','laufen'];const names={rad:'Rad',gehen:'Wandern',laufen:'Laufen'};
-    h+=`<div class="card"><h2>Puls beim Training <small>${p?.quelle||''}</small></h2>${p?`<table class="bf"><tr><td></td>${sa.map(s=>`<td><b>${names[s]}</b></td>`).join('')}</tr>${(plan.training.zonen||[]).map(z=>{return `<tr><td><span class="badge ${z.k==='A'?'ok':z.k==='B'?'warn':'bad'}">${esc(z.k)}</span> ${esc(z.name)}</td>${sa.map(s=>{const o=p.offsets[s]||0;return `<td>${z.k==='A'?'&lt; '+(p.vt1+o):z.k==='B'?(p.vt1+o)+'–'+(p.vt2+o):'&gt; '+(p.vt2+o)}</td>`}).join('')}</tr>`}).join('')}<tr><td>Maximalpuls</td>${sa.map(s=>`<td>${p.max+(p.offsets[s]||0)}</td>`).join('')}</tr></table>${(plan.training.zonen||[]).map(z=>`<div style="font-size:13.5px;margin-top:6px"><b>Zone ${esc(z.k)}:</b> ${esc(z.txt)}</div>`).join('')}`:''}<ul style="margin:8px 0 0;padding-left:18px;font-size:14px">${plan.training.hinweise.map(t=>`<li>${t}</li>`).join('')}</ul>${plan.training.woche?`<h2 style="margin-top:12px">Trainingswoche</h2>${['1','2','3','4','5','6','0'].map(d=>`<div class="ex"><div class="n"><b>${DAYS[(+d+6)%7]}</b><span>${(plan.training.woche[d]||[]).map(t=>t.name+(t.zeit?' ('+t.zeit+')':'')).join(', ')||'frei'}</span></div></div>`).join('')}`:''}</div>`;}
+    h+=`<div class="card"><h2>Puls beim Training <small>${p?.quelle||''}</small></h2>${p?`<table class="bf"><tr><td></td>${sa.map(s=>`<td><b>${names[s]}</b></td>`).join('')}</tr>${(plan.training.zonen||[]).map(z=>{return `<tr><td><span class="badge ${z.k==='A'?'ok':z.k==='B'?'warn':'bad'}">${esc(z.k)}</span> ${esc(z.name)}</td>${sa.map(s=>{const o=p.offsets[s]||0;return `<td>${z.k==='A'?'&lt; '+(p.vt1+o):z.k==='B'?(p.vt1+o)+'–'+(p.vt2+o):'&gt; '+(p.vt2+o)}</td>`}).join('')}</tr>`}).join('')}<tr><td>Maximalpuls</td>${sa.map(s=>`<td>${p.max+(p.offsets[s]||0)}</td>`).join('')}</tr></table>${(plan.training.zonen||[]).map(z=>`<div style="font-size:13.5px;margin-top:6px"><b>Zone ${esc(z.k)}:</b> ${esc(z.txt)}</div>`).join('')}`:''}<ul style="margin:8px 0 0;padding-left:18px;font-size:14px">${plan.training.hinweise.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>${plan.training.woche?`<h2 style="margin-top:12px">Trainingswoche</h2>${['1','2','3','4','5','6','0'].map(d=>`<div class="ex"><div class="n"><b>${DAYS[(+d+6)%7]}</b><span>${(plan.training.woche[d]||[]).map(t=>esc(t.name)+(t.zeit?' ('+esc(t.zeit)+')':'')).join(', ')||'frei'}</span></div></div>`).join('')}`:''}</div>`;}
   if(plan.bedarf)h+=`<div class="card"><h2>Bei Bedarf</h2>${plan.bedarf.map(b=>`<div class="ex"><div class="n"><b>${esc(b.name)} ${esc(b.dosis||'')}</b><span>${esc(b.wann)}</span></div></div>`).join('')}</div>`;
   if(plan.sport)h+=`<div class="card"><h2>Bei Sport</h2>${plan.sport.map(b=>`<div class="ex"><div class="n"><b>${esc(b.name)}</b><span>${esc(b.wann)}${b.dosis?' · '+b.dosis:''}</span></div></div>`).join('')}</div>`;
   $('befunde').innerHTML=h;
@@ -653,8 +664,8 @@ function renderPlan(){
   let h='<div class="card"><h2>Meine Präparate <small>'+esc(plan.quelle||'')+'</small></h2>';
   plan.praeparate.forEach(m=>{const ph=medPhase(m);const an=anchorOf(m);const ov=set.medOverride[m.id]||{};
     h+='<div class="medit"><div class="n">'+esc(m.name)+(ov.aus?' <span class="badge">aus</span>':'')+'</div><div class="hint">'+esc(m.hinweis||'')+(m.offen?' · ⚠️ '+esc(m.offen):'')+'</div>';
-    m.phasen.forEach(p=>{const cur=ph===p;const from=an?fmtDate(addDays(an,p.abTag)):'Kur-Tag '+(p.abTag+1);const to=an?(p.bisTag==null?'dauerhaft':'bis '+fmtDate(addDays(an,p.bisTag))):(p.bisTag==null?'dauerhaft':'bis Kur-Tag '+(p.bisTag+1));
-      h+='<div style="font-size:13.5px;padding:3px 0 3px 8px;border-left:3px solid '+(cur?'var(--ok)':'var(--line)')+';margin:3px 0">'+(cur?'<b>jetzt:</b> ':'')+'<b>'+doseTxt(p)+' '+esc(m.einheit||'')+'</b> · '+from+' '+to+(p.notiz?'<br><span class="hint">'+esc(p.notiz)+'</span>':'')+'</div>';});
+    m.phasen.forEach(p=>{const cur=ph===p;const eff=(cur&&ov.abTag===p.abTag&&ov.dose)?{...p,...ov.dose}:p;const from=an?fmtDate(addDays(an,p.abTag)):'Kur-Tag '+(p.abTag+1);const to=an?(p.bisTag==null?'dauerhaft':'bis '+fmtDate(addDays(an,p.bisTag))):(p.bisTag==null?'dauerhaft':'bis Kur-Tag '+(p.bisTag+1));
+      h+='<div style="font-size:13.5px;padding:3px 0 3px 8px;border-left:3px solid '+(cur?'var(--ok)':'var(--line)')+';margin:3px 0">'+(cur?'<b>jetzt:</b> ':'')+'<b>'+doseTxt(eff)+' '+esc(m.einheit||'')+'</b>'+(eff!==p?' <span class="badge">angepasst – Plan: '+doseTxt(p)+'</span>':'')+' · '+from+' '+to+(p.notiz?'<br><span class="hint">'+esc(p.notiz)+'</span>':'')+'</div>';});
     h+='</div>';});
   h+='</div>';
   if(plan.bedarf)h+='<div class="card"><h2>Bei Bedarf</h2>'+plan.bedarf.map(b=>'<div class="ex"><div class="n"><b>'+esc(b.name)+' '+esc(b.dosis||'')+'</b><span>'+esc(b.wann)+'</span></div></div>').join('')+'</div>';
@@ -665,20 +676,20 @@ function renderPlan(){
 }
 
 /* ---------- ESSEN: Scan / Zutaten-Check ---------- */
-let scanStream=null,scanTimer=null,zx=null;
+let scanStream=null,scanTimer=null,zx=null,scanSeq=0;
 function scanResult(r,info){
-  const col={ok:'ok',mass:'warn',no:'bad'}[r.verdict];const txt={ok:'✅ Passt',mass:'⚠️ Vorsicht',no:'❌ Passt nicht'}[r.verdict];
+  const col={ok:'ok',mass:'warn',no:'bad',unklar:'warn'}[r.verdict];const txt={ok:'✅ Keine bekannten Problemzutaten',mass:'⚠️ Vorsicht',no:'❌ Passt nicht',unklar:'❓ Zu wenig Text – nicht beurteilbar'}[r.verdict];
   $('scan-result').innerHTML='<div class="banner '+col+'"><b style="font-size:17px">'+txt+'</b>'+(info?'<br>'+esc(info):'')+(r.no.length?'<br><b>Nicht:</b> '+r.no.map(x=>esc(x.why)+' ('+x.found.map(esc).join(', ')+')').join(' · '):'')+(r.mass.length?'<br><b>Vorsicht:</b> '+r.mass.map(x=>esc(x.why)+' ('+x.found.map(esc).join(', ')+')').join(' · '):'')+(r.lf?'<br>laktosefrei gekennzeichnet':'')+(r.gf?'<br>glutenfrei gekennzeichnet':'')+'</div>';
 }
 async function lookupCode(code){
-  code=(code||'').replace(/\D/g,'');if(!code){toast('Kein Code');return;}
+  code=(code||'').replace(/\D/g,'');if(!code){toast('Kein Code');return;}const seq=++scanSeq;
   $('scan-result').innerHTML='<div class="hint">Suche '+code+' …</div>';
-  try{const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+code+'.json?fields=product_name,brands,ingredients_text_de,ingredients_text,allergens,labels');const j=await r.json();
+  try{const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+code+'.json?fields=product_name,brands,ingredients_text_de,ingredients_text,allergens,labels');const j=await r.json();if(seq!==scanSeq)return;
     if(!j.product){$('scan-result').innerHTML='<div class="banner warn">Produkt nicht in der Datenbank. Zutaten unten abtippen.</div>';return;}
     const p=j.product;const ing=p.ingredients_text_de||p.ingredients_text||'';$('scan-text').value=ing;
     if(!ing){$('scan-result').innerHTML='<div class="banner warn">'+esc((p.brands?p.brands+' ':'')+(p.product_name||''))+': keine Zutatenliste hinterlegt – bitte abtippen.</div>';return;}
-    scanResult(zutatenCheck(ing+' '+(p.labels||'')+' '+(p.allergens||'')),(p.brands?p.brands+' – ':'')+(p.product_name||''));
-  }catch(e){$('scan-result').innerHTML='<div class="banner warn">Datenbank nicht erreichbar (offline?). Zutaten unten abtippen.</div>';}
+    scanResult(zutatenCheck(ing+' '+(p.labels||'')+' '+(p.allergens||''),persMeiden()),(p.brands?p.brands+' – ':'')+(p.product_name||''));
+  }catch(e){if(seq!==scanSeq)return;$('scan-result').innerHTML='<div class="banner warn">Datenbank nicht erreichbar (offline?). Zutaten unten abtippen.</div>';}
 }
 function stopScan(){clearInterval(scanTimer);scanTimer=null;if(zx){try{zx.reset()}catch(e){}zx=null;}if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}$('scan-video').style.display='none';}
 async function startScan(){
@@ -697,12 +708,12 @@ async function startScan(){
 }
 $('scan-start').onclick=startScan;$('scan-stop').onclick=stopScan;
 $('scan-lookup').onclick=()=>lookupCode($('scan-code').value);
-$('scan-check').onclick=()=>{const t=$('scan-text').value.trim();if(!t){toast('Zutaten eingeben');return;}scanResult(zutatenCheck(t));};
+$('scan-check').onclick=()=>{const t=$('scan-text').value.trim();if(!t){toast('Zutaten eingeben');return;}scanResult(zutatenCheck(t,persMeiden()));};
 
 /* ---------- MEHR ---------- */
 function renderMehr(){
   $('plan-stand').textContent=plan?'Stand '+(plan.stand||''):'';
-  $('plan-status').innerHTML=plan?`✅ Plan geladen (${plan.praeparate.length} Präparate, ${plan.quelle||''})`:'❌ Kein Plan geladen.';
+  $('plan-status').innerHTML=plan?`✅ Plan geladen (${plan.praeparate.length} Präparate, ${esc(plan.quelle||'')})`:'❌ Kein Plan geladen.';
   $('kur-start').value=set.kurStart||'';
   const kp=kurPhase();
   $('kur-info').textContent=set.kurStart?(kp?`Heute: Tag ${kp.tag} – ${kp.name}. Detox-Shakes: ${fmtDate(addDays(set.kurStart,2))}–${fmtDate(addDays(set.kurStart,5))}, Präparate wieder ab ${fmtDate(addDays(set.kurStart,6))}.`:`Startet am ${fmtDate(set.kurStart)} (in ${daysBetween(TK,set.kurStart)} Tagen). Vorher: Kaffee langsam reduzieren, Darmdetox+ und Präparate besorgen.`):'Noch nicht gestartet.';
@@ -713,15 +724,15 @@ function renderMehr(){
   // Dosierung
   if(!plan){$('med-edit').innerHTML='<div class="empty">Plan laden.</div>';}
   else $('med-edit').innerHTML=plan.praeparate.map(m=>{const ov=set.medOverride[m.id]||{};const ph=medPhase(m);const d={...(ph||{}),...((ph&&ov.abTag===ph.abTag&&ov.dose)||{})};
-    return `<div class="medit"><div style="display:flex;align-items:center;gap:8px"><div class="n" style="flex:1">${esc(m.name)}<br><small class="hint">${ph?(ph.notiz||''):(m.anker==='kur'?'startet mit der Darmkur':'derzeit keine Phase')}</small></div><button class="sw ${ov.aus?'':'on'}" data-id="${m.id}"></button></div>${ph?`<div class="r">${['m','mi','a','n'].map(s=>`<input type="number" min="0" step="1" data-id="${m.id}" data-s="${s}" value="${d[s]||0}">`).join('<span>–</span>')}<span>${m.einheit||''}${d.nu?' + '+d.nu+' nüchtern':''}</span></div>`:''}</div>`}).join('');
+    return `<div class="medit"><div style="display:flex;align-items:center;gap:8px"><div class="n" style="flex:1">${esc(m.name)}<br><small class="hint">${ph?(ph.notiz||''):(m.anker==='kur'?'startet mit der Darmkur':'derzeit keine Phase')}</small></div><button class="sw ${ov.aus?'':'on'}" data-id="${m.id}"></button></div>${ph?`<div class="r">${['nu','m','mi','a','n'].map(s=>`<input type="number" min="0" step="1" data-id="${esc(m.id)}" data-s="${s}" data-ab="${ph.abTag}" value="${d[s]||0}" title="${s}">`).join('<span>–</span>')}<span>${esc(m.einheit||'')}</span></div>`:''}</div>`}).join('');
   $('med-edit').querySelectorAll('.sw').forEach(b=>b.onclick=()=>{const o=set.medOverride[b.dataset.id]||{};o.aus=!o.aus;set.medOverride[b.dataset.id]=o;saveSet();renderMehr();});
-  $('med-edit').querySelectorAll('input').forEach(i=>i.onchange=()=>{const o=set.medOverride[i.dataset.id]||{};const ph=medPhase(plan.praeparate.find(x=>x.id===i.dataset.id));if(o.abTag!==ph.abTag){o.dose={};o.abTag=ph.abTag;}o.dose[i.dataset.s]=+i.value||0;set.medOverride[i.dataset.id]=o;saveSet();toast('Gespeichert – gilt für die laufende Phase');});
+  $('med-edit').querySelectorAll('input').forEach(i=>i.onchange=()=>{const ph=medPhase(plan.praeparate.find(x=>x.id===i.dataset.id));if(!ph||String(ph.abTag)!==i.dataset.ab){toast('Phase hat gewechselt – Ansicht neu geladen');renderMehr();return;}const o=set.medOverride[i.dataset.id]||{};if(o.abTag!==ph.abTag){o.dose={};o.abTag=ph.abTag;}o.dose[i.dataset.s]=+i.value||0;set.medOverride[i.dataset.id]=o;saveSet();toast('Gespeichert – gilt für die laufende Phase');});
   $('quelle-hint').textContent='Diese App ersetzt keinen Arzt. '+(plan?'Grundlage: '+plan.quelle+'.':'Grundlage ist der geladene Plan.')+' Bei Änderungen: mein-plan.json anpassen und neu laden.';
   $('data-info').textContent=Object.keys(log).length+' Tage im Protokoll auf diesem Gerät.';
 }
 $('kur-start').onchange=()=>{set.kurStart=$('kur-start').value||null;set.medOverride={};saveSet();renderMehr();toast(set.kurStart?'Darmkur-Start gesetzt':'Darmkur-Start entfernt');};
 $('plan-load').onclick=()=>$('plan-file').click();
-$('plan-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const p=JSON.parse(r.result);if(!p.praeparate)throw 0;plan=p;LS.set('gp_plan',plan);set.medOverride={};saveSet();toast('Plan geladen ✓');renderMehr();}catch(e){toast('Das ist keine gültige mein-plan.json');}};r.readAsText(f);ev.target.value='';};
+$('plan-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const p=JSON.parse(r.result);const err=planFehler(p);if(err)throw new Error(err);plan=p;LS.set('gp_plan',plan);set.medOverride={};saveSet();if(week&&!week.days.every(x=>['f','m','a'].every(t=>rezOk(REZ(x[t]))))){week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});}toast('Plan geladen ✓');renderMehr();}catch(e){toast('Plan nicht übernommen: '+(e.message||'ungültige Datei'));}};r.readAsText(f);ev.target.value='';};
 $('notif-sw').onclick=async()=>{
   if(!('Notification' in window)){toast('Nicht unterstützt');return;}
   if(set.notif){set.notif=false;saveSet();renderMehr();return;}
@@ -737,11 +748,11 @@ function download(name,content,type){const a=document.createElement('a');a.href=
 /* ---------- Kalender-Export (.ics) ---------- */
 $('ics').onclick=()=>{
   if(!plan){toast('Zuerst Plan laden');return;}
-  const meds=medsToday();
+  const slotsAll=new Set();plan.praeparate.forEach(m=>m.phasen.forEach(p=>['nu','m','mi','a','n'].forEach(s=>{if(p[s]>0)slotsAll.add(s)})));
   const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Gesundheit App//DE','CALSCALE:GREGORIAN'];
   const ie=s=>String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');const stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
   const ev=(uid,time,title,desc)=>{const [h,mi]=time.split(':');const d=TK.replace(/-/g,'');lines.push('BEGIN:VEVENT','UID:'+uid+'@gesundheit-app','DTSTAMP:'+stamp,'DTSTART:'+d+'T'+h+mi+'00','DURATION:PT10M','RRULE:FREQ=DAILY','SUMMARY:'+ie(title),'DESCRIPTION:'+ie(desc),'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:'+ie(title),'END:VALARM','END:VEVENT');};
-  SLOTS.forEach(s=>{const ms=meds.filter(m=>m.slot===s.k);if(!ms.length)return;ev('med-'+s.k,set.times[s.k]||s.t,'💊 '+s.name,'Präparate laut Plan – Details in der App.');});
+  SLOTS.forEach(s=>{if(!slotsAll.has(s.k))return;ev('med-'+s.k,set.times[s.k]||s.t,'💊 '+s.name,'Präparate laut Plan – Details in der App.');});
   ATEM_SLOTS.forEach(s=>ev('atem-'+s.k,set.atimes[s.k]||s.t,'🌬️ '+s.name,'Atemübung – App öffnen für den geführten Ablauf.'));
   lines.push('END:VCALENDAR');
   download('gesundheit-erinnerungen.ics',lines.join('\r\n'),'text/calendar');
@@ -759,7 +770,7 @@ function checkReminders(){
   ATEM_SLOTS.forEach(s=>{const t=set.atimes[s.k]||s.t;if(hm>=t&&!e.atmen[s.k])fire('a'+s.k,'🌬️ Atemübung',s.name);});
 }
 setInterval(()=>{const nk=todayKey();if(nk!==TK){TK=nk;renderHeute();}checkReminders();},30000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){const nk=todayKey();if(nk!==TK){TK=nk;renderHeute();}checkReminders();}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopScan();if(!document.hidden){const nk=todayKey();if(nk!==TK){TK=nk;renderHeute();}checkReminders();}});
 
 /* ---------- Navigation ---------- */
 const PAGES={heute:renderHeute,essen:()=>{renderAmpel();renderWoche();renderEinkauf();renderTipps();renderRegeln();},atmen:renderExList,verlauf:()=>{renderVerlauf();renderPlan();renderBefunde();renderTermine();},mehr:renderMehr};
@@ -771,7 +782,7 @@ function gotoPage(p){
   if(p!=='essen')stopScan();PAGES[p]();window.scrollTo(0,0);
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
-document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
+document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 renderHeute();

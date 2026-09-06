@@ -36,5 +36,7 @@ const srv=http.createServer((q,r)=>{let p=decodeURIComponent(q.url.split('?')[0]
  const phases=await pg.evaluate(()=>{const r={};for(const d of ['2026-09-06','2026-09-15','2026-09-17','2026-09-20','2026-09-25','2026-11-10','2026-11-25','2027-02-01']){TK=d;const kp=kurPhase();r[d]=(kp?('KurT'+kp.tag+' '+kp.name+' | '):'')+medsToday().map(m=>m.name.split(' ')[0]+' '+m.menge+m.slot+(m.paused?'(P)':'')).join(', ')}TK=todayKey();return r});
  Object.entries(phases).forEach(([d,v])=>out.push(d+': '+v));
  console.log(out.join('\n'));console.log('ERRORS:',errs.length?errs.join('\n'):'keine');
- await b.close();srv.close();process.exit(0);
+ // Sollwerte: keine Browserfehler, Woche voll belegt, Fleischgrenze eingehalten
+ const fail=[];if(errs.length)fail.push('Browserfehler');if(fleisch>2)fail.push('Fleisch>2');if(!(await pg.evaluate(()=>week.days.every(d=>d.f&&d.m&&d.a))))fail.push('Woche unvollständig');
+ await b.close();srv.close();if(fail.length){console.error('FAIL:',fail.join(', '));process.exit(1);}process.exit(0);
 })().catch(e=>{console.error('FAIL',e.message.slice(0,200));console.error('ERRS',errs.join(' | '));process.exit(1)});

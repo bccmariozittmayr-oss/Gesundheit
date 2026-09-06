@@ -5,14 +5,14 @@
 const FODMAP=[
  {name:'Obst',open:true,items:[
   {n:'Ananas',s:'ok'},{n:'Banane (unreif, grünlich)',s:'ok'},{n:'Blaubeere / Heidelbeere',s:'ok'},{n:'Cranberry',s:'ok'},{n:'Erdbeere',s:'ok'},{n:'Grapefruit',s:'ok'},{n:'Himbeere',s:'ok'},{n:'Kiwi',s:'ok'},{n:'Kokosnuss',s:'ok'},{n:'Mandarine',s:'ok'},{n:'Maracuja',s:'ok'},{n:'Melone (Honig-, Zucker-)',s:'ok',why:'Wassermelone meiden'},{n:'Orange / Zitrone / Limette',s:'ok'},{n:'Papaya',s:'ok'},{n:'Pomelo',s:'ok'},{n:'Preiselbeere',s:'ok'},{n:'Rhabarber',s:'ok'},{n:'Trauben',s:'ok'},
-  {n:'Apfel',s:'no',why:'Fruktose + Sorbit'},{n:'Aprikose / Marille',s:'no',why:'Sorbit'},{n:'Avocado',s:'no',why:'Sorbit'},{n:'Banane (reif, braun)',s:'no'},{n:'Birne',s:'no',why:'Fruktose + Sorbit'},{n:'Brombeere',s:'no',why:'Sorbit'},{n:'Datteln',s:'no'},{n:'Dosenobst',s:'no'},{n:'Feigen',s:'no'},{n:'Granatapfel',s:'no'},{n:'Johannisbeere / Ribisel',s:'no'},{n:'Kaki',s:'no'},{n:'Kirsche',s:'no',why:'Sorbit'},{n:'Litschi',s:'no'},{n:'Mango',s:'no'},{n:'Mirabelle',s:'no'},{n:'Nektarine',s:'no',why:'Sorbit'},{n:'Pfirsich',s:'no',why:'Sorbit'},{n:'Pflaume / Zwetschke',s:'no',why:'Sorbit'},{n:'Stachelbeere',s:'no'},{n:'Trockenobst (Rosinen, Dörrpflaumen …)',s:'no',why:'Sorbit'},{n:'Wassermelone',s:'no'}
+  {n:'Apfel',s:'no',why:'Fruktose + Sorbit'},{n:'Aprikose / Marille',s:'no',why:'Sorbit'},{n:'Avocado',s:'no',why:'Perseitol (Zuckeralkohol)'},{n:'Banane (reif, braun)',s:'no'},{n:'Birne',s:'no',why:'Fruktose + Sorbit'},{n:'Brombeere',s:'no',why:'Sorbit'},{n:'Datteln',s:'no'},{n:'Dosenobst',s:'no'},{n:'Feigen',s:'no'},{n:'Granatapfel',s:'no'},{n:'Johannisbeere / Ribisel',s:'no'},{n:'Kaki',s:'no'},{n:'Kirsche',s:'no',why:'Sorbit'},{n:'Litschi',s:'no'},{n:'Mango',s:'no'},{n:'Mirabelle',s:'no'},{n:'Nektarine',s:'no',why:'Sorbit'},{n:'Pfirsich',s:'no',why:'Sorbit'},{n:'Pflaume / Zwetschke',s:'no',why:'Sorbit'},{n:'Stachelbeere',s:'no'},{n:'Trockenobst (Rosinen, Dörrpflaumen …)',s:'no',why:'Sorbit'},{n:'Wassermelone',s:'no'}
  ]},
  {name:'Gemüse',open:true,items:[
   {n:'Aubergine / Melanzani',s:'ok'},{n:'Brokkoli',s:'ok'},{n:'Chinakohl',s:'ok'},{n:'Esskastanien / Maroni',s:'ok'},{n:'Fenchel',s:'ok'},{n:'Grünkohl',s:'ok'},{n:'Gurke',s:'ok'},{n:'Ingwer',s:'ok'},{n:'Karotte',s:'ok'},{n:'Kartoffel',s:'ok'},{n:'Kohlrabi',s:'ok'},{n:'Kopfsalat / Blattsalat',s:'ok'},{n:'Kresse',s:'ok'},{n:'Kürbis',s:'ok'},{n:'Mais',s:'ok'},{n:'Mangold',s:'ok'},{n:'Paprika',s:'ok'},{n:'Radieschen',s:'ok'},{n:'Schnittlauch',s:'ok',why:'Ersatz für Zwiebel'},{n:'Spinat',s:'ok'},{n:'Tofu (fest)',s:'ok'},{n:'Tomate',s:'ok'},{n:'Zucchini',s:'ok'},{n:'Grüne Bohnen / Fisolen',s:'ok'},
   {n:'Artischocke',s:'no'},{n:'Blumenkohl / Karfiol',s:'no',why:'Kohlgemüse – häufig schlecht verträglich'},{n:'Bohnen (außer grüne)',s:'no',why:'Hülsenfrucht'},{n:'Chicorée',s:'no'},{n:'Edamame',s:'no'},{n:'Erbsen',s:'no'},{n:'Frühlingszwiebel (weißer Teil)',s:'no',why:'Zwiebelgewächs'},{n:'Kaiserschote / Zuckerschote',s:'no'},{n:'Kichererbsen',s:'no'},{n:'Knoblauch',s:'no',why:'Fruktane'},{n:'Lauch / Porree',s:'no'},{n:'Linsen',s:'no'},{n:'Pilze / Champignons',s:'no'},{n:'Radicchio',s:'no'},{n:'Rosenkohl / Kohlsprossen',s:'no',why:'Kohl'},{n:'Rote Bete / Rote Rüben',s:'no'},{n:'Rotkohl / Blaukraut',s:'no',why:'Kohl'},{n:'Schalotten',s:'no'},{n:'Schwarzwurzel',s:'no'},{n:'Sellerie',s:'no'},{n:'Soja',s:'no'},{n:'Spargel',s:'no'},{n:'Süßkartoffel',s:'no'},{n:'Topinambur',s:'no'},{n:'Wirsing',s:'no',why:'Kohl'},{n:'Zuckermais (Dose)',s:'no'},{n:'Zwiebel',s:'no',why:'Fruktane'}
  ]},
  {name:'Getreide & Beilagen',items:[
-  {n:'Amaranth',s:'ok'},{n:'Buchweizen',s:'ok'},{n:'Chiasamen',s:'ok'},{n:'Flohsamen(schalen)',s:'ok'},{n:'Glutenfreie Produkte',s:'ok'},{n:'Glutenfreies Brot (Buchweizen, Reis, Teff, Mais)',s:'ok',why:'Ersatz für Dinkel-/Weizentoast'},{n:'Hafer / Haferflocken / Haferschleim',s:'ok',why:'bei Glutenverzicht nur als „zertifiziert glutenfrei" kaufen'},{n:'Hirse / Teff',s:'ok'},{n:'Kartoffelmehl',s:'ok'},{n:'Polenta / Maisgrieß',s:'ok'},{n:'Quinoa',s:'ok'},{n:'Reis (alle Sorten)',s:'ok'},{n:'Sauerteigbrot (Dinkel/Roggen, lang geführt)',s:'mass',why:'FODMAP-arm, aber glutenhaltig'},
+  {n:'Amaranth',s:'ok'},{n:'Buchweizen',s:'ok'},{n:'Chiasamen',s:'ok'},{n:'Flohsamen(schalen)',s:'ok'},{n:'Glutenfreie Produkte',s:'mass',why:'Zutaten prüfen – oft mit Inulin, Apfelfaser oder Honig'},{n:'Glutenfreies Brot (Buchweizen, Reis, Teff, Mais)',s:'ok',why:'Ersatz für Dinkel-/Weizentoast'},{n:'Hafer / Haferflocken / Haferschleim',s:'ok',why:'bei Glutenverzicht nur als „zertifiziert glutenfrei" kaufen'},{n:'Hirse / Teff',s:'ok'},{n:'Kartoffelmehl',s:'ok'},{n:'Polenta / Maisgrieß',s:'ok'},{n:'Quinoa',s:'ok'},{n:'Reis (alle Sorten)',s:'ok'},{n:'Sauerteigbrot (Dinkel/Roggen, lang geführt)',s:'mass',why:'FODMAP-arm, aber glutenhaltig'},
   {n:'Weizen (Brot, Semmeln, Nudeln, Gebäck)',s:'no',why:'häufiger Auslöser für Blähungen'},{n:'Dinkel (außer Sauerteig)',s:'no'},{n:'Gerste',s:'no'},{n:'Kamut',s:'no'},{n:'Roggen (außer Sauerteig)',s:'no'}
  ]},
  {name:'Milchprodukte & Ersatz',items:[
@@ -61,7 +61,7 @@ const REZEPTE=[
  {id:'m1',typ:'m',name:'Grillgemüse (Zucchini, Fenchel, Aubergine) mit Hühnerbrust',fleisch:true,zutaten:[Z('Hühnerbrust',E),Z('Zucchini',G),Z('Fenchel',G),Z('Aubergine',G),Z('Olivenöl',OE),Z('Reis',K)]},
  {id:'m2',typ:'m',name:'Gedünsteter Lachs mit Karotten, Zucchini und Kartoffeln',zutaten:[Z('Lachsfilet',E),Z('Karotten',G),Z('Zucchini',G),Z('Kartoffeln',G),Z('Zitrone',O),Z('Dille',OE)]},
  {id:'m3',typ:'m',name:'Kürbiscremesuppe mit Kokosmilch und Ingwer',zutaten:[Z('Kürbis',G),Z('Kokosmilch (max. 100 ml/Portion, ohne Inulin)',M),Z('Ingwer',G),Z('Kartoffeln',G),Z('Glutenfreies Brot (Buchweizen/Reis)',K)]},
- {id:'m4',typ:'m',name:'Faschierte Laibchen (Rind) mit Kartoffeln, Mangold und grünem Salat',fleisch:true,zutaten:[Z('Rinderfaschiertes',E),Z('Kartoffeln',G),Z('Mangold',G),Z('Blattsalat',G),Z('Eier',E),Z('Haferflocken',K),Z('Olivenöl',OE)]},
+ {id:'m4',typ:'m',name:'Faschierte Laibchen (Rind) mit Kartoffeln, Mangold und grünem Salat',fleisch:true,zutaten:[Z('Rinderfaschiertes',E),Z('Kartoffeln',G),Z('Mangold',G),Z('Blattsalat',G),Z('Eier',E),Z('Haferflocken (zertifiziert glutenfrei)',K),Z('Schnittlauch',G),Z('Kümmel',OE),Z('Olivenöl',OE)]},
  {id:'m5',typ:'m',name:'Auberginengemüse mit Zanderfilet und Polenta',zutaten:[Z('Zanderfilet',E),Z('Aubergine',G),Z('Tomaten',G),Z('Polenta',K),Z('Olivenöl',OE)]},
  {id:'m6',typ:'m',name:'Ofengemüse mit Spiegelei',zutaten:[Z('Kartoffeln',G),Z('Karotten',G),Z('Zucchini',G),Z('Fenchel',G),Z('Eier',E),Z('Rosmarin',OE),Z('Olivenöl',OE)]},
  {id:'m7',typ:'m',name:'Quinoa-Bowl mit Tofu, Gurke, Fenchel und Sesam',zutaten:[Z('Quinoa',K),Z('Tofu (fest)',E),Z('Gurke',G),Z('Fenchel',G),Z('Sesam',N),Z('Limette',O),Z('Ingwer',G)]},
@@ -185,19 +185,31 @@ const ZUTATEN_CHECK=[
  {k:['inulin','chicorée','zichorie','oligofruktose','fos','gos','topinambur'],s:'no',why:'Inulin/Oligosaccharide'},
  {k:['bohnen','kichererbse','linsen','soja','erbsen','edamame'],s:'no',why:'Hülsenfrüchte / Soja'},
  {k:['cashew','pistazie'],s:'no',why:'FODMAP-reiche Nüsse'},
- {k:['paprika'],s:'no',why:'Paprika (persönlich)'},
  {k:['blumenkohl','karfiol','rosenkohl','rotkohl','wirsing','weißkohl','kraut'],s:'mass',why:'Kohl'},
  {k:['sonnenblumenöl','margarine','kokosöl','palmöl','distelöl','maiskeimöl','sojaöl'],s:'mass',why:'ungünstiges Fett'},
  {k:['aroma','konservierungsstoff','emulgator','farbstoff','süßungsmittel','aspartam','sucralose','acesulfam','e4','e3','e2','e1'],s:'mass',why:'Zusatzstoffe'},
  {k:['zucker','saccharose','dextrose','traubenzucker','glukosesirup','glucosesirup','sirup'],s:'mass',why:'Zucker – kleine Mengen ok'},
  {k:['schwein','speck','schinken','salami','wurst'],s:'mass',why:'Schwein / Verarbeitetes'}
 ];
-function zutatenCheck(text){
-  const t=(text||'').toLowerCase();const hits=[];
-  const lf=/laktosefrei|lactosefrei|lactose-free|laktose-frei/.test(t);const gf=/glutenfrei|gluten-free|sans gluten|senza glutine/.test(t);
-  ZUTATEN_CHECK.forEach(r=>{const f=r.k.filter(k=>t.includes(k));if(!f.length)return;
+/* Wörter, die harmlos sind, aber ein Schlagwort enthalten (Buchweizen ≠ Weizen, Kokosmilch ≠ Milch) */
+const ZUTATEN_HARMLOS=['buchweizen','buchweizenmehl','schnittlauch','kokosmilch','mandelmilch','reismilch','hafermilch','kokosnuss','kokosraspel','sauerkraut','laktosefrei','lactosefrei','laktosefreie','glutenfrei','glutenfreie','glutenfreies','weizenfrei','milchfrei','sojafrei','zuckerfrei'];
+const ZUTATEN_EN=[{k:['wheat','barley','rye','spelt','flour'],why:'Gluten'},{k:['milk','whey','cream','lactose','yogurt','yoghurt','cheese powder'],why:'Laktose (außer ausdrücklich laktosefrei)'},{k:['onion','garlic','leek'],why:'Fruktane (Zwiebel/Knoblauch)'},{k:['honey','fructose','agave','apple','pear','mango'],why:'Fruktose'},{k:['sorbitol','mannitol','xylitol','maltitol'],why:'Polyole / Sorbit'},{k:['inulin','chicory'],why:'Inulin/Oligosaccharide'}];
+/* extra = persönliche Regeln aus dem Plan: [{name, treffer[]}] */
+function zutatenCheck(text,extra){
+  let t=(text||'').toLowerCase().replace(/e\s+(\d{3})/g,'e$1');
+  const raw=t;
+  const lf=/laktosefrei|lactosefrei|lactose-free|laktose-frei/.test(raw)&&!/nicht laktosefrei|enthält laktose/.test(raw);
+  const gf=/glutenfrei|gluten-free|sans gluten|senza glutine/.test(raw)&&!/nicht glutenfrei|enthält gluten|kann gluten/.test(raw);
+  ZUTATEN_HARMLOS.forEach(w=>{t=t.split(w).join(' ');});
+  const hits=[];
+  const rules=ZUTATEN_CHECK.concat(ZUTATEN_EN.map(r=>({k:r.k,s:'no',why:r.why})));
+  rules.forEach(r=>{const f=r.k.filter(k=>t.includes(k));if(!f.length)return;
     if(r.why.startsWith('Laktose')&&lf)return; if(r.why==='Gluten'&&gf)return; if(r.why.startsWith('Hafer')&&gf)return;
+    const ex=hits.find(h=>h.why===r.why);if(ex){ex.found=[...new Set(ex.found.concat(f))].slice(0,4);return;}
     hits.push({why:r.why,s:r.s,found:[...new Set(f)].slice(0,4)});});
+  (extra||[]).forEach(p=>{const f=(p.treffer||[]).filter(k=>t.includes(k.toLowerCase()));if(f.length)hits.push({why:p.name+' (persönlich)',s:'no',found:f.slice(0,4)});});
   const no=hits.filter(h=>h.s==='no'),mass=hits.filter(h=>h.s==='mass');
-  return {verdict:no.length?'no':mass.length?'mass':'ok',no,mass,lf,gf};
+  const words=raw.split(/[^a-zäöüß]+/).filter(w=>w.length>3).length;
+  const unsicher=!hits.length&&words<2;
+  return {verdict:no.length?'no':mass.length?'mass':(unsicher?'unklar':'ok'),no,mass,lf,gf};
 }
