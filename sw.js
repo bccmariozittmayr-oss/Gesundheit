@@ -1,6 +1,6 @@
 /* Service Worker: macht die App offline nutzbar und zeigt Benachrichtigungen an.
    Bei jeder Änderung an den App-Dateien die VERSION hochzählen, sonst bleibt die alte Fassung im Cache. */
-const VERSION = 'v2026.09.06-1';
+const VERSION = 'v2026.09.06-4';
 const FILES = ['./', './index.html', './daten.js', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -11,7 +11,7 @@ self.addEventListener('activate', e => {
 });
 // Netz zuerst (damit Updates ankommen), sonst Cache
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
+  if (e.request.method !== 'GET' || new URL(e.request.url).origin !== self.location.origin) return;
   e.respondWith(fetch(e.request).then(r => { const copy = r.clone(); caches.open(VERSION).then(c => c.put(e.request, copy)); return r; }).catch(() => caches.match(e.request)));
 });
 self.addEventListener('notificationclick', e => {

@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#1f6f5f">
+<meta name="theme-color" content="#f2f2f7">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Gesundheit">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -13,65 +13,68 @@
 <title>Gesundheit</title>
 <style>
 :root{
-  --bg:#f3f5f4;--card:#fff;--txt:#1d2a27;--mut:#6b7c77;--line:#e1e7e4;
-  --p:#1f6f5f;--p2:#e4f1ed;--ok:#2e8b57;--ok2:#e3f4ea;--warn:#c98a00;--warn2:#fff3d6;--bad:#c0392b;--bad2:#fbe4e1;
-  --r:14px;--nav:64px;
+  --bg:#f2f2f7;--card:#fff;--txt:#1c1c1e;--mut:#8a8a8e;--line:rgba(60,60,67,.12);
+  --p:#007aff;--p2:#eaf3ff;--ok:#34c759;--ok2:#e8f9ee;--warn:#ff9500;--warn2:#fff4e5;--bad:#ff3b30;--bad2:#ffe9e7;
+  --r:18px;--nav:72px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.4;-webkit-text-size-adjust:100%}
 body{padding-bottom:calc(var(--nav) + env(safe-area-inset-bottom))}
-header{position:sticky;top:0;z-index:5;background:var(--p);color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px}
-header h1{margin:0;font-size:18px;font-weight:600}
-header .sub{font-size:13px;opacity:.85;margin-top:2px}
-main{padding:14px 14px 20px;max-width:720px;margin:0 auto}
+header{position:sticky;top:0;z-index:5;background:rgba(242,242,247,.85);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);color:var(--txt);padding:calc(10px + env(safe-area-inset-top)) 20px 8px}
+header h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.4px}
+header .sub{font-size:15px;color:var(--mut);margin-top:-2px;text-transform:capitalize}
+main{padding:8px 16px 24px;max-width:720px;margin:0 auto}
 .page{display:none}.page.on{display:block}
-.card{background:var(--card);border-radius:var(--r);padding:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
-.card h2{margin:0 0 10px;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 10px;font-size:17px;font-weight:600;letter-spacing:-.2px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .card h2 small{font-weight:400;color:var(--mut);font-size:13px}
 .hint{font-size:13px;color:var(--mut)}
-.badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--p2);color:var(--p);font-weight:600}
+.badge{display:inline-block;font-size:12px;padding:3px 9px;border-radius:999px;background:var(--p2);color:var(--p);font-weight:600}
 .badge.ok{background:var(--ok2);color:var(--ok)}.badge.warn{background:var(--warn2);color:var(--warn)}.badge.bad{background:var(--bad2);color:var(--bad)}
-.banner{border-radius:var(--r);padding:12px 14px;margin-bottom:12px;font-size:14px}
-.banner.warn{background:var(--warn2);border:1px solid #f1d58a}.banner.info{background:var(--p2)}.banner.bad{background:var(--bad2)}
+.banner{border-radius:var(--r);padding:12px 16px;margin-bottom:14px;font-size:14.5px}
+.banner.warn{background:var(--warn2)}.banner.info{background:var(--p2)}.banner.bad{background:var(--bad2)}
 button{font:inherit;cursor:pointer}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:10px;padding:11px 16px;background:var(--p);color:#fff;font-weight:600;font-size:15px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;padding:13px 18px;background:var(--p);color:#fff;font-weight:600;font-size:16px;transition:transform .1s,opacity .15s}
+.btn:active{transform:scale(.97);opacity:.85}
 .btn.sec{background:var(--p2);color:var(--p)}.btn.ghost{background:transparent;color:var(--p);padding:6px 8px}.btn.sm{padding:7px 12px;font-size:13px}
 .btn.full{width:100%;margin-top:8px}
 .btn:disabled{opacity:.5}
 /* Checkliste */
 .slot{margin-bottom:10px}
-.slot-h{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin:8px 0 4px}
+.slot-h{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 2px}
 .slot-h .t{font-weight:400;text-transform:none;letter-spacing:0}
-.chk{display:flex;align-items:center;gap:12px;padding:10px 6px;border-top:1px solid var(--line);min-height:52px}
+.chk{display:flex;align-items:center;gap:14px;padding:11px 4px;border-top:1px solid var(--line);min-height:56px;-webkit-tap-highlight-color:transparent}
 .chk:first-of-type{border-top:0}
-.chk .box{width:26px;height:26px;border-radius:8px;border:2px solid #b9c7c2;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;background:#fff}
+.chk .box{width:28px;height:28px;border-radius:50%;border:1.5px solid #c7c7cc;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700;background:#fff;transition:background .15s,border-color .15s}
 .chk.done .box{background:var(--ok);border-color:var(--ok)}
 .chk .lbl{flex:1}.chk .lbl b{font-weight:600}.chk .lbl span{display:block;font-size:12.5px;color:var(--mut)}
 .chk.done .lbl b{text-decoration:line-through;color:var(--mut)}
 .chk.paused{opacity:.55}.chk .dose{font-weight:700;color:var(--p);white-space:nowrap}
 /* Symptome */
 .sev{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:4px 0 8px}
-.sev button{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:9px 4px;font-size:13.5px;color:var(--txt)}
+.sev button{border:0;background:var(--bg);border-radius:10px;padding:10px 4px;font-size:14px;color:var(--txt);font-weight:500}
 .sev button.s0.sel{background:var(--ok2);border-color:var(--ok);color:var(--ok)}
 .sev button.s1.sel{background:#f0f6dc;border-color:#8bb400;color:#5d7a00}
 .sev button.s2.sel{background:var(--warn2);border-color:var(--warn);color:var(--warn)}
 .sev button.s3.sel{background:var(--bad2);border-color:var(--bad);color:var(--bad)}
 .row{display:flex;gap:10px;align-items:center;margin:6px 0}
 .row label{flex:1;font-size:14.5px}
-input[type=number],input[type=text],input[type=date],input[type=time],select,textarea{font:inherit;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;background:#fff;color:var(--txt);width:100%}
+input[type=number],input[type=text],input[type=date],input[type=time],select,textarea{font:inherit;padding:10px 12px;border:0;border-radius:10px;background:var(--bg);color:var(--txt);width:100%;-webkit-appearance:none}
+input:focus,textarea:focus{outline:2px solid var(--p);outline-offset:0}
 input[type=number]{width:96px;text-align:center}input[type=time]{width:110px}
 input[type=range]{width:100%}
 textarea{min-height:64px;resize:vertical}
 .lbl-sm{font-size:13px;color:var(--mut);margin:8px 0 3px}
 /* Nav */
-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:#fff;border-top:1px solid var(--line);display:flex;z-index:10}
-nav button{flex:1;border:0;background:none;color:var(--mut);font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
-nav button .i{font-size:22px;line-height:1}
-nav button.on{color:var(--p);font-weight:600}
+nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav) + env(safe-area-inset-bottom));padding:6px 0 env(safe-area-inset-bottom);background:rgba(255,255,255,.85);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:1px solid var(--line);display:flex;z-index:10}
+nav button{flex:1;border:0;background:none;color:var(--mut);font-size:10.5px;font-weight:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;-webkit-tap-highlight-color:transparent}
+nav button .i{font-size:24px;line-height:1;filter:grayscale(1) opacity(.6);transition:filter .15s}
+nav button.on{color:var(--p)}
+nav button.on .i{filter:none}
 /* Tabs */
-.tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto}
-.tabs button{flex:1;border:0;background:#fff;border-radius:999px;padding:9px 12px;font-size:14px;color:var(--mut);white-space:nowrap}
-.tabs button.on{background:var(--p);color:#fff;font-weight:600}
+.tabs{display:flex;gap:2px;margin:6px 0 14px;background:rgba(118,118,128,.12);border-radius:10px;padding:2px}
+.tabs button{flex:1;border:0;background:transparent;border-radius:8px;padding:7px 6px;font-size:13.5px;font-weight:500;color:var(--txt);white-space:nowrap}
+.tabs button.on{background:#fff;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .sub{display:none}.sub.on{display:block}
 /* Ampel */
 .food{display:flex;align-items:center;gap:10px;padding:8px 4px;border-top:1px solid var(--line);font-size:14.5px}
@@ -89,13 +92,13 @@ details{margin-bottom:8px}summary{cursor:pointer;font-weight:600;padding:8px 0;f
 .meal{display:flex;gap:10px;align-items:center;padding:8px 6px;border-top:1px solid var(--line)}
 .meal .k{font-size:11px;color:var(--mut);width:44px;flex:none;text-transform:uppercase}
 .meal .n{flex:1;font-size:14.5px}.meal .n small{display:block;color:var(--mut);font-size:12px}
-.meal button{border:0;background:var(--p2);color:var(--p);border-radius:8px;padding:6px 9px;font-size:13px}
+.meal button{border:0;background:var(--p2);color:var(--p);border-radius:10px;min-width:44px;min-height:44px;font-size:18px}
 /* Einkauf */
 .shop .chk{min-height:44px;padding:7px 6px}
 .shop h3{margin:12px 0 2px;font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
 /* Atmen */
 .breath{display:flex;flex-direction:column;align-items:center;padding:16px 0 6px}
-.orb{width:180px;height:180px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#8dd3c0,var(--p));display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:600;transition:transform 1s linear;transform:scale(.6);text-align:center;padding:16px}
+.orb{width:200px;height:200px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#7cc4ff,#0a63d6);box-shadow:0 20px 40px rgba(0,122,255,.25);display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:600;transition:transform 1s linear;transform:scale(.6);text-align:center;padding:16px}
 .orb small{display:block;font-size:14px;font-weight:400;opacity:.9}
 .bstat{margin-top:14px;font-size:14px;color:var(--mut)}
 .ex{display:flex;gap:12px;align-items:center;padding:10px 4px;border-top:1px solid var(--line)}
@@ -103,8 +106,8 @@ details{margin-bottom:8px}summary{cursor:pointer;font-weight:600;padding:8px 0;f
 /* Verlauf */
 canvas{width:100%;height:200px;display:block}
 .stat{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.stat div{background:var(--p2);border-radius:10px;padding:10px;text-align:center}
-.stat b{display:block;font-size:22px;color:var(--p)}.stat span{font-size:12px;color:var(--mut)}
+.stat div{background:var(--bg);border-radius:12px;padding:12px;text-align:center}
+.stat b{display:block;font-size:26px;font-weight:700;letter-spacing:-.5px;color:var(--txt)}.stat span{font-size:12px;color:var(--mut)}
 .ent{padding:8px 4px;border-top:1px solid var(--line);font-size:14px;display:flex;gap:8px;align-items:center}
 .ent .d{width:56px;flex:none;font-weight:600}.ent .s{flex:1;color:var(--mut);font-size:13px}
 table.bf{width:100%;border-collapse:collapse;font-size:13.5px}
@@ -114,14 +117,14 @@ table.bf td:first-child{font-weight:600}
 .set{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line);gap:10px}
 .set:first-of-type{border-top:0}
 .set .l{flex:1;font-size:14.5px}.set .l small{display:block;color:var(--mut);font-size:12.5px}
-.sw{width:48px;height:28px;border-radius:999px;background:#c8d3cf;position:relative;border:0;flex:none}
-.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
-.sw.on{background:var(--ok)}.sw.on::after{left:23px}
+.sw{width:51px;height:31px;border-radius:999px;background:#e9e9eb;position:relative;border:0;flex:none;transition:background .2s}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.15),0 1px 1px rgba(0,0,0,.06);transition:left .2s}
+.sw.on{background:var(--ok)}.sw.on::after{left:22px}
 .medit{padding:8px 0;border-top:1px solid var(--line)}
 .medit .n{font-weight:600;font-size:14.5px}.medit .r{display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap}
 .medit input[type=number]{width:56px;padding:6px}
 .medit .r span{font-size:12px;color:var(--mut)}
-.toast{position:fixed;left:50%;bottom:calc(var(--nav) + 16px);transform:translateX(-50%);background:#1d2a27;color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:20;white-space:nowrap}
+.toast{position:fixed;left:50%;bottom:calc(var(--nav) + 16px);transform:translateX(-50%);background:rgba(28,28,30,.92);backdrop-filter:blur(10px);color:#fff;padding:11px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:20;white-space:nowrap}
 .toast.on{opacity:1}
 .empty{text-align:center;color:var(--mut);padding:20px 10px;font-size:14px}
 .progress{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:6px 0 2px}
@@ -150,7 +153,7 @@ table.bf td:first-child{font-weight:600}
     <div id="train-list"></div>
   </div>
   <div class="card">
-    <h2>🌬️ Atmen heute <small>Arzt: 4-7-8 und 5-5 fest im Alltag</small></h2>
+    <h2>🌬️ Atmen heute <small>4-7-8 und 5-5 fest im Alltag</small></h2>
     <div id="atem-list"></div>
   </div>
   <div class="card">
@@ -232,7 +235,7 @@ table.bf td:first-child{font-weight:600}
   </div>
   <div class="card">
     <h2>Warum</h2>
-    <div class="hint">Laut Arztbrief hat dein Nervensystem am besten auf die <b>4-7-8-Atmung</b> und die <b>5-5-Atmung</b> reagiert — „regelmäßig im Alltag etablieren". Ruhige Atmung stimuliert den Vagusnerv; das senkt laut Darmbefund auch den Zonulin-Wert (Leaky Gut). Dazu: 15–30 Minuten Stille pro Tag.</div>
+    <div class="hint">Langsame, ruhige Atmung (4-7-8, 5-5) aktiviert den Vagusnerv und beruhigt das Nervensystem – das wirkt auch auf Verdauung und Darmwand. Ziel: fest im Alltag verankern, dazu 15–30 Minuten Stille pro Tag.</div>
   </div>
 </section>
 
@@ -292,7 +295,7 @@ table.bf td:first-child{font-weight:600}
     <div class="hint" style="margin-top:8px" id="data-info"></div>
   </div>
   <div class="card">
-    <div class="hint">Diese App ersetzt keinen Arzt. Grundlage sind die Befunde und der Einnahmeplan von dieFITMACHER (Stand 04.09.2026). Bei Änderungen des Plans: mein-plan.json anpassen und neu laden.</div>
+    <div class="hint" id="quelle-hint">Diese App ersetzt keinen Arzt. Grundlage ist der geladene Plan. Bei Änderungen: mein-plan.json anpassen und neu laden.</div>
   </div>
 </section>
 
@@ -317,6 +320,7 @@ table.bf td:first-child{font-weight:600}
    gp_set (Einstellungen), gp_week (Wochenplan), gp_shop (Einkaufs-Haken)
    ===================================================================== */
 const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LS={get:(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
 const todayKey=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const fmtDate=k=>{const [y,m,d]=k.split('-');return d+'.'+m+'.'+y};
@@ -385,7 +389,7 @@ function medsToday(){
     const ov=set.medOverride[m.id]||{};
     if(ov.aus)return;
     const ph=medPhase(m); if(!ph)return;
-    const dose={...ph,...(ov.dose||{})};
+    const dose={...ph,...((ov.abTag===ph.abTag&&ov.dose)||{})};
     const paused=detox&&m.detoxPause!==false;
     ['nu','m','mi','a','n'].forEach(s=>{ if(dose[s]>0) out.push({id:m.id,slot:s,name:m.name,menge:dose[s],einheit:m.einheit||'',hinweis:ph.notiz||m.hinweis||'',paused,offen:m.offen}); });
   });
@@ -423,7 +427,7 @@ function renderHeute(){
   else if(plan&&!set.kurStart)b+='<div class="banner info">Darmkur noch nicht gestartet – Startdatum unter <b>Mehr</b> eintragen, sobald es losgeht.</div>';
   // Präparate, die gerade bewusst pausieren (Phase ohne Dosis)
   if(plan){const pausen=plan.praeparate.filter(m=>{const ph=medPhase(m);return ph&&!['nu','m','mi','a','n'].some(s=>ph[s]>0)&&ph.notiz&&!(set.medOverride[m.id]||{}).aus;});
-    if(pausen.length)b+=`<div class="banner info" style="font-size:13px">${pausen.map(m=>'⏸ <b>'+m.name+'</b>: '+medPhase(m).notiz).join('<br>')}</div>`;}
+    if(pausen.length)b+=`<div class="banner info" style="font-size:13px">${pausen.map(m=>'⏸ <b>'+esc(m.name)+'</b>: '+esc(medPhase(m).notiz)).join('<br>')}</div>`;}
   $('heute-banner').innerHTML=b;
   // Training heute
   const wd=String(new Date().getDay());const tr=(plan?.training?.woche||{})[wd]||[];
@@ -441,14 +445,14 @@ function renderHeute(){
     SLOTS.concat([{k:'sp',name:'Beim Sport',t:''}]).forEach(s=>{
       const ms=meds.filter(m=>m.slot===s.k); if(!ms.length)return;
       html+=`<div class="slot"><div class="slot-h"><span>${s.name}</span><span class="t">${s.k==='sp'?'':(set.times[s.k]||s.t)}</span></div>`;
-      ms.forEach(m=>{const key=m.id+'_'+m.slot;const d=!!e.meds[key];if(d)done++;
-        html+=`<div class="chk ${d?'done':''} ${m.paused?'paused':''}" data-k="${key}"><div class="box">${d?'✓':''}</div><div class="lbl"><b>${m.name}</b><span>${m.paused?'⏸ pausiert (Darmdetox)':m.hinweis}${m.offen?' · ⚠️ '+m.offen:''}</span></div><div class="dose">${m.menge} ${m.einheit}</div></div>`;});
+      ms.forEach(m=>{const key=m.id+'_'+m.slot;const d=!m.paused&&!!e.meds[key];if(d)done++;
+        html+=`<div class="chk ${d?'done':''} ${m.paused?'paused':''}" data-k="${key}"><div class="box">${d?'✓':''}</div><div class="lbl"><b>${esc(m.name)}</b><span>${m.paused?'⏸ pausiert (Darmdetox)':esc(m.hinweis)}${m.offen?' · ⚠️ '+esc(m.offen):''}</span></div><div class="dose">${esc(m.menge)} ${esc(m.einheit)}</div></div>`;});
       html+='</div>';
     });
     list.innerHTML=html;
-    $('med-count').textContent=done+' / '+meds.length;
-    $('med-prog').style.width=Math.round(done/meds.length*100)+'%';
-    list.querySelectorAll('.chk').forEach(el=>el.onclick=()=>{const k=el.dataset.k;e.meds[k]=!e.meds[k];saveLog();renderHeute();});
+    const tot=meds.filter(m=>!m.paused).length;$('med-count').textContent=done+' / '+tot;
+    $('med-prog').style.width=(tot?Math.round(done/tot*100):0)+'%';
+    list.querySelectorAll('.chk').forEach(el=>el.onclick=()=>{if(el.classList.contains('paused')){toast('Heute pausiert (Darmdetox)');return;}const k=el.dataset.k;e.meds[k]=!e.meds[k];saveLog();renderHeute();});
   }
   // Atmen
   $('atem-list').innerHTML=ATEM_SLOTS.map(s=>{const d=!!e.atmen[s.k];return `<div class="chk ${d?'done':''}" data-k="${s.k}"><div class="box">${d?'✓':''}</div><div class="lbl"><b>${s.name}</b><span>${set.atimes[s.k]||s.t} Uhr · <a href="#" data-ex="${s.ex}">Übung starten</a></span></div></div>`}).join('');
@@ -515,10 +519,10 @@ let week=LS.get('gp_week',null);
 function ensureWeek(){ if(!week||week.monday!==mondayOf(TK)){week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});} }
 function renderWoche(){
   ensureWeek();
-  $('woche-info').textContent='ab '+fmtDate(week.monday);
+  $('woche-info').textContent='ab '+fmtDate(week.monday)+' · Fleisch '+week.days.flatMap(x=>[x.f,x.m,x.a]).filter(id=>REZ(id).fleisch).length+'×';
   const todayIdx=daysBetween(week.monday,TK);
   $('woche').innerHTML=week.days.map((d,i)=>`<div class="day"><h3>${DAYS[i]}${i===todayIdx?' · heute':''}</h3>${['f','m','a'].map(t=>{const r=REZ(d[t]);return `<div class="meal"><span class="k">${{f:'Früh',m:'Mittag',a:'Abend'}[t]}</span><div class="n">${r.name} ${(r.tags||[]).map(x=>`<span class="badge" style="font-size:10px">${{schnell:'⚡ schnell',tm:'TM',buero:'🏢 Büro',vorkochen:'🥡 vorkochen'}[x]||x}</span>`).join(' ')}<small>${r.zutaten.map(z=>z.n).join(', ')}</small>${r.tipp?`<small style="color:var(--p)">👨‍🍳 ${r.tipp}</small>`:''}</div><button data-d="${i}" data-t="${t}">↻</button></div>`}).join('')}</div>`).join('');
-  $('woche').querySelectorAll('.meal button').forEach(b=>b.onclick=()=>{const d=week.days[+b.dataset.d];const t=b.dataset.t;const used=week.days.flatMap(x=>[x.f,x.m,x.a]);d[t]=pick(REZEPTE.filter(r=>r.typ===t),used);LS.set('gp_week',week);renderWoche();renderEinkauf();});
+  $('woche').querySelectorAll('.meal button').forEach(b=>b.onclick=()=>{const di=+b.dataset.d,t=b.dataset.t;const d=week.days[di];const used=week.days.flatMap(x=>[x.f,x.m,x.a]);const meat=week.days.flatMap((x,i)=>['f','m','a'].filter(tt=>!(i===di&&tt===t)).map(tt=>x[tt])).filter(id=>REZ(id).fleisch).length;d[t]=pick(REZEPTE.filter(r=>r.typ===t),used,r=>!(r.fleisch&&meat>=2));LS.set('gp_week',week);renderWoche();renderEinkauf();});
 }
 $('woche-neu').onclick=()=>{week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});renderWoche();renderEinkauf();toast('Neue Woche gemischt');};
 
@@ -549,14 +553,14 @@ function renderTipps(){
 /* ---------- ESSEN: Regeln ---------- */
 function renderRegeln(){
   const r=(plan?.regeln)||REGELN_STANDARD;
-  $('regeln').innerHTML=r.map(g=>`<div class="card"><h2>${g.titel}</h2><ul style="margin:0;padding-left:18px;font-size:14.5px">${g.punkte.map(p=>`<li style="margin:4px 0">${p}</li>`).join('')}</ul></div>`).join('');
+  $('regeln').innerHTML=r.map(g=>`<div class="card"><h2>${esc(g.titel)}</h2><ul style="margin:0;padding-left:18px;font-size:14.5px">${g.punkte.map(p=>`<li style="margin:4px 0">${p}</li>`).join('')}</ul></div>`).join('');
 }
 
 /* ---------- ATMEN ---------- */
 let curEx=null,bTimer=null;
 function selectEx(id){curEx=ATEM.find(x=>x.id===id);$('orb').innerHTML=curEx.name+'<small>'+curEx.kurz+'</small>';$('bstat').textContent='Start drücken';renderExList();}
 function renderExList(){
-  $('ex-list').innerHTML=ATEM.map(x=>`<div class="ex"><div class="n"><b>${x.name}</b><span>${x.beschreibung}</span></div><button class="btn ${curEx&&curEx.id===x.id?'':'sec'} sm" data-id="${x.id}">${curEx&&curEx.id===x.id?'gewählt':'wählen'}</button></div>`).join('');
+  $('ex-list').innerHTML=ATEM.map(x=>`<div class="ex"><div class="n"><b>${x.name}</b><span>${x.beschreibung}</span>${(x.videos||[]).map(v=>`<span>▶ <a href="${v.u}" target="_blank" rel="noopener">${v.t}</a></span>`).join("")}</div><button class="btn ${curEx&&curEx.id===x.id?'':'sec'} sm" data-id="${x.id}">${curEx&&curEx.id===x.id?'gewählt':'wählen'}</button></div>`).join('');
   $('ex-list').querySelectorAll('button').forEach(b=>b.onclick=()=>selectEx(b.dataset.id));
 }
 function stopBreath(){clearInterval(bTimer);bTimer=null;$('orb').style.transform='scale(.6)';if(curEx)$('bstat').textContent='Gestoppt';}
@@ -603,17 +607,17 @@ function renderVerlauf(){
 function renderBefunde(){
   if(!plan){$('befunde').innerHTML='<div class="card"><div class="empty">Plan laden, dann erscheinen hier deine Befunde.</div></div>';return;}
   let h='';
-  if(plan.diagnosen)h+=`<div class="card"><h2>Diagnosen <small>Arztbrief ${plan.arztbriefDatum||''}</small></h2><ul style="margin:0;padding-left:18px;font-size:14.5px">${plan.diagnosen.map(d=>`<li>${d}</li>`).join('')}</ul></div>`;
-  if(plan.befunde){const st={hoch:'bad',niedrig:'warn',normal:'ok'};h+=`<div class="card"><h2>Auffällige Werte</h2><table class="bf">${plan.befunde.map(b=>`<tr><td>${b.name}<br><small class="hint">${b.datum||''}</small></td><td>${b.wert}<br><small class="hint">Ref. ${b.ref}</small></td><td><span class="badge ${st[b.status]||''}">${b.status}</span><br><small class="hint">${b.bedeutung||''}</small></td></tr>`).join('')}</table></div>`;}
+  if(plan.diagnosen)h+=`<div class="card"><h2>Diagnosen <small>Arztbrief ${plan.arztbriefDatum||''}</small></h2><ul style="margin:0;padding-left:18px;font-size:14.5px">${plan.diagnosen.map(d=>`<li>${esc(d)}</li>`).join('')}</ul></div>`;
+  if(plan.befunde){const st={hoch:'bad',niedrig:'warn',normal:'ok'};h+=`<div class="card"><h2>Auffällige Werte</h2><table class="bf">${plan.befunde.map(b=>`<tr><td>${esc(b.name)}<br><small class="hint">${esc(b.datum||'')}</small></td><td>${esc(b.wert)}<br><small class="hint">Ref. ${esc(b.ref)}</small></td><td><span class="badge ${st[b.status]||''}">${esc(b.status)}</span><br><small class="hint">${esc(b.bedeutung||'')}</small></td></tr>`).join('')}</table></div>`;}
   if(plan.training){const p=plan.training.puls;const sa=['rad','gehen','laufen'];const names={rad:'Rad',gehen:'Wandern',laufen:'Laufen'};
-    h+=`<div class="card"><h2>Puls beim Training <small>${p?.quelle||''}</small></h2>${p?`<table class="bf"><tr><td></td>${sa.map(s=>`<td><b>${names[s]}</b></td>`).join('')}</tr>${(plan.training.zonen||[]).map(z=>{return `<tr><td><span class="badge ${z.k==='A'?'ok':z.k==='B'?'warn':'bad'}">${z.k}</span> ${z.name}</td>${sa.map(s=>{const o=p.offsets[s]||0;return `<td>${z.k==='A'?'&lt; '+(p.vt1+o):z.k==='B'?(p.vt1+o)+'–'+(p.vt2+o):'&gt; '+(p.vt2+o)}</td>`}).join('')}</tr>`}).join('')}<tr><td>Maximalpuls</td>${sa.map(s=>`<td>${p.max+(p.offsets[s]||0)}</td>`).join('')}</tr></table>${(plan.training.zonen||[]).map(z=>`<div style="font-size:13.5px;margin-top:6px"><b>Zone ${z.k}:</b> ${z.txt}</div>`).join('')}`:''}<ul style="margin:8px 0 0;padding-left:18px;font-size:14px">${plan.training.hinweise.map(t=>`<li>${t}</li>`).join('')}</ul>${plan.training.woche?`<h2 style="margin-top:12px">Trainingswoche</h2>${['1','2','3','4','5','6','0'].map(d=>`<div class="ex"><div class="n"><b>${DAYS[(+d+6)%7]}</b><span>${(plan.training.woche[d]||[]).map(t=>t.name+(t.zeit?' ('+t.zeit+')':'')).join(', ')||'frei'}</span></div></div>`).join('')}`:''}</div>`;}
-  if(plan.bedarf)h+=`<div class="card"><h2>Bei Bedarf</h2>${plan.bedarf.map(b=>`<div class="ex"><div class="n"><b>${b.name} ${b.dosis||''}</b><span>${b.wann}</span></div></div>`).join('')}</div>`;
-  if(plan.sport)h+=`<div class="card"><h2>Bei Sport</h2>${plan.sport.map(b=>`<div class="ex"><div class="n"><b>${b.name}</b><span>${b.wann}${b.dosis?' · '+b.dosis:''}</span></div></div>`).join('')}</div>`;
+    h+=`<div class="card"><h2>Puls beim Training <small>${p?.quelle||''}</small></h2>${p?`<table class="bf"><tr><td></td>${sa.map(s=>`<td><b>${names[s]}</b></td>`).join('')}</tr>${(plan.training.zonen||[]).map(z=>{return `<tr><td><span class="badge ${z.k==='A'?'ok':z.k==='B'?'warn':'bad'}">${esc(z.k)}</span> ${esc(z.name)}</td>${sa.map(s=>{const o=p.offsets[s]||0;return `<td>${z.k==='A'?'&lt; '+(p.vt1+o):z.k==='B'?(p.vt1+o)+'–'+(p.vt2+o):'&gt; '+(p.vt2+o)}</td>`}).join('')}</tr>`}).join('')}<tr><td>Maximalpuls</td>${sa.map(s=>`<td>${p.max+(p.offsets[s]||0)}</td>`).join('')}</tr></table>${(plan.training.zonen||[]).map(z=>`<div style="font-size:13.5px;margin-top:6px"><b>Zone ${esc(z.k)}:</b> ${esc(z.txt)}</div>`).join('')}`:''}<ul style="margin:8px 0 0;padding-left:18px;font-size:14px">${plan.training.hinweise.map(t=>`<li>${t}</li>`).join('')}</ul>${plan.training.woche?`<h2 style="margin-top:12px">Trainingswoche</h2>${['1','2','3','4','5','6','0'].map(d=>`<div class="ex"><div class="n"><b>${DAYS[(+d+6)%7]}</b><span>${(plan.training.woche[d]||[]).map(t=>t.name+(t.zeit?' ('+t.zeit+')':'')).join(', ')||'frei'}</span></div></div>`).join('')}`:''}</div>`;}
+  if(plan.bedarf)h+=`<div class="card"><h2>Bei Bedarf</h2>${plan.bedarf.map(b=>`<div class="ex"><div class="n"><b>${esc(b.name)} ${esc(b.dosis||'')}</b><span>${esc(b.wann)}</span></div></div>`).join('')}</div>`;
+  if(plan.sport)h+=`<div class="card"><h2>Bei Sport</h2>${plan.sport.map(b=>`<div class="ex"><div class="n"><b>${esc(b.name)}</b><span>${esc(b.wann)}${b.dosis?' · '+b.dosis:''}</span></div></div>`).join('')}</div>`;
   $('befunde').innerHTML=h;
 }
 function renderTermine(){
   if(!plan||!plan.termine){$('termine').innerHTML='<div class="card"><div class="empty">Plan laden.</div></div>';return;}
-  $('termine').innerHTML='<div class="card"><h2>Termine & Kontrollen</h2>'+plan.termine.map(t=>`<div class="ex"><div class="n"><b>${t.name}</b><span>${t.rhythmus||''}${t.datum?' · '+t.datum:''}${t.details?'<br>'+t.details:''}</span></div></div>`).join('')+'</div>';
+  $('termine').innerHTML='<div class="card"><h2>Termine & Kontrollen</h2>'+plan.termine.map(t=>`<div class="ex"><div class="n"><b>${esc(t.name)}</b><span>${esc(t.rhythmus||'')}${t.datum?' · '+t.datum:''}${t.details?'<br>'+t.details:''}</span></div></div>`).join('')+'</div>';
 }
 
 /* ---------- MEHR ---------- */
@@ -629,10 +633,11 @@ function renderMehr(){
   $('times').querySelectorAll('input').forEach(i=>i.onchange=()=>{if(i.dataset.s)set.times[i.dataset.s]=i.value;else set.atimes[i.dataset.a]=i.value;saveSet();});
   // Dosierung
   if(!plan){$('med-edit').innerHTML='<div class="empty">Plan laden.</div>';}
-  else $('med-edit').innerHTML=plan.praeparate.map(m=>{const ov=set.medOverride[m.id]||{};const ph=medPhase(m);const d={...(ph||{}),...(ov.dose||{})};
-    return `<div class="medit"><div style="display:flex;align-items:center;gap:8px"><div class="n" style="flex:1">${m.name}<br><small class="hint">${ph?(ph.notiz||''):(m.anker==='kur'?'startet mit der Darmkur':'derzeit keine Phase')}</small></div><button class="sw ${ov.aus?'':'on'}" data-id="${m.id}"></button></div>${ph?`<div class="r">${['m','mi','a','n'].map(s=>`<input type="number" min="0" step="1" data-id="${m.id}" data-s="${s}" value="${d[s]||0}">`).join('<span>–</span>')}<span>${m.einheit||''}${d.nu?' + '+d.nu+' nüchtern':''}</span></div>`:''}</div>`}).join('');
+  else $('med-edit').innerHTML=plan.praeparate.map(m=>{const ov=set.medOverride[m.id]||{};const ph=medPhase(m);const d={...(ph||{}),...((ph&&ov.abTag===ph.abTag&&ov.dose)||{})};
+    return `<div class="medit"><div style="display:flex;align-items:center;gap:8px"><div class="n" style="flex:1">${esc(m.name)}<br><small class="hint">${ph?(ph.notiz||''):(m.anker==='kur'?'startet mit der Darmkur':'derzeit keine Phase')}</small></div><button class="sw ${ov.aus?'':'on'}" data-id="${m.id}"></button></div>${ph?`<div class="r">${['m','mi','a','n'].map(s=>`<input type="number" min="0" step="1" data-id="${m.id}" data-s="${s}" value="${d[s]||0}">`).join('<span>–</span>')}<span>${m.einheit||''}${d.nu?' + '+d.nu+' nüchtern':''}</span></div>`:''}</div>`}).join('');
   $('med-edit').querySelectorAll('.sw').forEach(b=>b.onclick=()=>{const o=set.medOverride[b.dataset.id]||{};o.aus=!o.aus;set.medOverride[b.dataset.id]=o;saveSet();renderMehr();});
-  $('med-edit').querySelectorAll('input').forEach(i=>i.onchange=()=>{const o=set.medOverride[i.dataset.id]||{};o.dose=o.dose||{};o.dose[i.dataset.s]=+i.value||0;set.medOverride[i.dataset.id]=o;saveSet();toast('Gespeichert – gilt für die laufende Phase');});
+  $('med-edit').querySelectorAll('input').forEach(i=>i.onchange=()=>{const o=set.medOverride[i.dataset.id]||{};const ph=medPhase(plan.praeparate.find(x=>x.id===i.dataset.id));if(o.abTag!==ph.abTag){o.dose={};o.abTag=ph.abTag;}o.dose[i.dataset.s]=+i.value||0;set.medOverride[i.dataset.id]=o;saveSet();toast('Gespeichert – gilt für die laufende Phase');});
+  $('quelle-hint').textContent='Diese App ersetzt keinen Arzt. '+(plan?'Grundlage: '+plan.quelle+'.':'Grundlage ist der geladene Plan.')+' Bei Änderungen: mein-plan.json anpassen und neu laden.';
   $('data-info').textContent=Object.keys(log).length+' Tage im Protokoll auf diesem Gerät.';
 }
 $('kur-start').onchange=()=>{set.kurStart=$('kur-start').value||null;set.medOverride={};saveSet();renderMehr();toast(set.kurStart?'Darmkur-Start gesetzt':'Darmkur-Start entfernt');};
@@ -645,7 +650,7 @@ $('notif-sw').onclick=async()=>{
   if(p==='granted'){set.notif=true;saveSet();toast('Erinnerungen aktiv (solange App offen)');}else toast('Keine Erlaubnis erteilt');
   renderMehr();
 };
-$('exp').onclick=()=>download('gesundheit-protokoll-'+TK+'.json',JSON.stringify({log,set,week},null,1),'application/json');
+$('exp').onclick=()=>{if(!confirm('Die Datei enthält deine Gesundheitsdaten (Symptome, Gewicht, Notizen). Nur an einem sicheren Ort ablegen.'))return;download('gesundheit-protokoll-'+TK+'.json',JSON.stringify({log,set,week},null,1),'application/json');};
 $('imp').onclick=()=>$('imp-file').click();
 $('imp-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.log){Object.assign(log,d.log);saveLog();}if(d.set){set={...set,...d.set};saveSet();}toast('Wiederhergestellt ✓');renderMehr();}catch(e){toast('Datei nicht lesbar');}};r.readAsText(f);ev.target.value='';};
 function download(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);}
@@ -655,8 +660,9 @@ $('ics').onclick=()=>{
   if(!plan){toast('Zuerst Plan laden');return;}
   const meds=medsToday();
   const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Gesundheit App//DE','CALSCALE:GREGORIAN'];
-  const ev=(uid,time,title,desc)=>{const [h,mi]=time.split(':');const d=TK.replace(/-/g,'');lines.push('BEGIN:VEVENT','UID:'+uid+'@gesundheit-app','DTSTAMP:'+d+'T000000','DTSTART:'+d+'T'+h+mi+'00','DURATION:PT10M','RRULE:FREQ=DAILY','SUMMARY:'+title,'DESCRIPTION:'+desc.replace(/\n/g,'\\n'),'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:'+title,'END:VALARM','END:VEVENT');};
-  SLOTS.forEach(s=>{const ms=meds.filter(m=>m.slot===s.k);if(!ms.length)return;ev('med-'+s.k,set.times[s.k]||s.t,'💊 '+s.name,ms.map(m=>m.name+' '+m.menge+' '+m.einheit).join(', ')+'\nDosis kann sich je Phase ändern – Details in der App.');});
+  const ie=s=>String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');const stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  const ev=(uid,time,title,desc)=>{const [h,mi]=time.split(':');const d=TK.replace(/-/g,'');lines.push('BEGIN:VEVENT','UID:'+uid+'@gesundheit-app','DTSTAMP:'+stamp,'DTSTART:'+d+'T'+h+mi+'00','DURATION:PT10M','RRULE:FREQ=DAILY','SUMMARY:'+ie(title),'DESCRIPTION:'+ie(desc),'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:'+ie(title),'END:VALARM','END:VEVENT');};
+  SLOTS.forEach(s=>{const ms=meds.filter(m=>m.slot===s.k);if(!ms.length)return;ev('med-'+s.k,set.times[s.k]||s.t,'💊 '+s.name,'Präparate laut Plan – Details in der App.');});
   ATEM_SLOTS.forEach(s=>ev('atem-'+s.k,set.atimes[s.k]||s.t,'🌬️ '+s.name,'Atemübung – App öffnen für den geführten Ablauf.'));
   lines.push('END:VCALENDAR');
   download('gesundheit-erinnerungen.ics',lines.join('\r\n'),'text/calendar');
@@ -670,10 +676,11 @@ function checkReminders(){
   const fired=LS.get('gp_fired',{});const e=entry(TK);
   const meds=medsToday();
   const fire=(key,title,body)=>{if(fired[TK+key])return;fired[TK+key]=1;LS.set('gp_fired',fired);navigator.serviceWorker?.ready.then(r=>r.showNotification(title,{body,icon:'icon-192.png',tag:key})).catch(()=>new Notification(title,{body}));};
-  SLOTS.forEach(s=>{const t=set.times[s.k]||s.t;if(hm!==t)return;const ms=meds.filter(m=>m.slot===s.k&&!e.meds[m.id+'_'+m.slot]&&!m.paused);if(ms.length)fire('m'+s.k,'💊 '+s.name,ms.map(m=>m.name+' '+m.menge+' '+m.einheit).join(', '));});
-  ATEM_SLOTS.forEach(s=>{const t=set.atimes[s.k]||s.t;if(hm===t&&!e.atmen[s.k])fire('a'+s.k,'🌬️ Atemübung',s.name);});
+  SLOTS.forEach(s=>{const t=set.times[s.k]||s.t;if(hm<t)return;const ms=meds.filter(m=>m.slot===s.k&&!e.meds[m.id+'_'+m.slot]&&!m.paused);if(ms.length)fire('m'+s.k,'💊 '+s.name,ms.length+' Präparat'+(ms.length>1?'e':'')+' – tippen für Details');});
+  ATEM_SLOTS.forEach(s=>{const t=set.atimes[s.k]||s.t;if(hm>=t&&!e.atmen[s.k])fire('a'+s.k,'🌬️ Atemübung',s.name);});
 }
 setInterval(()=>{const nk=todayKey();if(nk!==TK){TK=nk;renderHeute();}checkReminders();},30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){const nk=todayKey();if(nk!==TK){TK=nk;renderHeute();}checkReminders();}});
 
 /* ---------- Navigation ---------- */
 const PAGES={heute:renderHeute,essen:()=>{renderAmpel();renderWoche();renderEinkauf();renderTipps();renderRegeln();},atmen:renderExList,verlauf:()=>{renderVerlauf();renderBefunde();renderTermine();},mehr:renderMehr};

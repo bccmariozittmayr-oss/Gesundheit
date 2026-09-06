@@ -3,7 +3,8 @@ const {chromium}=require('C:/Users/Mario/Desktop/claude-code/BCC-Zentrale/01_Kun
 const http=require('http');
 const root='C:/Users/Mario/Desktop/claude-code/BCC-Zentrale/03_Privat/Gesundheit';
 const OUT=process.argv[2];
-const plan=fs.readFileSync('C:/Users/Mario/DBCC GmbH/Mario - Dokumente/Privat/Arzt/Die Fitmacher/Gesundheits-App/mein-plan.json','utf8');
+// Plan-Datei: Standard = Beispiel im Repo; echter Plan nur lokal per 2. Argument
+const plan=fs.readFileSync(process.argv[3]||path.join(root,'mein-plan.beispiel.json'),'utf8');
 const srv=http.createServer((q,r)=>{let p=decodeURIComponent(q.url.split('?')[0]);if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}const t={'.html':'text/html','.js':'text/javascript','.json':'application/json','.svg':'image/svg+xml','.png':'image/png'}[path.extname(f)]||'text/plain';r.setHeader('content-type',t);r.end(fs.readFileSync(f))}).listen(8765,'127.0.0.1');
 (async()=>{
  const b=await chromium.launch();const ctx=await b.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,locale:'de-AT'});const pg=await ctx.newPage();

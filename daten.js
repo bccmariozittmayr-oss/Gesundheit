@@ -1,5 +1,5 @@
 /* Allgemeine Inhalte – keine persönlichen Daten.
-   Quelle FODMAP-Tabelle: Broschüre dieFITMACHER (FODMAPS.pdf) + Darmkur-Broschüre.
+   Quelle: gängige FODMAP-Tabellen (Monash-Prinzip) und Darmkur-Broschüre des Behandlers.
    s: ok = FODMAP-arm, mass = in Maßen, no = FODMAP-reich (meiden) */
 
 const FODMAP=[
@@ -9,11 +9,11 @@ const FODMAP=[
  ]},
  {name:'Gemüse',open:true,items:[
   {n:'Aubergine / Melanzani',s:'ok'},{n:'Brokkoli',s:'ok'},{n:'Chinakohl',s:'ok'},{n:'Esskastanien / Maroni',s:'ok'},{n:'Fenchel',s:'ok'},{n:'Grünkohl',s:'ok'},{n:'Gurke',s:'ok'},{n:'Ingwer',s:'ok'},{n:'Karotte',s:'ok'},{n:'Kartoffel',s:'ok'},{n:'Kohlrabi',s:'ok'},{n:'Kopfsalat / Blattsalat',s:'ok'},{n:'Kresse',s:'ok'},{n:'Kürbis',s:'ok'},{n:'Mais',s:'ok'},{n:'Mangold',s:'ok'},{n:'Paprika',s:'ok'},{n:'Radieschen',s:'ok'},{n:'Schnittlauch',s:'ok',why:'Ersatz für Zwiebel'},{n:'Spinat',s:'ok'},{n:'Tofu (fest)',s:'ok'},{n:'Tomate',s:'ok'},{n:'Zucchini',s:'ok'},{n:'Grüne Bohnen / Fisolen',s:'ok'},
-  {n:'Artischocke',s:'no'},{n:'Blumenkohl / Karfiol',s:'no',why:'Kohl – laut Darmbefund schlecht verträglich'},{n:'Bohnen (außer grüne)',s:'no',why:'laut Darmbefund schlecht verträglich'},{n:'Chicorée',s:'no'},{n:'Edamame',s:'no'},{n:'Erbsen',s:'no'},{n:'Frühlingszwiebel (weißer Teil)',s:'no',why:'Zwiebel – laut Darmbefund schlecht verträglich'},{n:'Kaiserschote / Zuckerschote',s:'no'},{n:'Kichererbsen',s:'no'},{n:'Knoblauch',s:'no',why:'laut Darmbefund schlecht verträglich'},{n:'Lauch / Porree',s:'no'},{n:'Linsen',s:'no'},{n:'Pilze / Champignons',s:'no'},{n:'Radicchio',s:'no'},{n:'Rosenkohl / Kohlsprossen',s:'no',why:'Kohl'},{n:'Rote Bete / Rote Rüben',s:'no'},{n:'Rotkohl / Blaukraut',s:'no',why:'Kohl'},{n:'Schalotten',s:'no'},{n:'Schwarzwurzel',s:'no'},{n:'Sellerie',s:'no'},{n:'Soja',s:'no'},{n:'Spargel',s:'no'},{n:'Süßkartoffel',s:'no'},{n:'Topinambur',s:'no'},{n:'Wirsing',s:'no',why:'Kohl'},{n:'Zuckermais (Dose)',s:'no'},{n:'Zwiebel',s:'no',why:'laut Darmbefund schlecht verträglich'}
+  {n:'Artischocke',s:'no'},{n:'Blumenkohl / Karfiol',s:'no',why:'Kohlgemüse – häufig schlecht verträglich'},{n:'Bohnen (außer grüne)',s:'no',why:'Hülsenfrucht'},{n:'Chicorée',s:'no'},{n:'Edamame',s:'no'},{n:'Erbsen',s:'no'},{n:'Frühlingszwiebel (weißer Teil)',s:'no',why:'Zwiebelgewächs'},{n:'Kaiserschote / Zuckerschote',s:'no'},{n:'Kichererbsen',s:'no'},{n:'Knoblauch',s:'no',why:'Fruktane'},{n:'Lauch / Porree',s:'no'},{n:'Linsen',s:'no'},{n:'Pilze / Champignons',s:'no'},{n:'Radicchio',s:'no'},{n:'Rosenkohl / Kohlsprossen',s:'no',why:'Kohl'},{n:'Rote Bete / Rote Rüben',s:'no'},{n:'Rotkohl / Blaukraut',s:'no',why:'Kohl'},{n:'Schalotten',s:'no'},{n:'Schwarzwurzel',s:'no'},{n:'Sellerie',s:'no'},{n:'Soja',s:'no'},{n:'Spargel',s:'no'},{n:'Süßkartoffel',s:'no'},{n:'Topinambur',s:'no'},{n:'Wirsing',s:'no',why:'Kohl'},{n:'Zuckermais (Dose)',s:'no'},{n:'Zwiebel',s:'no',why:'Fruktane'}
  ]},
  {name:'Getreide & Beilagen',items:[
   {n:'Amaranth',s:'ok'},{n:'Buchweizen',s:'ok'},{n:'Chiasamen',s:'ok'},{n:'Flohsamen(schalen)',s:'ok'},{n:'Glutenfreie Produkte',s:'ok'},{n:'Hafer / Haferflocken / Haferschleim',s:'ok'},{n:'Hirse / Teff',s:'ok'},{n:'Kartoffelmehl',s:'ok'},{n:'Polenta / Maisgrieß',s:'ok'},{n:'Quinoa',s:'ok'},{n:'Reis (alle Sorten)',s:'ok'},{n:'Sauerteigbrot (Dinkel/Roggen, lang geführt)',s:'ok',why:'handschriftlich als erlaubt ergänzt'},
-  {n:'Weizen (Brot, Semmeln, Nudeln, Gebäck)',s:'no',why:'Weißbrot laut Anamnese Auslöser für Blähungen'},{n:'Dinkel (außer Sauerteig)',s:'no'},{n:'Gerste',s:'no'},{n:'Kamut',s:'no'},{n:'Roggen (außer Sauerteig)',s:'no'}
+  {n:'Weizen (Brot, Semmeln, Nudeln, Gebäck)',s:'no',why:'häufiger Auslöser für Blähungen'},{n:'Dinkel (außer Sauerteig)',s:'no'},{n:'Gerste',s:'no'},{n:'Kamut',s:'no'},{n:'Roggen (außer Sauerteig)',s:'no'}
  ]},
  {name:'Milchprodukte & Ersatz',items:[
   {n:'Butter',s:'ok'},{n:'Camembert / Brie',s:'ok'},{n:'Cheddar',s:'ok'},{n:'Hartkäse (Parmesan, Bergkäse, Emmentaler)',s:'ok'},{n:'Laktosefreie Milch / Joghurt / Topfen',s:'ok'},{n:'Mandelmilch',s:'ok'},{n:'Reismilch',s:'ok'},
@@ -21,10 +21,10 @@ const FODMAP=[
  ]},
  {name:'Eiweiß: Ei, Fisch, Fleisch',items:[
   {n:'Eier',s:'ok'},{n:'Fisch (Lachs, Forelle, Zander, Thunfisch …)',s:'ok'},{n:'Huhn / Pute',s:'ok'},{n:'Rind',s:'ok',why:'bevorzugt, max. 1–2× Fleisch pro Woche'},{n:'Wild',s:'ok'},{n:'Skyr / Cottage Cheese (laktosefrei)',s:'ok'},
-  {n:'Schwein',s:'no',why:'in der Darmkur meiden'},{n:'Wurst, Speck, Schinken, Leberkäse',s:'no',why:'Verarbeitetes meiden (Arztbrief)'}
+  {n:'Schwein',s:'no',why:'in der Darmkur meiden'},{n:'Wurst, Speck, Schinken, Leberkäse',s:'no',why:'Verarbeitetes meiden'}
  ]},
  {name:'Nüsse & Samen',items:[
-  {n:'Walnüsse',s:'mass',why:'max. 10 Stück – gut für Urolithin A'},{n:'Pekannüsse',s:'mass',why:'max. 10 Stück'},{n:'Mandeln',s:'mass',why:'max. 10 Stück'},{n:'Haselnüsse',s:'mass',why:'max. 10 Stück'},{n:'Paranüsse',s:'mass',why:'max. 1–2 – Selen ist bereits hoch'},{n:'Körner (Kürbis-, Sonnenblumen-, Leinsamen)',s:'mass',why:'max. 2 TL'},
+  {n:'Walnüsse',s:'mass',why:'max. 10 Stück – gut für Urolithin A'},{n:'Pekannüsse',s:'mass',why:'max. 10 Stück'},{n:'Mandeln',s:'mass',why:'max. 10 Stück'},{n:'Haselnüsse',s:'mass',why:'max. 10 Stück'},{n:'Paranüsse',s:'mass',why:'max. 1–2 – sehr selenreich'},{n:'Körner (Kürbis-, Sonnenblumen-, Leinsamen)',s:'mass',why:'max. 2 TL'},
   {n:'Cashewkerne',s:'no'},{n:'Pistazien',s:'no'}
  ]},
  {name:'Süßes & Sonstiges',items:[
@@ -33,11 +33,11 @@ const FODMAP=[
  ]},
  {name:'Fette & Öle',items:[
   {n:'Olivenöl',s:'ok'},{n:'Rapsöl',s:'ok'},{n:'Leinöl',s:'ok'},{n:'Walnussöl',s:'ok'},{n:'Butter',s:'ok'},
-  {n:'Kürbiskernöl',s:'mass',why:'nur in Maßen (Arztbrief)'},
-  {n:'Sonnenblumenöl',s:'no',why:'oxidationsfreudig (Labor)'},{n:'Kokosöl',s:'no',why:'Arztbrief: vermeiden'},{n:'Margarine',s:'no'},{n:'Distelöl / Maiskeimöl / Sojaöl',s:'no'}
+  {n:'Kürbiskernöl',s:'mass',why:'nur in Maßen'},
+  {n:'Sonnenblumenöl',s:'no',why:'oxidationsfreudig'},{n:'Kokosöl',s:'no',why:'gesättigte Fette'},{n:'Margarine',s:'no'},{n:'Distelöl / Maiskeimöl / Sojaöl',s:'no'}
  ]},
  {name:'Getränke',items:[
-  {n:'Wasser (still oder wenig Kohlensäure)',s:'ok',why:'Ziel 2 Liter'},{n:'Kräutertee (Kamille, Minze, Ingwer, Zitronengras)',s:'ok'},{n:'Tee kurz gezogen (max. 3 Min.)',s:'ok'},{n:'Kaffee',s:'mass',why:'1 Tasse; in der Darmkur reduzieren'},{n:'Grüner Tee',s:'mass',why:'gut für die Darmflora, in Kur-Phase 1 aber tabu'},{n:'Gemüsesaft (bio)',s:'ok',why:'Labor: bis 750 ml/Tag'},
+  {n:'Wasser (still oder wenig Kohlensäure)',s:'ok',why:'Ziel 2 Liter'},{n:'Kräutertee (Kamille, Minze, Ingwer, Zitronengras)',s:'ok'},{n:'Tee kurz gezogen (max. 3 Min.)',s:'ok'},{n:'Kaffee',s:'mass',why:'1 Tasse; in der Darmkur reduzieren'},{n:'Grüner Tee',s:'mass',why:'gut für die Darmflora, in Kur-Phase 1 aber tabu'},{n:'Gemüsesaft (bio)',s:'ok',why:'bis 750 ml/Tag'},
   {n:'Tee lange gezogen (5–6 Min.)',s:'no'},{n:'Fruchtsäfte',s:'no'},{n:'Limonaden, Cola, Energy',s:'no'},{n:'Kaffeeersatz (Malz, Zichorie)',s:'no'},{n:'Wein, Likör, Rum',s:'no'},{n:'Alkohol abends',s:'no',why:'Schlaf + Darm'},{n:'Sojadrink',s:'no'}
  ]}
 ];
@@ -59,7 +59,7 @@ const REZEPTE=[
  // Mittag
  {id:'m1',typ:'m',name:'Grillgemüse mit Hühnerbrust',fleisch:true,zutaten:[Z('Hühnerbrust',E),Z('Zucchini',G),Z('Paprika',G),Z('Aubergine',G),Z('Olivenöl',OE),Z('Reis',K)]},
  {id:'m2',typ:'m',name:'Gedünsteter Lachs mit Karotten, Zucchini und Kartoffeln',zutaten:[Z('Lachsfilet',E),Z('Karotten',G),Z('Zucchini',G),Z('Kartoffeln',G),Z('Zitrone',O),Z('Dille',OE)]},
- {id:'m3',typ:'m',name:'Kürbiscremesuppe mit Kokosmilch und Ingwer',zutaten:[Z('Kürbis',G),Z('Kokosmilch',M),Z('Ingwer',G),Z('Kartoffeln',G),Z('Sauerteigbrot',K)]},
+ {id:'m3',typ:'m',name:'Kürbiscremesuppe mit Kokosmilch und Ingwer',zutaten:[Z('Kürbis',G),Z('Kokosmilch (max. 100 ml/Portion, ohne Inulin)',M),Z('Ingwer',G),Z('Kartoffeln',G),Z('Sauerteigbrot',K)]},
  {id:'m4',typ:'m',name:'Faschierte Laibchen (Rind) mit Kartoffeln, Mangold und grünem Salat',fleisch:true,zutaten:[Z('Rinderfaschiertes',E),Z('Kartoffeln',G),Z('Mangold',G),Z('Blattsalat',G),Z('Eier',E),Z('Haferflocken',K),Z('Olivenöl',OE)]},
  {id:'m5',typ:'m',name:'Auberginengemüse mit Zanderfilet und Polenta',zutaten:[Z('Zanderfilet',E),Z('Aubergine',G),Z('Tomaten',G),Z('Polenta',K),Z('Olivenöl',OE)]},
  {id:'m6',typ:'m',name:'Ofengemüse mit Spiegelei',zutaten:[Z('Kartoffeln',G),Z('Karotten',G),Z('Zucchini',G),Z('Paprika',G),Z('Eier',E),Z('Rosmarin',OE),Z('Olivenöl',OE)]},
@@ -90,9 +90,9 @@ const VORRAT=[
  {n:'Präparate laut Plan (Nachschub?)',kat:'Vorrat / Präparate'}
 ];
 
-/* Atemübungen – Muster laut Arztbrief (4-7-8, 5-5, 4:6, Box 4-4-4-4, Stille) */
+/* Atemübungen – gängige Muster (4-7-8, 5-5, 4:6, Box 4-4-4-4, Stille) */
 const ATEM=[
- {id:'478',name:'4-7-8',kurz:'4 ein · 7 halten · 8 aus',beschreibung:'Durch die Nase 4 s einatmen, 7 s halten, 8 s durch den Mund ausatmen. 4 Runden. Laut Arzt deine wirksamste Übung – morgens und abends.',runden:4,muster:[{n:'Einatmen',s:4},{n:'Halten',s:7},{n:'Ausatmen',s:8}]},
+ {id:'478',name:'4-7-8',kurz:'4 ein · 7 halten · 8 aus',beschreibung:'Durch die Nase 4 s einatmen, 7 s halten, 8 s durch den Mund ausatmen. 4 Runden. Sehr wirksam zum Runterkommen – morgens und abends.',runden:4,muster:[{n:'Einatmen',s:4},{n:'Halten',s:7},{n:'Ausatmen',s:8}]},
  {id:'55',name:'5-5 kohärent',kurz:'5 ein · 5 aus',beschreibung:'Gleichmäßig 5 s ein, 5 s aus – 6 Atemzüge pro Minute. 5 Minuten, geht auch im Auto oder vor einem Termin.',runden:30,muster:[{n:'Einatmen',s:5},{n:'Ausatmen',s:5}]},
  {id:'46',name:'4:6 kohärent',kurz:'4 ein · 6 aus',beschreibung:'Längeres Ausatmen beruhigt stärker. 5 Minuten.',runden:30,muster:[{n:'Einatmen',s:4},{n:'Ausatmen',s:6}]},
  {id:'box',name:'Box-Breathing',kurz:'4 · 4 · 4 · 4',beschreibung:'4 s ein, 4 s halten, 4 s aus, 4 s halten. 6 Runden. Bei akutem Stress.',runden:6,muster:[{n:'Einatmen',s:4},{n:'Halten',s:4},{n:'Ausatmen',s:4},{n:'Halten',s:4}]},
@@ -104,7 +104,7 @@ const REGELN_STANDARD=[
  {titel:'Essenszeiten',punkte:['Essfenster max. 11 Stunden, z.B. 8–19 Uhr (16:8)','Mindestens 2 Stunden vor dem Schlafen nichts mehr essen','Keine Snacks zwischendurch, schon gar keine Kohlenhydrat-Snacks','Nur zu 80 % satt essen']},
  {titel:'Reihenfolge beim Essen',punkte:['Mit Gemüse, Salat oder einem Glas Essigwasser beginnen','Kohlenhydrate nie alleine und nie als Erstes','Süßes oder Obst nur direkt nach der Hauptmahlzeit','Gut kauen, langsam essen']},
  {titel:'Was drauf soll',punkte:['Ballaststoffe bei jeder Mahlzeit (Ziel > 30 g/Tag): Hafer, Kartoffeln, Gemüse, Leinsamen, Chia, Flohsamen','Eiweiß bei jeder Mahlzeit: Ei, Fisch, Skyr, Topfen (laktosefrei), Cottage Cheese','Fette: Olivenöl, Rapsöl, Leinöl, Walnussöl','Fermentiertes: Sauerkraut, Kimchi, Kefir, Joghurt (laktosefrei)','2 Liter Wasser oder Kräutertee']},
- {titel:'Was weg soll',punkte:['FODMAP-reich: Zwiebel, Knoblauch, Kohl, Bohnen, Weizen, Milchzucker (siehe Ampel)','Sorbit: Steinobst, Apfel, Birne, zuckerfreie Kaugummis','Fleisch nur 1–2× pro Woche, dann Rind oder Wild; kein Schwein','Wurst, Speck, Schinken, Leberkäse, Fertigprodukte, Industriezucker','Sonnenblumenöl, Kokosöl, Margarine','Alkohol abends; Kaffee reduzieren']}
+ {titel:'Was weg soll',punkte:['FODMAP-reich: Zwiebel, Knoblauch, Kohl, Bohnen, Weizen, Milchzucker (siehe Ampel)','Sorbit: Steinobst, Apfel, Birne, zuckerfreie Kaugummis','Fleisch nur 1–2× pro Woche, bevorzugt Rind oder Wild; kein Schwein','Wurst, Speck, Schinken, Leberkäse, Fertigprodukte, Industriezucker','Sonnenblumenöl, Kokosöl, Margarine','Alkohol abends; Kaffee reduzieren']}
 ];
 
 /* Kochtipps je Rezept: tags = schnell (≤ 15 Min.), tm (Thermomix), buero (Büro/unterwegs), vorkochen */
@@ -161,3 +161,13 @@ const TIPPS=[
  {titel:'🥡 Vorkochen am Sonntag',punkte:['Reis, Quinoa, Kartoffeln und Ofengemüse auf Vorrat – daraus werden in 8 Minuten Pfannen, Bowls und Salate.','Suppen in Portionen einfrieren.'],tag:'vorkochen'},
  {titel:'Thermomix-Gerichte',punkte:['Varoma = Dämpfen: Fisch oben, Gemüse unten – alles in einem Gang. Cremesuppen: kochen, pürieren, fertig. Porridge: 7 Min/90°/Stufe 1.'],tag:'tm'}
 ];
+
+/* Videos zu den Atemübungen (geprüft 06.09.2026 – Erfinder bzw. deutschsprachige Anleitungen) */
+const ATEM_VIDEOS={
+ '478':[{t:'Dr. Andrew Weil (Erfinder) – Anleitung',u:'https://www.youtube.com/watch?v=YRPh_GaiL8s'},{t:'Dr. Weil – Wirkung & Demonstration (2024)',u:'https://www.youtube.com/watch?v=Egr8iGBg8Oc'}],
+ '55':[{t:'Kohärentes Atmen 5 Min. inkl. Einführung (deutsch)',u:'https://www.youtube.com/watch?v=Lu7Fb4zwKhE'},{t:'Rhythmus 5 s ein/aus – 10 Min. (deutsch)',u:'https://www.youtube.com/watch?v=-CaKwpHoaCQ'}],
+ '46':[{t:'Rhythmus-Video 5-5 verwenden, beim Ausatmen bewusst länger (deutsch)',u:'https://www.youtube.com/watch?v=-CaKwpHoaCQ'}],
+ 'box':[{t:'Geführte Box-Atmung 4-4-4-4 (deutsch)',u:'https://www.youtube.com/watch?v=wazCdqIBi2c'}],
+ 'stille':[{t:'Vagusnerv-Meditation – Nervensystem beruhigen (deutsch)',u:'https://www.youtube.com/watch?v=MoRUOUpNsGM'}]
+};
+ATEM.forEach(x=>x.videos=ATEM_VIDEOS[x.id]||[]);
