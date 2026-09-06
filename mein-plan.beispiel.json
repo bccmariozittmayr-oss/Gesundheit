@@ -1,0 +1,27 @@
+{
+  "_hinweis": "Vorlage OHNE echte Daten. Die echte Datei heißt mein-plan.json, liegt NUR auf OneDrive und wird in der App unter „Mehr → Plan laden\" gewählt. Sie gehört nie ins Git.",
+  "version": 1,
+  "stand": "TT.MM.JJJJ",
+  "quelle": "Arztpraxis, Einnahmeplan vom …",
+  "anker": { "plan": "2026-01-01" },
+  "praeparate": [
+    { "id": "beispiel", "name": "Präparat A", "einheit": "Kapsel", "hinweis": "zur Mahlzeit", "anker": "plan",
+      "phasen": [
+        { "abTag": 0, "bisTag": 30, "m": 2, "notiz": "Tag 0–30: 2 morgens" },
+        { "abTag": 31, "bisTag": null, "m": 1, "a": 1, "notiz": "danach 1-0-1" }
+      ] },
+    { "id": "kur1", "name": "Präparat B (Darmkur)", "einheit": "Kapsel", "anker": "kur", "detoxPause": true,
+      "phasen": [ { "abTag": 6, "bisTag": 66, "nu": 1, "n": 1, "notiz": "ab Kur-Tag 7, nüchtern + vor dem Schlafen" } ] }
+  ],
+  "_schluessel": "Slots: nu = nüchtern, m = morgens/Frühstück, mi = mittags, a = abends, n = vor dem Schlafen. abTag/bisTag = Tage ab dem Anker (plan-Datum oder Darmkur-Start = Tag 0). bisTag null = unbegrenzt.",
+  "bedarf": [ { "name": "Präparat C", "dosis": "1-0-1", "wann": "bei Bedarf" } ],
+  "sport": [ { "name": "Sportgetränk", "wann": "zum Sport", "dosis": "laut Packung" } ],
+  "persoenlich": {
+    "kost": ["FODMAP-arm"],
+    "meiden": [ { "name": "Sorbit", "grund": "Unverträglichkeit", "treffer": ["Sorbit", "Apfel", "Birne"] } ]
+  },
+  "diagnosen": ["Diagnose 1", "Diagnose 2"],
+  "befunde": [ { "name": "Wert", "wert": "123", "ref": "< 100", "status": "hoch", "datum": "TT.MM.JJJJ", "bedeutung": "kurz erklärt" } ],
+  "training": { "hfZonen": { "A": "Puls < 120" }, "hinweise": ["…"] },
+  "termine": [ { "name": "Kontrolle", "datum": "Monat JJJJ", "details": "…" } ]
+}

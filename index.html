@@ -2,776 +2,694 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1f6f5f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gesundheit">
-<title>Gesundheitsprotokoll</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Gesundheit</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#1a202c;min-height:100vh;padding-bottom:85px}
-.header{background:linear-gradient(135deg,#0284c7,#0ea5e9);color:white;padding:14px 20px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-.header h1{font-size:19px;font-weight:700}
-.header p{font-size:13px;opacity:.85;margin-top:2px}
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e2e8f0;display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:100}
-.nav-btn{flex:1;padding:8px 4px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:#94a3b8;transition:color .2s}
-.nav-btn.active{color:#0284c7}
-.nav-btn svg{width:21px;height:21px}
-.page{display:none;padding:14px}
-.page.active{display:block}
-.card{background:white;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.card-title{font-size:14px;font-weight:600;color:#0284c7;margin-bottom:10px}
-.severity-row{margin-bottom:10px}
-.sev-label{font-size:13px;color:#64748b;margin-bottom:5px}
-.sev-btns{display:flex;gap:5px}
-.sev-btn{flex:1;padding:7px 2px;border:2px solid #e2e8f0;border-radius:8px;background:white;font-size:12px;cursor:pointer;font-weight:500;transition:all .15s}
-.sev-btn[data-val="keine"].sel{background:#dcfce7;border-color:#16a34a;color:#16a34a}
-.sev-btn[data-val="leicht"].sel{background:#fef9c3;border-color:#ca8a04;color:#ca8a04}
-.sev-btn[data-val="mittel"].sel{background:#fed7aa;border-color:#ea580c;color:#ea580c}
-.sev-btn[data-val="stark"].sel{background:#fee2e2;border-color:#dc2626;color:#dc2626}
-.check-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
-.check-item:last-child{border-bottom:none}
-.check-item input[type="checkbox"]{width:20px;height:20px;cursor:pointer;accent-color:#0284c7;flex-shrink:0}
-.check-item label{font-size:14px;cursor:pointer;flex:1}
-.inp-label{font-size:12px;color:#64748b;margin-bottom:3px}
-.inp-row{margin-bottom:10px}
-input[type="text"],input[type="number"],input[type="time"],textarea{width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;background:#f8fafc;outline:none;transition:border-color .2s}
-input:focus,textarea:focus{border-color:#0284c7;background:white}
-textarea{resize:none;min-height:70px}
-.two-col{display:flex;gap:10px}
-.two-col>*{flex:1}
-.range-row{margin-bottom:12px}
-.range-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-.range-lbl{font-size:13px;color:#64748b}
-.range-val{font-size:18px;font-weight:700;color:#0284c7;min-width:28px;text-align:right}
-input[type="range"]{width:100%;accent-color:#0284c7;height:4px}
-.range-sub{display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-top:2px}
-.save-btn{width:100%;padding:15px;background:linear-gradient(135deg,#0284c7,#0ea5e9);color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:6px;box-shadow:0 4px 12px rgba(2,132,199,.3)}
-.toast{position:fixed;bottom:95px;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:11px 22px;border-radius:24px;font-size:14px;font-weight:500;z-index:200;opacity:0;transition:opacity .3s;white-space:nowrap}
-.toast.show{opacity:1}
-.entry-card{background:white;border-radius:12px;padding:13px 15px;margin-bottom:9px;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer;display:flex;align-items:center;justify-content:space-between}
-.entry-date{font-size:14px;font-weight:600}
-.entry-sum{font-size:12px;color:#64748b;margin-top:3px}
-.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:600;margin-right:3px}
-.b-keine{background:#dcfce7;color:#16a34a}
-.b-leicht{background:#fef9c3;color:#ca8a04}
-.b-mittel{background:#fed7aa;color:#ea580c}
-.b-stark{background:#fee2e2;color:#dc2626}
-.back-btn{padding:7px 12px;background:#e2e8f0;border:none;border-radius:8px;cursor:pointer;font-size:14px}
-.det-hdr{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
-.det-hdr strong{font-size:15px;flex:1}
-.edit-btn{padding:7px 14px;background:#0284c7;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600}
-.exp-btn{width:100%;padding:13px;border:2px solid #0284c7;color:#0284c7;background:white;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px}
-.exp-btn.green{border-color:#16a34a;color:#16a34a}
-.exp-out{background:white;border-radius:12px;padding:14px;font-size:11px;line-height:1.6;white-space:pre-wrap;font-family:monospace;color:#1a202c;max-height:50vh;overflow-y:auto;border:1px solid #e2e8f0}
-.empty{text-align:center;padding:40px 20px;color:#94a3b8;font-size:15px}
-.today-tag{text-align:center;margin-bottom:10px}
-.today-tag span{display:inline-block;padding:3px 14px;background:#dbeafe;color:#1d4ed8;border-radius:20px;font-size:12px;font-weight:600}
-.edit-banner{background:#fff7ed;border:2px solid #f97316;border-radius:10px;padding:10px 14px;margin-bottom:10px;display:none;text-align:center;font-size:13px;font-weight:600;color:#c2410c}
-.edit-banner.show{display:block}
-.edit-banner button{margin-left:8px;padding:4px 12px;background:#f97316;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600}
-/* Auswertung */
-.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
-.stat-box{background:#f8fafc;border-radius:10px;padding:12px;text-align:center}
-.stat-val{font-size:24px;font-weight:700;color:#0284c7}
-.stat-lbl{font-size:11px;color:#64748b;margin-top:2px}
-.pattern-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9}
-.pattern-item:last-child{border-bottom:none}
-.pattern-icon{font-size:20px;flex-shrink:0;margin-top:1px}
-.pattern-text{font-size:13px;color:#374151;line-height:1.5}
-.pattern-text strong{color:#1a202c}
-.chart-wrap{position:relative;height:220px;margin-top:8px}
-.trend-up{color:#dc2626;font-weight:700}
-.trend-down{color:#16a34a;font-weight:700}
-.trend-same{color:#64748b;font-weight:700}
-.warn-box{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px;margin-bottom:8px;font-size:13px;color:#dc2626}
-.good-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;margin-bottom:8px;font-size:13px;color:#16a34a}
-.info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;margin-bottom:8px;font-size:13px;color:#1d4ed8}
+:root{
+  --bg:#f3f5f4;--card:#fff;--txt:#1d2a27;--mut:#6b7c77;--line:#e1e7e4;
+  --p:#1f6f5f;--p2:#e4f1ed;--ok:#2e8b57;--ok2:#e3f4ea;--warn:#c98a00;--warn2:#fff3d6;--bad:#c0392b;--bad2:#fbe4e1;
+  --r:14px;--nav:64px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.4;-webkit-text-size-adjust:100%}
+body{padding-bottom:calc(var(--nav) + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:var(--p);color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px}
+header h1{margin:0;font-size:18px;font-weight:600}
+header .sub{font-size:13px;opacity:.85;margin-top:2px}
+main{padding:14px 14px 20px;max-width:720px;margin:0 auto}
+.page{display:none}.page.on{display:block}
+.card{background:var(--card);border-radius:var(--r);padding:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.card h2{margin:0 0 10px;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card h2 small{font-weight:400;color:var(--mut);font-size:13px}
+.hint{font-size:13px;color:var(--mut)}
+.badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--p2);color:var(--p);font-weight:600}
+.badge.ok{background:var(--ok2);color:var(--ok)}.badge.warn{background:var(--warn2);color:var(--warn)}.badge.bad{background:var(--bad2);color:var(--bad)}
+.banner{border-radius:var(--r);padding:12px 14px;margin-bottom:12px;font-size:14px}
+.banner.warn{background:var(--warn2);border:1px solid #f1d58a}.banner.info{background:var(--p2)}.banner.bad{background:var(--bad2)}
+button{font:inherit;cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:10px;padding:11px 16px;background:var(--p);color:#fff;font-weight:600;font-size:15px}
+.btn.sec{background:var(--p2);color:var(--p)}.btn.ghost{background:transparent;color:var(--p);padding:6px 8px}.btn.sm{padding:7px 12px;font-size:13px}
+.btn.full{width:100%;margin-top:8px}
+.btn:disabled{opacity:.5}
+/* Checkliste */
+.slot{margin-bottom:10px}
+.slot-h{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin:8px 0 4px}
+.slot-h .t{font-weight:400;text-transform:none;letter-spacing:0}
+.chk{display:flex;align-items:center;gap:12px;padding:10px 6px;border-top:1px solid var(--line);min-height:52px}
+.chk:first-of-type{border-top:0}
+.chk .box{width:26px;height:26px;border-radius:8px;border:2px solid #b9c7c2;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;background:#fff}
+.chk.done .box{background:var(--ok);border-color:var(--ok)}
+.chk .lbl{flex:1}.chk .lbl b{font-weight:600}.chk .lbl span{display:block;font-size:12.5px;color:var(--mut)}
+.chk.done .lbl b{text-decoration:line-through;color:var(--mut)}
+.chk.paused{opacity:.55}.chk .dose{font-weight:700;color:var(--p);white-space:nowrap}
+/* Symptome */
+.sev{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:4px 0 8px}
+.sev button{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:9px 4px;font-size:13.5px;color:var(--txt)}
+.sev button.s0.sel{background:var(--ok2);border-color:var(--ok);color:var(--ok)}
+.sev button.s1.sel{background:#f0f6dc;border-color:#8bb400;color:#5d7a00}
+.sev button.s2.sel{background:var(--warn2);border-color:var(--warn);color:var(--warn)}
+.sev button.s3.sel{background:var(--bad2);border-color:var(--bad);color:var(--bad)}
+.row{display:flex;gap:10px;align-items:center;margin:6px 0}
+.row label{flex:1;font-size:14.5px}
+input[type=number],input[type=text],input[type=date],input[type=time],select,textarea{font:inherit;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;background:#fff;color:var(--txt);width:100%}
+input[type=number]{width:96px;text-align:center}input[type=time]{width:110px}
+input[type=range]{width:100%}
+textarea{min-height:64px;resize:vertical}
+.lbl-sm{font-size:13px;color:var(--mut);margin:8px 0 3px}
+/* Nav */
+nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:#fff;border-top:1px solid var(--line);display:flex;z-index:10}
+nav button{flex:1;border:0;background:none;color:var(--mut);font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+nav button .i{font-size:22px;line-height:1}
+nav button.on{color:var(--p);font-weight:600}
+/* Tabs */
+.tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto}
+.tabs button{flex:1;border:0;background:#fff;border-radius:999px;padding:9px 12px;font-size:14px;color:var(--mut);white-space:nowrap}
+.tabs button.on{background:var(--p);color:#fff;font-weight:600}
+.sub{display:none}.sub.on{display:block}
+/* Ampel */
+.food{display:flex;align-items:center;gap:10px;padding:8px 4px;border-top:1px solid var(--line);font-size:14.5px}
+.food .dot{width:12px;height:12px;border-radius:50%;flex:none}
+.dot.ok{background:var(--ok)}.dot.mass{background:var(--warn)}.dot.no{background:var(--bad)}
+.food .n{flex:1}.food .why{font-size:12px;color:var(--mut)}
+.food .tag{font-size:11px;padding:1px 6px;border-radius:6px;background:var(--bad2);color:var(--bad);font-weight:600}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--mut);margin:6px 0 10px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:5px}
+.search{margin-bottom:10px}
+details{margin-bottom:8px}summary{cursor:pointer;font-weight:600;padding:8px 0;font-size:15px}
+/* Wochenplan */
+.day{margin-bottom:10px}
+.day h3{margin:0 0 4px;font-size:14px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.meal{display:flex;gap:10px;align-items:center;padding:8px 6px;border-top:1px solid var(--line)}
+.meal .k{font-size:11px;color:var(--mut);width:44px;flex:none;text-transform:uppercase}
+.meal .n{flex:1;font-size:14.5px}.meal .n small{display:block;color:var(--mut);font-size:12px}
+.meal button{border:0;background:var(--p2);color:var(--p);border-radius:8px;padding:6px 9px;font-size:13px}
+/* Einkauf */
+.shop .chk{min-height:44px;padding:7px 6px}
+.shop h3{margin:12px 0 2px;font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+/* Atmen */
+.breath{display:flex;flex-direction:column;align-items:center;padding:16px 0 6px}
+.orb{width:180px;height:180px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#8dd3c0,var(--p));display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:600;transition:transform 1s linear;transform:scale(.6);text-align:center;padding:16px}
+.orb small{display:block;font-size:14px;font-weight:400;opacity:.9}
+.bstat{margin-top:14px;font-size:14px;color:var(--mut)}
+.ex{display:flex;gap:12px;align-items:center;padding:10px 4px;border-top:1px solid var(--line)}
+.ex .n{flex:1}.ex .n b{display:block}.ex .n span{font-size:13px;color:var(--mut)}
+/* Verlauf */
+canvas{width:100%;height:200px;display:block}
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.stat div{background:var(--p2);border-radius:10px;padding:10px;text-align:center}
+.stat b{display:block;font-size:22px;color:var(--p)}.stat span{font-size:12px;color:var(--mut)}
+.ent{padding:8px 4px;border-top:1px solid var(--line);font-size:14px;display:flex;gap:8px;align-items:center}
+.ent .d{width:56px;flex:none;font-weight:600}.ent .s{flex:1;color:var(--mut);font-size:13px}
+table.bf{width:100%;border-collapse:collapse;font-size:13.5px}
+table.bf td{padding:7px 4px;border-top:1px solid var(--line);vertical-align:top}
+table.bf td:first-child{font-weight:600}
+/* Einstellungen */
+.set{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line);gap:10px}
+.set:first-of-type{border-top:0}
+.set .l{flex:1;font-size:14.5px}.set .l small{display:block;color:var(--mut);font-size:12.5px}
+.sw{width:48px;height:28px;border-radius:999px;background:#c8d3cf;position:relative;border:0;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
+.sw.on{background:var(--ok)}.sw.on::after{left:23px}
+.medit{padding:8px 0;border-top:1px solid var(--line)}
+.medit .n{font-weight:600;font-size:14.5px}.medit .r{display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap}
+.medit input[type=number]{width:56px;padding:6px}
+.medit .r span{font-size:12px;color:var(--mut)}
+.toast{position:fixed;left:50%;bottom:calc(var(--nav) + 16px);transform:translateX(-50%);background:#1d2a27;color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:20;white-space:nowrap}
+.toast.on{opacity:1}
+.empty{text-align:center;color:var(--mut);padding:20px 10px;font-size:14px}
+.progress{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:6px 0 2px}
+.progress i{display:block;height:100%;background:var(--ok)}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>🩺 Gesundheitsprotokoll</h1>
-  <p id="hdrDate">Lade...</p>
-</div>
+<header>
+  <h1 id="hd-title">Heute</h1>
+  <div class="sub" id="hd-sub"></div>
+</header>
 
-<!-- HEUTE -->
-<div class="page active" id="page-heute">
-  <div class="today-tag"><span id="todayTag">Heute</span></div>
-  <div class="edit-banner" id="edit-banner">✏️ Du bearbeitest: <span id="edit-banner-date"></span><button onclick="resetToToday()">Zurück zu Heute</button></div>
+<main>
 
+<!-- ================= HEUTE ================= -->
+<section class="page on" id="p-heute">
+  <div id="heute-banner"></div>
   <div class="card">
-    <div class="card-title">😊 Allgemeinbefinden</div>
-    <div class="range-row">
-      <div class="range-hdr"><span class="range-lbl">Gesamtzustand</span><span class="range-val" id="v-gesamt">5</span></div>
-      <input type="range" min="1" max="10" value="5" id="sl-gesamt" oninput="document.getElementById('v-gesamt').textContent=this.value">
-      <div class="range-sub"><span>Sehr schlecht</span><span>Sehr gut</span></div>
-    </div>
-    <div class="range-row">
-      <div class="range-hdr"><span class="range-lbl">Stresslevel</span><span class="range-val" id="v-stress">3</span></div>
-      <input type="range" min="1" max="10" value="3" id="sl-stress" oninput="document.getElementById('v-stress').textContent=this.value">
-      <div class="range-sub"><span>Kein Stress</span><span>Sehr viel</span></div>
-    </div>
-    <div class="two-col">
-      <div class="inp-row"><div class="inp-label">Schlaf (h)</div><input type="number" id="schlaf" placeholder="7" min="0" max="24" step="0.5"></div>
-      <div class="inp-row"><div class="inp-label">Gewicht (kg)</div><input type="number" id="gewicht" placeholder="90.0" step="0.1"></div>
+    <h2>💊 Tabletten <small id="med-count"></small></h2>
+    <div class="progress"><i id="med-prog" style="width:0"></i></div>
+    <div id="med-list"></div>
+  </div>
+  <div class="card" id="train-card">
+    <h2>🏋️ Training heute</h2>
+    <div id="train-list"></div>
+  </div>
+  <div class="card">
+    <h2>🌬️ Atmen heute <small>Arzt: 4-7-8 und 5-5 fest im Alltag</small></h2>
+    <div id="atem-list"></div>
+  </div>
+  <div class="card">
+    <h2>🩺 Kurz-Check</h2>
+    <div class="row"><label>Kaffee heute <span class="hint" id="kaffee-hint"></span></label><div style="display:flex;gap:6px;align-items:center"><button class="btn sec sm" id="kaffee-minus">−</button><b id="kaffee-v" style="min-width:20px;text-align:center">0</b><button class="btn sec sm" id="kaffee-plus">+</button></div></div>
+    <div class="lbl-sm">Gefühl im Hals (Kloß, Enge)</div>
+    <div class="sev" data-f="hals"></div>
+    <div class="lbl-sm">Bauch (Blähungen, Völlegefühl)</div>
+    <div class="sev" data-f="bauch"></div>
+    <div class="lbl-sm">Stress heute: <b id="stress-v">5</b>/10</div>
+    <input type="range" id="stress" min="0" max="10" value="5">
+    <div class="row"><label>Schlaf (Stunden)</label><input type="number" id="schlaf" step="0.5" min="0" max="14" placeholder="8"></div>
+    <div class="row"><label>Gewicht (kg)</label><input type="number" id="gewicht" step="0.1" placeholder="83.0"></div>
+    <div class="row"><label>Sport heute</label><button class="sw" id="sport" aria-label="Sport heute"></button></div>
+    <div class="lbl-sm">Notiz (Essen, Auffälliges, Stuhlgang …)</div>
+    <textarea id="notiz" placeholder="z.B. Hals nach Kaffee stärker …"></textarea>
+    <div class="hint" id="save-info" style="margin-top:6px">Wird automatisch gespeichert.</div>
+  </div>
+</section>
+
+<!-- ================= ESSEN ================= -->
+<section class="page" id="p-essen">
+  <div class="tabs">
+    <button class="on" data-sub="ampel">Ampel</button>
+    <button data-sub="woche">Wochenplan</button>
+    <button data-sub="einkauf">Einkauf</button>
+    <button data-sub="tipps">Tipps</button>
+    <button data-sub="regeln">Regeln</button>
+  </div>
+
+  <div class="sub" id="s-tipps"><div id="tipps"></div></div>
+
+  <div class="sub on" id="s-ampel">
+    <div class="card">
+      <input type="text" class="search" id="food-q" placeholder="Lebensmittel suchen … z.B. Apfel">
+      <div class="legend"><span><i class="dot ok"></i>passt</span><span><i class="dot mass"></i>in Maßen</span><span><i class="dot no"></i>meiden</span></div>
+      <div id="food-pers"></div>
+      <div id="food-list"></div>
     </div>
   </div>
 
+  <div class="sub" id="s-woche">
+    <div class="card">
+      <h2>Wochenplan <small id="woche-info"></small></h2>
+      <div class="hint" style="margin-bottom:8px">FODMAP-arm, Fleisch max. 2× pro Woche (Rind/Huhn), Abendessen leicht. Tipp auf ↻ tauscht ein Gericht.</div>
+      <div id="woche"></div>
+      <button class="btn sec full" id="woche-neu">↻ Ganze Woche neu mischen</button>
+    </div>
+  </div>
+
+  <div class="sub" id="s-einkauf">
+    <div class="card shop">
+      <h2>Einkaufsliste <small>aus dem Wochenplan</small></h2>
+      <div id="einkauf"></div>
+      <button class="btn ghost" id="einkauf-reset">Haken zurücksetzen</button>
+    </div>
+  </div>
+
+  <div class="sub" id="s-regeln">
+    <div id="regeln"></div>
+  </div>
+</section>
+
+<!-- ================= ATMEN ================= -->
+<section class="page" id="p-atmen">
   <div class="card">
-    <div class="card-title">🔥 Symptome</div>
-    <div class="severity-row">
-      <div class="sev-label">Halsenge / Engegefühl</div>
-      <div class="sev-btns" data-field="halsenge">
-        <button class="sev-btn" data-val="keine">Keine</button>
-        <button class="sev-btn" data-val="leicht">Leicht</button>
-        <button class="sev-btn" data-val="mittel">Mittel</button>
-        <button class="sev-btn" data-val="stark">Stark</button>
+    <div class="breath">
+      <div class="orb" id="orb">Bereit<small id="orb-sub">Übung wählen</small></div>
+      <div class="bstat" id="bstat">&nbsp;</div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn" id="b-start">Start</button>
+        <button class="btn sec" id="b-stop">Stopp</button>
       </div>
     </div>
-    <div class="severity-row">
-      <div class="sev-label">Brennen im Hals / Magen</div>
-      <div class="sev-btns" data-field="brennen">
-        <button class="sev-btn" data-val="keine">Keine</button>
-        <button class="sev-btn" data-val="leicht">Leicht</button>
-        <button class="sev-btn" data-val="mittel">Mittel</button>
-        <button class="sev-btn" data-val="stark">Stark</button>
-      </div>
-    </div>
-    <div class="severity-row">
-      <div class="sev-label">Sodbrennen</div>
-      <div class="sev-btns" data-field="sodbrennen">
-        <button class="sev-btn" data-val="keine">Keine</button>
-        <button class="sev-btn" data-val="leicht">Leicht</button>
-        <button class="sev-btn" data-val="mittel">Mittel</button>
-        <button class="sev-btn" data-val="stark">Stark</button>
-      </div>
-    </div>
-    <div class="severity-row">
-      <div class="sev-label">Aufstoßen</div>
-      <div class="sev-btns" data-field="aufstossen">
-        <button class="sev-btn" data-val="keine">Keine</button>
-        <button class="sev-btn" data-val="leicht">Leicht</button>
-        <button class="sev-btn" data-val="mittel">Mittel</button>
-        <button class="sev-btn" data-val="stark">Stark</button>
-      </div>
-    </div>
-    <div class="inp-row" style="margin-top:8px">
-      <div class="inp-label">Wann am stärksten?</div>
-      <input type="text" id="wann" placeholder="z.B. abends ab 18 Uhr">
-    </div>
-    <div class="inp-row">
-      <div class="inp-label">Bemerkungen zu Symptomen</div>
-      <textarea id="sym-bem" placeholder="z.B. nach Kaffee stärker, weniger nach Bewegung..."></textarea>
-    </div>
   </div>
-
   <div class="card">
-    <div class="card-title">💊 Medikamente</div>
-    <div class="check-item"><input type="checkbox" id="m-du-mo"><label for="m-du-mo">Durotiv 40mg — Morgens</label></div>
-    <div class="check-item"><input type="checkbox" id="m-du-ab"><label for="m-du-ab">Durotiv 40mg — Abends</label></div>
-    <div class="check-item"><input type="checkbox" id="m-su-mi"><label for="m-su-mi">Sucralan 1G/5ml — Mittags</label></div>
-    <div class="check-item"><input type="checkbox" id="m-su-na"><label for="m-su-na">Sucralan 1G/5ml — Nachts</label></div>
-    <div class="inp-row" style="margin-top:4px">
-      <div class="inp-label">Gaviscon — Anzahl Tabletten heute</div>
-      <div class="two-col">
-        <input type="number" id="m-gav-n" placeholder="0" min="0" max="20">
-        <input type="text" id="m-gav-z" placeholder="Uhrzeiten z.B. 10:00, 20:00">
-      </div>
+    <h2>Übungen</h2>
+    <div id="ex-list"></div>
+  </div>
+  <div class="card">
+    <h2>Warum</h2>
+    <div class="hint">Laut Arztbrief hat dein Nervensystem am besten auf die <b>4-7-8-Atmung</b> und die <b>5-5-Atmung</b> reagiert — „regelmäßig im Alltag etablieren". Ruhige Atmung stimuliert den Vagusnerv; das senkt laut Darmbefund auch den Zonulin-Wert (Leaky Gut). Dazu: 15–30 Minuten Stille pro Tag.</div>
+  </div>
+</section>
+
+<!-- ================= VERLAUF ================= -->
+<section class="page" id="p-verlauf">
+  <div class="tabs">
+    <button class="on" data-sub="chart">Verlauf</button>
+    <button data-sub="befunde">Befunde</button>
+    <button data-sub="termine">Termine</button>
+  </div>
+  <div class="sub on" id="s-chart">
+    <div class="card">
+      <div class="stat" id="stats"></div>
+      <canvas id="chart"></canvas>
+      <div class="legend" style="margin-top:8px"><span><i class="dot" style="background:#c0392b"></i>Hals</span><span><i class="dot" style="background:#c98a00"></i>Bauch</span><span><i class="dot" style="background:#6b7c77"></i>Stress/3</span></div>
     </div>
-    <div class="inp-row">
-      <div class="inp-label">Rennie — Anzahl Tabletten heute</div>
-      <div class="two-col">
-        <input type="number" id="m-ren-n" placeholder="0" min="0" max="20">
-        <input type="text" id="m-ren-z" placeholder="Uhrzeiten z.B. 10:00, 20:00">
-      </div>
-    </div>
-    <div class="inp-row" style="margin-top:8px">
-      <div class="inp-label">Sonstiges</div>
-      <input type="text" id="m-son" placeholder="Anderes Medikament...">
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">🌅 Frühstück</div>
-    <div class="inp-row"><div class="inp-label">Uhrzeit</div><input type="time" id="fr-zeit"></div>
-    <div class="check-item"><input type="checkbox" id="fr-hafer"><label for="fr-hafer">Haferschleim</label></div>
-    <div class="check-item"><input type="checkbox" id="fr-kamille"><label for="fr-kamille">Kamillentee</label></div>
-    <div class="check-item"><input type="checkbox" id="fr-ht-sch"><label for="fr-ht-sch">Hotoast mit Putenschinken</label></div>
-    <div class="check-item"><input type="checkbox" id="fr-ht-mar"><label for="fr-ht-mar">Hotoast mit Marmelade</label></div>
-    <div class="inp-row" style="margin-top:8px"><div class="inp-label">Sonstiges</div><input type="text" id="fr-son" placeholder="Anderes..."></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">🍽️ Mittagessen</div>
-    <div class="inp-row"><div class="inp-label">Uhrzeit</div><input type="time" id="mi-zeit"></div>
-    <div class="check-item"><input type="checkbox" id="mi-huhn"><label for="mi-huhn">Gedünstetes Hühnerfleisch mit Gemüse</label></div>
-    <div class="check-item"><input type="checkbox" id="mi-lachs"><label for="mi-lachs">Gedünsteter Lachs mit Gemüse</label></div>
-    <div class="check-item"><input type="checkbox" id="mi-karotten"><label for="mi-karotten">Gemüse: Karotten</label></div>
-    <div class="check-item"><input type="checkbox" id="mi-zucchini"><label for="mi-zucchini">Gemüse: Zucchini</label></div>
-    <div class="check-item"><input type="checkbox" id="mi-karfiol"><label for="mi-karfiol">Gemüse: Karfiol</label></div>
-    <div class="check-item"><input type="checkbox" id="mi-kartoffel"><label for="mi-kartoffel">Gemüse: Kartoffel</label></div>
-    <div class="check-item"><input type="checkbox" id="mi-reis"><label for="mi-reis">Reis</label></div>
-    <div class="check-item"><input type="checkbox" id="mi-strudel"><label for="mi-strudel">Gemüsestrudel mit Joghurt-Rahm-Soße</label></div>
-    <div class="inp-row" style="margin-top:8px"><div class="inp-label">Sonstiges</div><input type="text" id="mi-son" placeholder="Anderes..."></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">🌙 Abendessen</div>
-    <div class="inp-row"><div class="inp-label">Uhrzeit</div><input type="time" id="ab-zeit"></div>
-    <div class="inp-row"><div class="inp-label">Was gegessen?</div><textarea id="ab-was" placeholder="z.B. Joghurt, Haferschleim..."></textarea></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">🍎 Snacks / Zwischenmahlzeiten</div>
-    <textarea id="snacks" placeholder="z.B. Banane um 10 Uhr, Joghurt um 15 Uhr..."></textarea>
-  </div>
-
-  <div class="card">
-    <div class="card-title">💧 Getränke</div>
-    <div class="two-col">
-      <div class="inp-row"><div class="inp-label">Wasser (ml)</div><input type="number" id="gt-wasser" placeholder="1500" step="100"></div>
-      <div class="inp-row"><div class="inp-label">Kaffee (Tassen)</div><input type="number" id="gt-kaffee" placeholder="0" min="0" max="10"></div>
-    </div>
-    <div class="inp-row"><div class="inp-label">Kaffee Uhrzeit(en)</div><input type="text" id="gt-kaf-zeit" placeholder="z.B. 08:00, 10:30"></div>
-    <div class="check-item"><input type="checkbox" id="gt-alk"><label for="gt-alk">Alkohol konsumiert</label></div>
-    <div class="inp-row" style="margin-top:8px"><div class="inp-label">Was / Wieviel (Alkohol)</div><input type="text" id="gt-alk-was" placeholder="z.B. 1 Bier"></div>
-    <div class="inp-row"><div class="inp-label">Sonstiges</div><input type="text" id="gt-son" placeholder="z.B. Kräutertee, Limo..."></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">🕐 Letztes Essen vor dem Schlafen</div>
-    <div class="two-col">
-      <div class="inp-row"><div class="inp-label">Uhrzeit</div><input type="time" id="le-zeit"></div>
-      <div class="inp-row"><div class="inp-label">Was</div><input type="text" id="le-was" placeholder="z.B. Joghurt"></div>
+    <div class="card">
+      <h2>Letzte Tage</h2>
+      <div id="entries"></div>
     </div>
   </div>
+  <div class="sub" id="s-befunde"><div id="befunde"></div></div>
+  <div class="sub" id="s-termine"><div id="termine"></div></div>
+</section>
 
+<!-- ================= MEHR ================= -->
+<section class="page" id="p-mehr">
   <div class="card">
-    <div class="card-title">📝 Notizen &amp; Besonderheiten</div>
-    <textarea id="notizen" placeholder="Besondere Ereignisse, Stress, Beobachtungen..."></textarea>
+    <h2>Mein Plan <small id="plan-stand"></small></h2>
+    <div id="plan-status" class="hint" style="margin-bottom:8px"></div>
+    <input type="file" id="plan-file" accept=".json,application/json" style="display:none">
+    <button class="btn full" id="plan-load">📂 Plan laden (mein-plan.json)</button>
+    <div class="hint" style="margin-top:8px">Die Datei liegt nur auf deinem OneDrive und bleibt nur auf diesem Gerät. Nichts davon ist im Internet.</div>
   </div>
-
-  <button class="save-btn" onclick="saveEntry()">✓ Tag speichern</button>
-</div>
-
-<!-- VERLAUF -->
-<div class="page" id="page-verlauf">
-  <div id="vl-list"></div>
-  <div id="vl-detail" style="display:none"></div>
-</div>
-
-<!-- AUSWERTUNG -->
-<div class="page" id="page-auswertung">
-  <div id="aus-content"><div class="empty">Noch keine Daten.<br>Trage zuerst ein paar Tage ein!</div></div>
-</div>
-
-<!-- ARZT-BERICHT -->
-<div class="page" id="page-export">
   <div class="card">
-    <div class="card-title">📋 Arzt-Bericht für 25.03.2026</div>
-    <p style="font-size:13px;color:#64748b;margin-bottom:12px">Ordensklinikum Linz — Zwerchfellbruch &amp; Sodbrennen</p>
-    <button class="exp-btn" onclick="generateExport()">Bericht generieren</button>
-    <button class="exp-btn green" onclick="copyExport()">Bericht kopieren (für E-Mail / WhatsApp)</button>
+    <h2>Darmkur</h2>
+    <div class="set"><div class="l">Startdatum (Tag 1 = erster Reduziertag)<small>Daraus rechnet die App Detox-Tage, Aufbau und Erhaltung.</small></div><input type="date" id="kur-start" style="width:150px"></div>
+    <div id="kur-info" class="hint"></div>
   </div>
-  <div id="exp-out"></div>
-</div>
+  <div class="card">
+    <h2>Erinnerungen</h2>
+    <div class="set"><div class="l">Benachrichtigungen<small id="notif-info">Nur solange die App/der Browser offen ist.</small></div><button class="sw" id="notif-sw"></button></div>
+    <div id="times"></div>
+    <button class="btn sec full" id="ics">📅 In Kalender übernehmen (.ics)</button>
+    <div class="hint" style="margin-top:6px">Verlässlichste Erinnerung am Handy: die .ics-Datei einmal in den Kalender importieren — dann klingelt der Kalender jeden Tag zu den Zeiten oben, auch wenn die App zu ist.</div>
+  </div>
+  <div class="card">
+    <h2>Dosierung anpassen</h2>
+    <div class="hint" style="margin-bottom:6px">Nur die aktuell laufende Phase. Reihenfolge: morgens – mittags – abends – nachts. Präparat aus = wird nicht angezeigt.</div>
+    <div id="med-edit"></div>
+  </div>
+  <div class="card">
+    <h2>Daten</h2>
+    <button class="btn sec full" id="exp">⬇️ Protokoll sichern (JSON)</button>
+    <input type="file" id="imp-file" accept=".json" style="display:none">
+    <button class="btn sec full" id="imp">⬆️ Protokoll wiederherstellen</button>
+    <div class="hint" style="margin-top:8px" id="data-info"></div>
+  </div>
+  <div class="card">
+    <div class="hint">Diese App ersetzt keinen Arzt. Grundlage sind die Befunde und der Einnahmeplan von dieFITMACHER (Stand 04.09.2026). Bei Änderungen des Plans: mein-plan.json anpassen und neu laden.</div>
+  </div>
+</section>
 
+</main>
+
+<nav>
+  <button class="on" data-p="heute"><span class="i">☀️</span>Heute</button>
+  <button data-p="essen"><span class="i">🥗</span>Essen</button>
+  <button data-p="atmen"><span class="i">🌬️</span>Atmen</button>
+  <button data-p="verlauf"><span class="i">📈</span>Verlauf</button>
+  <button data-p="mehr"><span class="i">⚙️</span>Mehr</button>
+</nav>
 <div class="toast" id="toast"></div>
 
-<div class="bottom-nav">
-  <button class="nav-btn active" id="nav-heute" onclick="gotoPage('heute')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-    Heute
-  </button>
-  <button class="nav-btn" id="nav-verlauf" onclick="gotoPage('verlauf')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    Verlauf
-  </button>
-  <button class="nav-btn" id="nav-auswertung" onclick="gotoPage('auswertung')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 20 14 12 8 18 2 12"/><polyline points="16 4 22 4 22 10"/></svg>
-    Auswertung
-  </button>
-  <button class="nav-btn" id="nav-export" onclick="gotoPage('export')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-    Arzt-Bericht
-  </button>
-</div>
-
+<script src="daten.js"></script>
 <script>
-const TODAY_KEY = new Date().toISOString().split('T')[0];
-const TODAY_DISPLAY = new Date().toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-let sev = {halsenge:'',brennen:'',sodbrennen:'',aufstossen:''};
-let editingKey = TODAY_KEY;
-let editingDisplay = TODAY_DISPLAY;
-let symChart = null;
+/* =====================================================================
+   Gesundheit – persönliche Alltags-App
+   Aufbau: index.html (App) + daten.js (allgemeine Listen: FODMAP, Rezepte,
+   Atemübungen) + mein-plan.json (PRIVAT, nur lokal geladen).
+   Speicher: localStorage  gp_plan (Plan), gp_log (Tagesprotokoll),
+   gp_set (Einstellungen), gp_week (Wochenplan), gp_shop (Einkaufs-Haken)
+   ===================================================================== */
+const $=id=>document.getElementById(id);
+const LS={get:(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
+const todayKey=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const fmtDate=k=>{const [y,m,d]=k.split('-');return d+'.'+m+'.'+y};
+const daysBetween=(a,b)=>Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);
+const addDays=(k,n)=>{const d=new Date(k+'T00:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const toast=t=>{const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2200)};
 
-document.getElementById('hdrDate').textContent = TODAY_DISPLAY;
-document.getElementById('todayTag').textContent = new Date().toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long'});
+const SLOTS=[
+  {k:'nu',name:'Morgens nüchtern',t:'06:30'},
+  {k:'m',name:'Zum Frühstück',t:'07:30'},
+  {k:'mi',name:'Mittags',t:'12:30'},
+  {k:'a',name:'Abends',t:'18:30'},
+  {k:'n',name:'Vor dem Schlafen',t:'21:30'}
+];
+const ATEM_SLOTS=[
+  {k:'am',name:'Morgens: 4-7-8 (4 Runden)',ex:'478',t:'07:00'},
+  {k:'at',name:'Tagsüber: 5-5 kohärent (z.B. im Auto, 5 Min.)',ex:'55',t:'13:00'},
+  {k:'ab',name:'Abends: 4-7-8 + 15 Min. Stille',ex:'478',t:'21:00'}
+];
 
-document.querySelectorAll('.sev-btns').forEach(grp => {
-  grp.querySelectorAll('.sev-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const f = grp.dataset.field;
-      grp.querySelectorAll('.sev-btn').forEach(b => b.classList.remove('sel'));
-      btn.classList.add('sel');
-      sev[f] = btn.dataset.val;
+let plan=LS.get('gp_plan',null);
+let log=LS.get('gp_log',{});
+let set=LS.get('gp_set',{times:{},atimes:{},notif:false,kurStart:null,medOverride:{}});
+let TK=todayKey();
+
+/* ---------- Migration aus der alten App (localStorage 'hpro') ---------- */
+(function migrate(){
+  const old=LS.get('hpro',null);
+  if(!old||Object.keys(log).length)return;
+  const sv={keine:0,leicht:1,mittel:2,stark:3};
+  Object.keys(old).forEach(k=>{const e=old[k];if(!e)return;
+    log[k]={hals:sv[e.symptome?.halsenge]??null,bauch:null,stress:parseInt(e.befinden?.stress)||null,schlaf:parseFloat(e.befinden?.schlaf)||null,gewicht:parseFloat(e.gewicht)||null,notiz:[e.symptome?.bemerkung,e.bemerkung].filter(Boolean).join(' '),meds:{},atmen:{}};
+  });
+  LS.set('gp_log',log);
+})();
+
+/* ---------- Plan-Logik ---------- */
+function kurTag(){ // Tag 1 = Startdatum; null wenn nicht gestartet
+  if(!set.kurStart)return null;
+  const d=daysBetween(set.kurStart,TK)+1;
+  return d<1?null:d;
+}
+function kurPhase(){
+  const t=kurTag();
+  if(t===null)return null;
+  if(t<=2)return {tag:t,name:'Reduziertag '+t,txt:t===1?'Nur die Hälfte der üblichen Menge essen. Bei Verstopfungsneigung: 1 TL Bittersalz+ in 250 ml Wasser.':'Nur leicht Verdauliches: Obst, Suppe, Joghurt oder Smoothies in kleiner Menge.',detox:false};
+  if(t<=6)return {tag:t,name:'Darmdetox+ Tag '+(t-2)+' von 4',txt:'7 Shakes über den Tag, keine feste Nahrung, ALLE anderen Präparate pausieren. Viel Wasser/Kräutertee (2 l).',detox:true};
+  if(t<=8)return {tag:t,name:'Aufbautag '+(t-6),txt:t===7?'Flüssiges: Suppen, Smoothies, Joghurt. Präparate wieder starten.':'Weiches und Gekochtes in kleinen Mengen: Gemüse, Kartoffeln, Fisch.',detox:false};
+  if(t<=67)return {tag:t,name:'Regeneration – Monat '+(t<=37?1:2),txt:'FODMAP-arm essen, Darm-Präparate 1-0-1. Rind/Huhn statt Schwein.',detox:false};
+  if(t<=128)return {tag:t,name:'Aufbau – Monat '+(t<=98?3:4),txt:'Reduzierte Darm-Präparate, FODMAP-arm, Kohlenhydrate wieder vielfältiger.',detox:false};
+  return {tag:t,name:'Erhaltung',txt:'Darmbasis+ und Probiotikum dauerhaft. Darmsanierung 1× jährlich.',detox:false};
+}
+function medPhase(m){ // aktive Phase eines Präparats heute, oder null
+  // anker: "kur" = Darmkur-Start, "plan"/leer = Plandatum, sonst ein festes Datum JJJJ-MM-TT
+  let anchor=m.anker==='kur'?set.kurStart:((!m.anker||m.anker==='plan')?plan?.anker?.plan:m.anker);
+  if(!anchor)return m.anker==='kur'?null:(m.phasen[0]||null);
+  const day=daysBetween(anchor,TK);
+  for(const p of m.phasen){ if(day>=p.abTag && (p.bisTag==null||day<=p.bisTag)) return p; }
+  return null;
+}
+function medsToday(){
+  if(!plan)return [];
+  const kp=kurPhase(); const detox=kp&&kp.detox;
+  const out=[];
+  plan.praeparate.forEach(m=>{
+    const ov=set.medOverride[m.id]||{};
+    if(ov.aus)return;
+    const ph=medPhase(m); if(!ph)return;
+    const dose={...ph,...(ov.dose||{})};
+    const paused=detox&&m.detoxPause!==false;
+    ['nu','m','mi','a','n'].forEach(s=>{ if(dose[s]>0) out.push({id:m.id,slot:s,name:m.name,menge:dose[s],einheit:m.einheit||'',hinweis:ph.notiz||m.hinweis||'',paused,offen:m.offen}); });
+  });
+  return out;
+}
+function entry(k){ if(!log[k])log[k]={hals:null,bauch:null,stress:null,schlaf:null,gewicht:null,notiz:'',meds:{},atmen:{},sport:false}; return log[k]; }
+function saveLog(){ LS.set('gp_log',log); }
+function saveSet(){ LS.set('gp_set',set); }
+
+/* ---------- Puls-Zonen (aus der Spiroergometrie im Plan) ---------- */
+function zonen(sportart){ // liefert die Grenzen, angepasst an die Sportart
+  const p=plan?.training?.puls; if(!p)return null;
+  const off=p.offsets?.[sportart]||0;
+  return {vt1:p.vt1+off,vt2:p.vt2+off,max:p.max+off,off,sportart};
+}
+function pulsKarte(t){
+  if(!plan?.training?.puls||t.zone==='kraft'||!t.zone)return t.zone==='kraft'?'<div class="hint" style="padding:4px 6px 8px">Kraft: Puls egal – sauber und langsam, 2–3 Sätze, letzte Wiederholungen schwer. Zwischen den Sätzen 5-5 atmen.</div>':'';
+  const sel=(set.sportart&&t.sportart==='auto')?set.sportart:(t.sportart==='auto'?'rad':t.sportart);
+  const z=zonen(sel);const names={rad:'Rad',gehen:'Wandern/Walking',laufen:'Laufen',schwimmen:'Schwimmen'};
+  const ziel=t.zone==='A'?`<b style="color:var(--ok)">unter ${z.vt1}</b> – locker, Nasenatmung, keine Spitzen`:t.zone==='AB'?`<b style="color:var(--ok)">${z.vt1-10}–${z.vt2}</b> – überwiegend locker, Anstiege bis max. ${z.vt2}`:t.zone==='B'?`<b style="color:var(--warn)">${z.vt1}–${z.vt2}</b>`:`<b style="color:var(--bad)">über ${z.vt2}</b> nur kurz`;
+  const chips=Object.keys(plan.training.puls.offsets||{}).map(k=>`<button class="btn ${k===sel?'':'sec'} sm" data-sa="${k}" style="padding:4px 9px;font-size:12px">${names[k]||k}</button>`).join(' ');
+  return `<div class="banner info" style="margin:4px 0 8px;font-size:13.5px"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">${t.sportart==='auto'?chips:''}</div>❤️ Ziel heute: ${ziel}<div class="hint" style="margin-top:4px">Zonen ${names[sel]||sel}: A &lt; ${z.vt1} · B ${z.vt1}–${z.vt2} · C &gt; ${z.vt2} · max. ${z.max}</div></div>`;
+}
+
+/* ---------- HEUTE ---------- */
+function renderHeute(){
+  $('hd-title').textContent='Heute';
+  $('hd-sub').textContent=new Date().toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long'});
+  const e=entry(TK);
+  // Banner
+  let b='';
+  if(!plan)b='<div class="banner warn">Noch kein Plan geladen. Unter <b>Mehr → Plan laden</b> die Datei <b>mein-plan.json</b> vom OneDrive auswählen.</div>';
+  const kp=kurPhase();
+  if(kp)b+=`<div class="banner ${kp.detox?'bad':'info'}"><b>Darmkur Tag ${kp.tag}: ${kp.name}</b><br>${kp.txt}</div>`;
+  else if(plan&&!set.kurStart)b+='<div class="banner info">Darmkur noch nicht gestartet – Startdatum unter <b>Mehr</b> eintragen, sobald es losgeht.</div>';
+  // Präparate, die gerade bewusst pausieren (Phase ohne Dosis)
+  if(plan){const pausen=plan.praeparate.filter(m=>{const ph=medPhase(m);return ph&&!['nu','m','mi','a','n'].some(s=>ph[s]>0)&&ph.notiz&&!(set.medOverride[m.id]||{}).aus;});
+    if(pausen.length)b+=`<div class="banner info" style="font-size:13px">${pausen.map(m=>'⏸ <b>'+m.name+'</b>: '+medPhase(m).notiz).join('<br>')}</div>`;}
+  $('heute-banner').innerHTML=b;
+  // Training heute
+  const wd=String(new Date().getDay());const tr=(plan?.training?.woche||{})[wd]||[];
+  $('train-card').style.display=plan?'':'none';
+  $('train-list').innerHTML=tr.length?tr.map((t,i)=>{const k='t'+i;const d=!!(e.training||{})[k];return `<div class="chk ${d?'done':''}" data-k="${k}"><div class="box">${d?'✓':''}</div><div class="lbl"><b>${t.name}</b><span>${[t.zeit,t.dauer].filter(Boolean).join(' · ')}${t.info?' – '+t.info:''}</span></div></div>`+pulsKarte(t)}).join('')+'<div class="hint" style="margin-top:6px">Dazu 5× am Tag 10–20 Sekunden Puls hochjagen (Stiegen, kurzer Sprint).</div>':'<div class="empty">Kein Training geplant – 10.000 Schritte reichen heute.</div>'+pulsKarte({zone:'A',sportart:'auto'});
+  $('train-list').querySelectorAll('.chk').forEach(el=>el.onclick=()=>{e.training=e.training||{};e.training[el.dataset.k]=!e.training[el.dataset.k];if(e.training[el.dataset.k])e.sport=true;saveLog();renderHeute();});
+  $('train-list').querySelectorAll('[data-sa]').forEach(b=>b.onclick=()=>{set.sportart=b.dataset.sa;saveSet();renderHeute();});
+  // Medikamente
+  const meds=medsToday();
+  if(e.sport&&plan?.sport){plan.sport.filter(s=>s.zeitpunkt==='waehrend'||s.zeitpunkt==='danach').forEach(s=>meds.push({id:'sport_'+s.name.replace(/\W/g,''),slot:'sp',name:s.name,menge:s.dosis||'',einheit:'',hinweis:s.wann,paused:false}));}
+  const list=$('med-list');
+  if(!meds.length){list.innerHTML='<div class="empty">Keine Präparate für heute.</div>';$('med-count').textContent='';$('med-prog').style.width='0';}
+  else{
+    let html='';let done=0;
+    SLOTS.concat([{k:'sp',name:'Beim Sport',t:''}]).forEach(s=>{
+      const ms=meds.filter(m=>m.slot===s.k); if(!ms.length)return;
+      html+=`<div class="slot"><div class="slot-h"><span>${s.name}</span><span class="t">${s.k==='sp'?'':(set.times[s.k]||s.t)}</span></div>`;
+      ms.forEach(m=>{const key=m.id+'_'+m.slot;const d=!!e.meds[key];if(d)done++;
+        html+=`<div class="chk ${d?'done':''} ${m.paused?'paused':''}" data-k="${key}"><div class="box">${d?'✓':''}</div><div class="lbl"><b>${m.name}</b><span>${m.paused?'⏸ pausiert (Darmdetox)':m.hinweis}${m.offen?' · ⚠️ '+m.offen:''}</span></div><div class="dose">${m.menge} ${m.einheit}</div></div>`;});
+      html+='</div>';
     });
-  });
-});
-
-function gotoPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
-  document.getElementById('nav-'+name).classList.add('active');
-  if (name === 'verlauf') renderVerlauf();
-  if (name === 'auswertung') renderAuswertung();
-}
-
-function g(id) { return document.getElementById(id); }
-function gv(id) { return g(id).value; }
-function gc(id) { return g(id).checked; }
-function ss(v) { return {keine:0,leicht:1,mittel:2,stark:3}[v]||0; }
-function avgSym(e) {
-  const s = e.symptome;
-  const vals = [ss(s.halsenge),ss(s.brennen),ss(s.sodbrennen),ss(s.aufstossen)];
-  return vals.reduce((a,b)=>a+b,0)/4;
-}
-
-function collectData() {
-  return {
-    date: editingKey, dateDisplay: editingDisplay,
-    befinden: { gesamt: gv('sl-gesamt'), stress: gv('sl-stress'), schlaf: gv('schlaf') },
-    gewicht: gv('gewicht'),
-    symptome: { halsenge: sev.halsenge, brennen: sev.brennen, sodbrennen: sev.sodbrennen, aufstossen: sev.aufstossen, wann: gv('wann'), bem: gv('sym-bem') },
-    med: { duMo: gc('m-du-mo'), duAb: gc('m-du-ab'), suMi: gc('m-su-mi'), suNa: gc('m-su-na'), gavN: gv('m-gav-n'), gavZ: gv('m-gav-z'), renN: gv('m-ren-n'), renZ: gv('m-ren-z'), son: gv('m-son') },
-    fr: { zeit: gv('fr-zeit'), hafer: gc('fr-hafer'), kamille: gc('fr-kamille'), htSch: gc('fr-ht-sch'), htMar: gc('fr-ht-mar'), son: gv('fr-son') },
-    mi: { zeit: gv('mi-zeit'), huhn: gc('mi-huhn'), lachs: gc('mi-lachs'), karotten: gc('mi-karotten'), zucchini: gc('mi-zucchini'), karfiol: gc('mi-karfiol'), kartoffel: gc('mi-kartoffel'), reis: gc('mi-reis'), strudel: gc('mi-strudel'), son: gv('mi-son') },
-    ab: { zeit: gv('ab-zeit'), was: gv('ab-was') },
-    snacks: gv('snacks'),
-    gt: { wasser: gv('gt-wasser'), kaffee: gv('gt-kaffee'), kafZeit: gv('gt-kaf-zeit'), alk: gc('gt-alk'), alkWas: gv('gt-alk-was'), son: gv('gt-son') },
-    le: { zeit: gv('le-zeit'), was: gv('le-was') },
-    notizen: gv('notizen')
-  };
-}
-
-function saveEntry() {
-  const data = collectData();
-  const entries = JSON.parse(localStorage.getItem('hpro') || '{}');
-  entries[editingKey] = data;
-  localStorage.setItem('hpro', JSON.stringify(entries));
-  showToast('Tag gespeichert! ✓');
-}
-
-function fillForm(d) {
-  if (!d) return;
-  sev = {halsenge:'',brennen:'',sodbrennen:'',aufstossen:''};
-  document.querySelectorAll('.sev-btn').forEach(b => b.classList.remove('sel'));
-  g('sl-gesamt').value = d.befinden.gesamt; g('v-gesamt').textContent = d.befinden.gesamt;
-  g('sl-stress').value = d.befinden.stress; g('v-stress').textContent = d.befinden.stress;
-  g('schlaf').value = d.befinden.schlaf; g('gewicht').value = d.gewicht;
-  ['halsenge','brennen','sodbrennen','aufstossen'].forEach(f => {
-    if (d.symptome[f]) {
-      sev[f] = d.symptome[f];
-      const grp = document.querySelector(`.sev-btns[data-field="${f}"]`);
-      if (grp) { const b = grp.querySelector(`[data-val="${d.symptome[f]}"]`); if(b) b.classList.add('sel'); }
-    }
-  });
-  g('wann').value = d.symptome.wann||''; g('sym-bem').value = d.symptome.bem||'';
-  g('m-du-mo').checked=d.med.duMo; g('m-du-ab').checked=d.med.duAb;
-  g('m-su-mi').checked=d.med.suMi; g('m-su-na').checked=d.med.suNa;
-  g('m-gav-n').value=d.med.gavN||''; g('m-gav-z').value=d.med.gavZ||''; g('m-ren-n').value=d.med.renN||''; g('m-ren-z').value=d.med.renZ||''; g('m-son').value=d.med.son||'';
-  g('fr-zeit').value=d.fr.zeit||''; g('fr-hafer').checked=d.fr.hafer;
-  g('fr-kamille').checked=d.fr.kamille; g('fr-ht-sch').checked=d.fr.htSch;
-  g('fr-ht-mar').checked=d.fr.htMar; g('fr-son').value=d.fr.son||'';
-  g('mi-zeit').value=d.mi.zeit||''; g('mi-huhn').checked=d.mi.huhn;
-  g('mi-lachs').checked=d.mi.lachs; g('mi-karotten').checked=d.mi.karotten;
-  g('mi-zucchini').checked=d.mi.zucchini; g('mi-karfiol').checked=d.mi.karfiol;
-  g('mi-kartoffel').checked=d.mi.kartoffel; g('mi-reis').checked=d.mi.reis;
-  g('mi-strudel').checked=d.mi.strudel; g('mi-son').value=d.mi.son||'';
-  g('ab-zeit').value=d.ab.zeit||''; g('ab-was').value=d.ab.was||'';
-  g('snacks').value=d.snacks||'';
-  g('gt-wasser').value=d.gt.wasser||''; g('gt-kaffee').value=d.gt.kaffee||'';
-  g('gt-kaf-zeit').value=d.gt.kafZeit||''; g('gt-alk').checked=d.gt.alk;
-  g('gt-alk-was').value=d.gt.alkWas||''; g('gt-son').value=d.gt.son||'';
-  g('le-zeit').value=d.le.zeit||''; g('le-was').value=d.le.was||'';
-  g('notizen').value=d.notizen||'';
-}
-
-function loadToday() {
-  const entries = JSON.parse(localStorage.getItem('hpro') || '{}');
-  fillForm(entries[TODAY_KEY]);
-}
-
-function editEntry(k) {
-  const entries = JSON.parse(localStorage.getItem('hpro') || '{}');
-  const e = entries[k]; if (!e) return;
-  editingKey = k; editingDisplay = e.dateDisplay || k;
-  fillForm(e); closeDetail(); gotoPage('heute');
-  g('edit-banner-date').textContent = editingDisplay;
-  g('edit-banner').classList.add('show');
-  g('todayTag').textContent = editingDisplay;
-  window.scrollTo(0,0); showToast('Eintrag zum Bearbeiten geladen');
-}
-
-function resetToToday() {
-  editingKey = TODAY_KEY; editingDisplay = TODAY_DISPLAY;
-  g('edit-banner').classList.remove('show');
-  g('todayTag').textContent = new Date().toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long'});
-  const entries = JSON.parse(localStorage.getItem('hpro') || '{}');
-  if (entries[TODAY_KEY]) { fillForm(entries[TODAY_KEY]); }
-  else { sev={halsenge:'',brennen:'',sodbrennen:'',aufstossen:''}; document.querySelectorAll('.sev-btn').forEach(b=>b.classList.remove('sel')); }
-}
-
-function maxSym(sym) {
-  const vals = [sym.halsenge,sym.brennen,sym.sodbrennen,sym.aufstossen].filter(Boolean);
-  if (!vals.length) return 'keine';
-  return vals.sort((a,b)=>ss(b)-ss(a))[0];
-}
-
-// ===== AUSWERTUNG =====
-function renderAuswertung() {
-  const entries = JSON.parse(localStorage.getItem('hpro') || '{}');
-  const keys = Object.keys(entries).sort();
-  const cont = g('aus-content');
-  if (keys.length < 2) { cont.innerHTML = '<div class="empty">Mindestens 2 Tage nötig für die Auswertung.</div>'; return; }
-
-  const n = keys.length;
-  const avgSymAll = keys.map(k => avgSym(entries[k]));
-  const overallAvg = avgSymAll.reduce((a,b)=>a+b,0)/n;
-  const firstHalf = avgSymAll.slice(0, Math.floor(n/2));
-  const secondHalf = avgSymAll.slice(Math.floor(n/2));
-  const firstAvg = firstHalf.reduce((a,b)=>a+b,0)/firstHalf.length;
-  const secondAvg = secondHalf.reduce((a,b)=>a+b,0)/secondHalf.length;
-  const trend = secondAvg < firstAvg - 0.2 ? 'besser' : secondAvg > firstAvg + 0.2 ? 'schlechter' : 'gleich';
-
-  const weights = keys.map(k=>parseFloat(entries[k].gewicht)).filter(Boolean);
-  const weightDiff = weights.length > 1 ? (weights[weights.length-1] - weights[0]).toFixed(1) : null;
-
-  // Kaffee-Korrelation
-  const kaffeeTage = keys.filter(k => parseInt(entries[k].gt.kaffee) >= 2);
-  const keineKaffeeTage = keys.filter(k => parseInt(entries[k].gt.kaffee) < 2);
-  const kafSym = kaffeeTage.length > 0 ? kaffeeTage.map(k=>avgSym(entries[k])).reduce((a,b)=>a+b,0)/kaffeeTage.length : null;
-  const noKafSym = keineKaffeeTage.length > 0 ? keineKaffeeTage.map(k=>avgSym(entries[k])).reduce((a,b)=>a+b,0)/keineKaffeeTage.length : null;
-
-  // Stress-Korrelation
-  const stressTage = keys.filter(k => parseInt(entries[k].befinden.stress) >= 6);
-  const ruhigeTage = keys.filter(k => parseInt(entries[k].befinden.stress) < 6);
-  const stressSym = stressTage.length > 0 ? stressTage.map(k=>avgSym(entries[k])).reduce((a,b)=>a+b,0)/stressTage.length : null;
-  const ruhigSym = ruhigeTage.length > 0 ? ruhigeTage.map(k=>avgSym(entries[k])).reduce((a,b)=>a+b,0)/ruhigeTage.length : null;
-
-  // Spätes Essen Korrelation (nach 20 Uhr)
-  const spaesTage = keys.filter(k => { const z = entries[k].le.zeit; return z && z >= '20:00'; });
-  const fruehTage = keys.filter(k => { const z = entries[k].le.zeit; return z && z < '20:00'; });
-  const spaetSym = spaesTage.length > 0 ? spaesTage.map(k=>avgSym(entries[k])).reduce((a,b)=>a+b,0)/spaesTage.length : null;
-  const fruehSym = fruehTage.length > 0 ? fruehTage.map(k=>avgSym(entries[k])).reduce((a,b)=>a+b,0)/fruehTage.length : null;
-
-  // Alkohol-Korrelation
-  const alkTage = keys.filter(k => entries[k].gt.alk);
-  const alkSym = alkTage.length > 0 ? alkTage.map(k=>avgSym(entries[k])).reduce((a,b)=>a+b,0)/alkTage.length : null;
-
-  // Medikamenten-Compliance
-  const medOk = keys.filter(k => entries[k].med.duMo && entries[k].med.duAb).length;
-  const medSym = keys.filter(k=>entries[k].med.duMo&&entries[k].med.duAb).map(k=>avgSym(entries[k]));
-  const noMedSym = keys.filter(k=>!entries[k].med.duMo||!entries[k].med.duAb).map(k=>avgSym(entries[k]));
-  const medAvg = medSym.length > 0 ? medSym.reduce((a,b)=>a+b,0)/medSym.length : null;
-  const noMedAvg = noMedSym.length > 0 ? noMedSym.reduce((a,b)=>a+b,0)/noMedSym.length : null;
-
-  // Schlaf-Korrelation
-  const gutSchlaf = keys.filter(k => parseFloat(entries[k].befinden.schlaf) >= 7);
-  const schlGutSym = gutSchlaf.length > 0 ? gutSchlaf.map(k=>avgSym(entries[k])).reduce((a,b)=>a+b,0)/gutSchlaf.length : null;
-  const schlechtSchlaf = keys.filter(k => parseFloat(entries[k].befinden.schlaf) > 0 && parseFloat(entries[k].befinden.schlaf) < 6);
-  const schlSlSym = schlechtSchlaf.length > 0 ? schlechtSchlaf.map(k=>avgSym(entries[k])).reduce((a,b)=>a+b,0)/schlechtSchlaf.length : null;
-
-  const symLabel = v => v < 0.5 ? 'Keine' : v < 1.2 ? 'Leicht' : v < 2 ? 'Mittel' : 'Stark';
-  const diff = (a,b) => a !== null && b !== null ? (a-b).toFixed(2) : null;
-
-  // Patterns sammeln
-  let patterns = [];
-
-  if (trend === 'besser') patterns.push({icon:'📈', cls:'good-box', txt:`<strong>Positiver Verlauf:</strong> Deine Symptome sind in der zweiten Hälfte des Beobachtungszeitraums <strong>besser</strong> geworden. Weiter so!`});
-  else if (trend === 'schlechter') patterns.push({icon:'📉', cls:'warn-box', txt:`<strong>Achtung:</strong> Deine Symptome sind in den letzten Tagen <strong>stärker</strong> geworden. Wichtig für den Arzt!`});
-  else patterns.push({icon:'➡️', cls:'info-box', txt:`<strong>Stabiler Verlauf:</strong> Die Symptome sind über den Zeitraum relativ gleichbleibend.`});
-
-  if (kafSym !== null && noKafSym !== null && kafSym > noKafSym + 0.3)
-    patterns.push({icon:'☕', cls:'warn-box', txt:`<strong>Kaffee-Zusammenhang:</strong> An Tagen mit 2+ Tassen Kaffee waren deine Symptome im Durchschnitt <strong>stärker</strong> (${symLabel(kafSym)}) als an Tagen mit wenig/keinem Kaffee (${symLabel(noKafSym)}).`});
-  else if (kafSym !== null && noKafSym !== null)
-    patterns.push({icon:'☕', cls:'info-box', txt:`<strong>Kaffee:</strong> Kein eindeutiger Zusammenhang zwischen Kaffeekonsum und Symptomstärke festgestellt.`});
-
-  if (stressSym !== null && ruhigSym !== null && stressSym > ruhigSym + 0.3)
-    patterns.push({icon:'😤', cls:'warn-box', txt:`<strong>Stress-Zusammenhang:</strong> An stressigen Tagen waren die Symptome deutlich <strong>stärker</strong> (${symLabel(stressSym)}) als an ruhigen Tagen (${symLabel(ruhigSym)}). Stressbewältigung könnte helfen.`});
-  else if (stressSym !== null && ruhigSym !== null && stressTage.length >= 2)
-    patterns.push({icon:'😌', cls:'good-box', txt:`<strong>Stress:</strong> Kein starker Zusammenhang zwischen Stresslevel und Symptomstärke erkennbar.`});
-
-  if (spaetSym !== null && fruehSym !== null && spaetSym > fruehSym + 0.3)
-    patterns.push({icon:'🕐', cls:'warn-box', txt:`<strong>Spätes Essen:</strong> An Tagen mit letzter Mahlzeit nach 20 Uhr waren die Symptome <strong>stärker</strong> (${symLabel(spaetSym)}) als bei früherem letzten Essen (${symLabel(fruehSym)}).`});
-  else if (spaesTage.length > 0 && fruehTage.length > 0)
-    patterns.push({icon:'🕐', cls:'good-box', txt:`<strong>Essenszeiten:</strong> Kein starker Zusammenhang zwischen Essenszeit und Symptomen erkennbar.`});
-
-  if (alkTage.length > 0 && alkSym !== null && alkSym > overallAvg + 0.3)
-    patterns.push({icon:'🍺', cls:'warn-box', txt:`<strong>Alkohol:</strong> An ${alkTage.length} Tagen mit Alkohol waren die Symptome <strong>stärker</strong> als im Durchschnitt.`});
-
-  if (medAvg !== null && noMedAvg !== null && medAvg < noMedAvg - 0.2)
-    patterns.push({icon:'💊', cls:'good-box', txt:`<strong>Medikamente wirken:</strong> An Tagen mit vollständiger Medikamenteneinnahme (Durotiv morgens + abends) waren die Symptome <strong>besser</strong> (${symLabel(medAvg)}) als ohne (${symLabel(noMedAvg)}).`});
-  else if (medAvg !== null && noMedAvg !== null && noMedSym.length >= 2)
-    patterns.push({icon:'💊', cls:'info-box', txt:`<strong>Medikamente:</strong> Durotiv-Einnahme an ${medOk} von ${n} Tagen vollständig. Kein klarer Unterschied im Vergleich zu unvollständiger Einnahme.`});
-
-  if (schlGutSym !== null && schlSlSym !== null && schlSlSym > schlGutSym + 0.3)
-    patterns.push({icon:'😴', cls:'warn-box', txt:`<strong>Schlaf-Zusammenhang:</strong> Bei weniger als 6h Schlaf waren die Symptome <strong>stärker</strong> (${symLabel(schlSlSym)}) als bei 7h+ Schlaf (${symLabel(schlGutSym)}).`});
-
-  if (weightDiff !== null && parseFloat(weightDiff) < -1)
-    patterns.push({icon:'⚖️', cls:'good-box', txt:`<strong>Gewichtsverlauf:</strong> Du hast ${Math.abs(weightDiff)}kg abgenommen — das ist positiv für die Hiatushernie!`});
-
-  // Chart-Daten
-  const chartLabels = keys.map(k => { const d = new Date(k); return d.getDate()+'.'+(d.getMonth()+1)+'.'; });
-  const halsengeData = keys.map(k => ss(entries[k].symptome.halsenge));
-  const brennenData = keys.map(k => ss(entries[k].symptome.brennen));
-  const sodData = keys.map(k => ss(entries[k].symptome.sodbrennen));
-  const aufData = keys.map(k => ss(entries[k].symptome.aufstossen));
-  const stressData = keys.map(k => (parseInt(entries[k].befinden.stress)||0) * 3/10);
-
-  cont.innerHTML = `
-    <div class="card">
-      <div class="card-title">📊 Übersicht (${n} Tage)</div>
-      <div class="stat-grid">
-        <div class="stat-box"><div class="stat-val">${n}</div><div class="stat-lbl">Tage protokolliert</div></div>
-        <div class="stat-box"><div class="stat-val ${trend==='besser'?'trend-down':trend==='schlechter'?'trend-up':'trend-same'}">${trend==='besser'?'↓ Besser':trend==='schlechter'?'↑ Schlechter':'→ Stabil'}</div><div class="stat-lbl">Symptom-Trend</div></div>
-        ${weightDiff !== null ? `<div class="stat-box"><div class="stat-val ${parseFloat(weightDiff)<0?'trend-down':'trend-up'}">${parseFloat(weightDiff)>0?'+':''}${weightDiff} kg</div><div class="stat-lbl">Gewichtsveränderung</div></div>` : ''}
-        <div class="stat-box"><div class="stat-val">${medOk}/${n}</div><div class="stat-lbl">Tage Durotiv vollst.</div></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">📈 Symptomverlauf</div>
-      <div style="font-size:11px;color:#94a3b8;margin-bottom:6px">0 = Keine &nbsp; 1 = Leicht &nbsp; 2 = Mittel &nbsp; 3 = Stark</div>
-      <div class="chart-wrap"><canvas id="symChart"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="card-title">🔍 Erkannte Muster &amp; Zusammenhänge</div>
-      <p style="font-size:12px;color:#94a3b8;margin-bottom:10px">Alle eingetragenen Daten werden berücksichtigt: Mahlzeiten, Snacks, Getränke, Schlaf, Stress, Medikamente, Essenszeiten.</p>
-      ${patterns.map(p=>`<div class="${p.cls}" style="display:flex;gap:8px;align-items:flex-start"><span style="font-size:18px">${p.icon}</span><span>${p.txt}</span></div>`).join('')}
-    </div>`;
-
-  setTimeout(() => {
-    const ctx = document.getElementById('symChart');
-    if (!ctx) return;
-    if (symChart) { symChart.destroy(); symChart = null; }
-    symChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: chartLabels,
-        datasets: [
-          {label:'Halsenge', data:halsengeData, borderColor:'#dc2626', backgroundColor:'rgba(220,38,38,.1)', tension:.3, pointRadius:3, borderWidth:2},
-          {label:'Brennen', data:brennenData, borderColor:'#ea580c', backgroundColor:'rgba(234,88,12,.1)', tension:.3, pointRadius:3, borderWidth:2},
-          {label:'Sodbrennen', data:sodData, borderColor:'#ca8a04', backgroundColor:'rgba(202,138,4,.1)', tension:.3, pointRadius:3, borderWidth:2},
-          {label:'Aufstoßen', data:aufData, borderColor:'#0284c7', backgroundColor:'rgba(2,132,199,.1)', tension:.3, pointRadius:3, borderWidth:2},
-          {label:'Stress', data:stressData, borderColor:'#9333ea', backgroundColor:'transparent', tension:.3, pointRadius:2, borderWidth:1, borderDash:[4,4]}
-        ]
-      },
-      options: {
-        responsive:true, maintainAspectRatio:false,
-        scales: {
-          y: { min:0, max:3, ticks:{ stepSize:1, font:{size:10} }, grid:{color:'#f1f5f9'} },
-          x: { ticks:{ font:{size:10}, maxRotation:45 }, grid:{display:false} }
-        },
-        plugins: { legend:{ labels:{ font:{size:11}, boxWidth:12, padding:8 } } }
-      }
-    });
-  }, 100);
-}
-
-// ===== VERLAUF =====
-function renderVerlauf() {
-  const entries = JSON.parse(localStorage.getItem('hpro') || '{}');
-  const keys = Object.keys(entries).sort().reverse();
-  const list = g('vl-list');
-  g('vl-detail').style.display = 'none'; list.style.display = 'block';
-  if (!keys.length) { list.innerHTML = '<div class="empty">Noch keine Einträge.<br>Starte heute!</div>'; return; }
-  list.innerHTML = keys.map(k => {
-    const e = entries[k];
-    const ms = maxSym(e.symptome);
-    const meals = [e.fr.hafer&&'Haferschleim', e.mi.huhn&&'Huhn', e.mi.lachs&&'Lachs'].filter(Boolean).join(', ');
-    return `<div class="entry-card" onclick="showDetail('${k}')">
-      <div>
-        <div class="entry-date">${e.dateDisplay||k}</div>
-        <div class="entry-sum"><span class="badge b-${ms}">${ms.charAt(0).toUpperCase()+ms.slice(1)}</span>${e.gewicht?e.gewicht+'kg':''} ${meals?'• '+meals:''}</div>
-      </div><span style="color:#cbd5e1;font-size:22px">›</span>
-    </div>`;
-  }).join('');
-}
-
-function showDetail(k) {
-  const e = JSON.parse(localStorage.getItem('hpro')||'{}')[k]; if (!e) return;
-  g('vl-list').style.display = 'none';
-  const det = g('vl-detail'); det.style.display = 'block';
-  const s=e.symptome, m=e.med, fr=e.fr, mi=e.mi;
-  const frT=[fr.hafer&&'Haferschleim',fr.kamille&&'Kamillentee',fr.htSch&&'Hotoast Schinken',fr.htMar&&'Hotoast Marmelade',fr.son].filter(Boolean).join(', ');
-  const miT=[mi.huhn&&'Hühnerfleisch',mi.lachs&&'Lachs',mi.karotten&&'Karotten',mi.zucchini&&'Zucchini',mi.karfiol&&'Karfiol',mi.kartoffel&&'Kartoffel',mi.reis&&'Reis',mi.strudel&&'Gemüsestrudel',mi.son].filter(Boolean).join(', ');
-  const medT=[m.duMo&&'Durotiv Mo',m.duAb&&'Durotiv Ab',m.suMi&&'Sucralan Mi',m.suNa&&'Sucralan Na',(m.gavN>0)&&('Gaviscon '+m.gavN+'x'+(m.gavZ?' ('+m.gavZ+')':'')),(m.renN>0)&&('Rennie '+m.renN+'x'+(m.renZ?' ('+m.renZ+')':'')),m.son].filter(Boolean).join(', ');
-  det.innerHTML = `
-    <div class="det-hdr"><button class="back-btn" onclick="closeDetail()">← Zurück</button><strong>${e.dateDisplay||k}</strong><button class="edit-btn" onclick="editEntry('${k}')">✏️ Bearbeiten</button></div>
-    <div class="card"><div class="card-title">😊 Befinden</div>Zustand: ${e.befinden.gesamt}/10 | Stress: ${e.befinden.stress}/10 | Schlaf: ${e.befinden.schlaf}h | Gewicht: ${e.gewicht||'–'}kg</div>
-    <div class="card"><div class="card-title">🔥 Symptome</div>
-      Halsenge: <span class="badge b-${s.halsenge||'keine'}">${s.halsenge||'–'}</span>
-      Brennen: <span class="badge b-${s.brennen||'keine'}">${s.brennen||'–'}</span>
-      Sodbrennen: <span class="badge b-${s.sodbrennen||'keine'}">${s.sodbrennen||'–'}</span>
-      Aufstoßen: <span class="badge b-${s.aufstossen||'keine'}">${s.aufstossen||'–'}</span>
-      ${s.wann?'<br>Wann: '+s.wann:''}${s.bem?'<br>Hinweis: '+s.bem:''}
-    </div>
-    <div class="card"><div class="card-title">💊 Medikamente</div>${medT||'Keine genommen'}</div>
-    <div class="card"><div class="card-title">🌅 Frühstück</div>${fr.zeit||''} ${frT||'–'}</div>
-    <div class="card"><div class="card-title">🍽️ Mittagessen</div>${mi.zeit||''} ${miT||'–'}</div>
-    <div class="card"><div class="card-title">🌙 Abendessen</div>${e.ab.zeit||''} ${e.ab.was||'–'}</div>
-    ${e.snacks?`<div class="card"><div class="card-title">🍎 Snacks</div>${e.snacks}</div>`:''}
-    <div class="card"><div class="card-title">💧 Getränke</div>Wasser: ${e.gt.wasser||'–'}ml | Kaffee: ${e.gt.kaffee||'0'} Tassen ${e.gt.kafZeit?'('+e.gt.kafZeit+')':''}${e.gt.alk?'<br>Alkohol: '+e.gt.alkWas:''}${e.gt.son?'<br>'+e.gt.son:''}</div>
-    <div class="card"><div class="card-title">🕐 Letztes Essen</div>${e.le.zeit||'–'} ${e.le.was||''}</div>
-    ${e.notizen?`<div class="card"><div class="card-title">📝 Notizen</div>${e.notizen}</div>`:''}`;
-}
-
-function closeDetail() { g('vl-list').style.display='block'; g('vl-detail').style.display='none'; }
-
-// ===== ARZT-BERICHT =====
-function generateExport() {
-  const entries = JSON.parse(localStorage.getItem('hpro') || '{}');
-  const keys = Object.keys(entries).sort();
-  if (!keys.length) { g('exp-out').innerHTML='<div class="card"><p style="color:#64748b">Noch keine Einträge.</p></div>'; return; }
-  const n = keys.length;
-
-  // Muster für Bericht
-  const avgSymAll = keys.map(k => avgSym(entries[k]));
-  const overallAvg = avgSymAll.reduce((a,b)=>a+b,0)/n;
-  const weights = keys.map(k=>parseFloat(entries[k].gewicht)).filter(Boolean);
-  const kaffeeTage = keys.filter(k => parseInt(entries[k].gt.kaffee) >= 2);
-  const stressTage = keys.filter(k => parseInt(entries[k].befinden.stress) >= 6);
-  const alkTage = keys.filter(k => entries[k].gt.alk);
-  const medOk = keys.filter(k => entries[k].med.duMo && entries[k].med.duAb).length;
-  const spaesTage = keys.filter(k => { const z=entries[k].le.zeit; return z && z>='20:00'; });
-  const symLabel = v => v < 0.5 ? 'Keine' : v < 1.2 ? 'Leicht' : v < 2 ? 'Mittel' : 'Stark';
-
-  const firstHalf = avgSymAll.slice(0,Math.floor(n/2));
-  const secondHalf = avgSymAll.slice(Math.floor(n/2));
-  const firstAvg = firstHalf.reduce((a,b)=>a+b,0)/firstHalf.length;
-  const secondAvg = secondHalf.reduce((a,b)=>a+b,0)/secondHalf.length;
-  const trend = secondAvg < firstAvg-0.2 ? 'VERBESSERUNG' : secondAvg > firstAvg+0.2 ? 'VERSCHLECHTERUNG' : 'STABIL';
-
-  let t = `╔══════════════════════════════════════════════════╗
-║         GESUNDHEITSPROTOKOLL - ARZTBERICHT        ║
-╚══════════════════════════════════════════════════╝
-
-Patient:  Mario Zittmayr, geb. 26.04.1977
-Adresse:  Ipfbachstraße 10A, 4481 Asten
-Termin:   25.03.2026, Ordensklinikum Linz
-          Abt. Zwerchfellbruch & Sodbrennen
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-DIAGNOSEN (aus vorliegenden Befunden)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Kleine Hiatushernie (Zwerchfellbruch)
-• Refluxösophagitis Grad I
-• Geringgradige Antrumgastritis
-• Histologie (13.01.2026): unauffällig, kein H. pylori
-• Sonographie Oberbauch (16.02.2026): unauffällig
-• Blutbild (11.02.2026): alle Werte im Normbereich
-
-AKTUELLE MEDIKATION (ab 20.01.2026)
-• Durotiv 40mg: morgens + abends
-• Sucralan 1G/5ml: mittags + nachts
-• Gaviscon Erdbeer: bei Bedarf
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ZUSAMMENFASSUNG (${n} TAGE PROTOKOLL)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Zeitraum:        ${keys[0]} bis ${keys[keys.length-1]}
-Symptom-Niveau:  Ø ${symLabel(overallAvg)} (${overallAvg.toFixed(1)}/3.0)
-Symptom-Trend:   ${trend}
-${weights.length>1?`Gewicht:         ${weights[0]}kg → ${weights[weights.length-1]}kg (${(weights[weights.length-1]-weights[0]).toFixed(1)}kg)`:''}
-Medikamente:     Durotiv vollst. an ${medOk}/${n} Tagen (${Math.round(medOk/n*100)}%)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ERKANNTE MUSTER & AUSLÖSER
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-
-  // Kaffee
-  if (kaffeeTage.length > 0) {
-    const kafSym = kaffeeTage.map(k=>avgSym(entries[k])).reduce((a,b)=>a+b,0)/kaffeeTage.length;
-    const noKafTage = keys.filter(k=>parseInt(entries[k].gt.kaffee)<2);
-    const noKafSym = noKafTage.length>0 ? noKafTage.map(k=>avgSym(entries[k])).reduce((a,b)=>a+b,0)/noKafTage.length : null;
-    t += `☕ Kaffee (${kaffeeTage.length} Tage mit 2+ Tassen): Symptome Ø ${symLabel(kafSym)}`;
-    if (noKafSym !== null) t += `, ohne Kaffee: Ø ${symLabel(noKafSym)}`;
-    t += '\n';
+    list.innerHTML=html;
+    $('med-count').textContent=done+' / '+meds.length;
+    $('med-prog').style.width=Math.round(done/meds.length*100)+'%';
+    list.querySelectorAll('.chk').forEach(el=>el.onclick=()=>{const k=el.dataset.k;e.meds[k]=!e.meds[k];saveLog();renderHeute();});
   }
-  // Stress
-  if (stressTage.length > 0) {
-    const stressSym = stressTage.map(k=>avgSym(entries[k])).reduce((a,b)=>a+b,0)/stressTage.length;
-    t += `😤 Stress (${stressTage.length} stressige Tage): Symptome Ø ${symLabel(stressSym)}\n`;
-  }
-  // Spätes Essen
-  if (spaesTage.length > 0) {
-    const spaetSym = spaesTage.map(k=>avgSym(entries[k])).reduce((a,b)=>a+b,0)/spaesTage.length;
-    t += `🕐 Spätes Essen nach 20h (${spaesTage.length} Tage): Symptome Ø ${symLabel(spaetSym)}\n`;
-  }
-  // Alkohol
-  if (alkTage.length > 0) {
-    const alkSym = alkTage.map(k=>avgSym(entries[k])).reduce((a,b)=>a+b,0)/alkTage.length;
-    t += `🍺 Alkohol (${alkTage.length} Tage): Symptome Ø ${symLabel(alkSym)}\n`;
-  }
-
-  t += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nSYMPTOM-STATISTIK\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-
-  const symF = ['halsenge','brennen','sodbrennen','aufstossen'];
-  const symN = ['Halsenge/Engegefühl','Brennen','Sodbrennen','Aufstoßen'];
-  symF.forEach((f,i) => {
-    const c={keine:0,leicht:0,mittel:0,stark:0};
-    keys.forEach(k=>{const v=entries[k].symptome[f];if(v)c[v]++;});
-    const pct = v => Math.round(v/n*100);
-    t += `${symN[i]}:\n  Keine ${c.keine}x(${pct(c.keine)}%) | Leicht ${c.leicht}x(${pct(c.leicht)}%) | Mittel ${c.mittel}x(${pct(c.mittel)}%) | Stark ${c.stark}x(${pct(c.stark)}%)\n`;
+  // Atmen
+  $('atem-list').innerHTML=ATEM_SLOTS.map(s=>{const d=!!e.atmen[s.k];return `<div class="chk ${d?'done':''}" data-k="${s.k}"><div class="box">${d?'✓':''}</div><div class="lbl"><b>${s.name}</b><span>${set.atimes[s.k]||s.t} Uhr · <a href="#" data-ex="${s.ex}">Übung starten</a></span></div></div>`}).join('');
+  $('atem-list').querySelectorAll('.chk').forEach(el=>el.onclick=ev=>{ if(ev.target.dataset.ex){ev.preventDefault();gotoPage('atmen');selectEx(ev.target.dataset.ex);return;} e.atmen[el.dataset.k]=!e.atmen[el.dataset.k];saveLog();renderHeute();});
+  // Symptome
+  document.querySelectorAll('.sev').forEach(g=>{const f=g.dataset.f;
+    g.innerHTML=['Keine','Leicht','Mittel','Stark'].map((l,i)=>`<button class="s${i} ${e[f]===i?'sel':''}" data-v="${i}">${l}</button>`).join('');
+    g.querySelectorAll('button').forEach(bt=>bt.onclick=()=>{e[f]=e[f]===+bt.dataset.v?null:+bt.dataset.v;saveLog();renderHeute();});
   });
+  const kmax=plan?.kaffee?.max||3;const kv=e.kaffee||0;
+  $('kaffee-v').textContent=kv;$('kaffee-v').style.color=kv>kmax?'var(--bad)':kv===kmax?'var(--warn)':'inherit';
+  $('kaffee-hint').textContent=plan?.kaffee?(kv>=kmax?' – Limit '+kmax+' erreicht':' – max. '+kmax+', erster 90 Min. nach dem Aufstehen'):'';
+  $('stress').value=e.stress??5;$('stress-v').textContent=e.stress??'–';
+  $('schlaf').value=e.schlaf??'';$('gewicht').value=e.gewicht??'';$('notiz').value=e.notiz||'';
+  $('sport').classList.toggle('on',!!e.sport);
+}
+$('stress').oninput=()=>{const e=entry(TK);e.stress=+$('stress').value;$('stress-v').textContent=e.stress;saveLog();};
+$('schlaf').onchange=()=>{entry(TK).schlaf=parseFloat($('schlaf').value)||null;saveLog();};
+$('gewicht').onchange=()=>{entry(TK).gewicht=parseFloat($('gewicht').value)||null;saveLog();};
+$('notiz').oninput=()=>{entry(TK).notiz=$('notiz').value;saveLog();};
+$('sport').onclick=()=>{const e=entry(TK);e.sport=!e.sport;saveLog();renderHeute();};
+$('kaffee-plus').onclick=()=>{const e=entry(TK);e.kaffee=(e.kaffee||0)+1;saveLog();renderHeute();if(e.kaffee>(plan?.kaffee?.max||3))toast('Über dem Kaffee-Limit');};
+$('kaffee-minus').onclick=()=>{const e=entry(TK);e.kaffee=Math.max(0,(e.kaffee||0)-1);saveLog();renderHeute();};
 
-  t += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nTÄGLICHE DETAILS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-
-  keys.forEach(k => {
-    const e=entries[k], s=e.symptome, m=e.med, fr=e.fr, mi=e.mi;
-    const frT=[fr.hafer&&'Haferschleim',fr.kamille&&'Kamillentee',fr.htSch&&'Hotoast Schinken',fr.htMar&&'Hotoast Marmelade',fr.son].filter(Boolean).join(', ');
-    const miT=[mi.huhn&&'Hühnerfleisch m.Gemüse',mi.lachs&&'Lachs m.Gemüse',mi.karotten&&'Karotten',mi.zucchini&&'Zucchini',mi.karfiol&&'Karfiol',mi.kartoffel&&'Kartoffel',mi.reis&&'Reis',mi.strudel&&'Gemüsestrudel',mi.son].filter(Boolean).join(', ');
-    const medT=[m.duMo&&'Durotiv Mo',m.duAb&&'Durotiv Ab',m.suMi&&'Sucralan Mi',m.suNa&&'Sucralan Na',(m.gavN>0)&&('Gaviscon '+m.gavN+'x'+(m.gavZ?' ('+m.gavZ+')':'')),(m.renN>0)&&('Rennie '+m.renN+'x'+(m.renZ?' ('+m.renZ+')':'')),m.son].filter(Boolean).join(', ');
-    t += `\n${'-'.repeat(48)}\n${e.dateDisplay||k}\n`;
-    t += `Befinden: ${e.befinden.gesamt}/10 | Stress: ${e.befinden.stress}/10 | Schlaf: ${e.befinden.schlaf}h | Gew: ${e.gewicht||'–'}kg\n`;
-    t += `Symptome: Halsenge ${s.halsenge||'–'} | Brennen ${s.brennen||'–'} | Sodbrennen ${s.sodbrennen||'–'} | Aufstoßen ${s.aufstossen||'–'}\n`;
-    if (s.wann) t += `  Wann am stärksten: ${s.wann}\n`;
-    if (s.bem) t += `  Hinweis: ${s.bem}\n`;
-    t += `Medikamente: ${medT||'Keine genommen'}\n`;
-    t += `Frühstück: ${fr.zeit||''} ${frT||'–'}\n`;
-    t += `Mittagessen: ${mi.zeit||''} ${miT||'–'}\n`;
-    t += `Abendessen: ${e.ab.zeit||''} ${e.ab.was||'–'}\n`;
-    if (e.snacks) t += `Snacks: ${e.snacks}\n`;
-    t += `Getränke: ${e.gt.wasser||'–'}ml Wasser | Kaffee: ${e.gt.kaffee||'0'} Tassen${e.gt.kafZeit?' ('+e.gt.kafZeit+')':''}${e.gt.alk?' | Alkohol: '+e.gt.alkWas:''}\n`;
-    if (e.gt.son) t += `Weitere Getränke: ${e.gt.son}\n`;
-    t += `Letztes Essen: ${e.le.zeit||'–'} ${e.le.was||''}\n`;
-    if (e.notizen) t += `Notizen: ${e.notizen}\n`;
+/* ---------- ESSEN: Ampel ---------- */
+function persMeiden(){ return (plan?.persoenlich?.meiden)||[]; }
+function foodTags(item){ // persönliche Marker aus dem Plan
+  const tags=[];
+  persMeiden().forEach(p=>{ if((p.treffer||[]).some(t=>item.n.toLowerCase().includes(t.toLowerCase()))) tags.push(p.name); });
+  return tags;
+}
+function renderAmpel(){
+  const q=($('food-q').value||'').trim().toLowerCase();
+  const pm=persMeiden();
+  $('food-pers').innerHTML=pm.length?`<div class="banner warn" style="font-size:13px"><b>Persönlich meiden:</b> ${pm.map(p=>p.name+' ('+p.grund+')').join(' · ')}</div>`:'';
+  let html='';
+  FODMAP.forEach(cat=>{
+    const items=cat.items.filter(i=>!q||i.n.toLowerCase().includes(q)||(i.why||'').toLowerCase().includes(q));
+    if(!items.length)return;
+    const rows=items.map(i=>`<div class="food"><i class="dot ${i.s}"></i><div class="n">${i.n}${i.why?`<div class="why">${i.why}</div>`:''}</div>${foodTags(i).map(t=>`<span class="tag">${t}</span>`).join('')}</div>`).join('');
+    html+=q?`<div class="lbl-sm">${cat.name}</div>${rows}`:`<details ${cat.open?'open':''}><summary>${cat.name} <small class="hint">(${items.length})</small></summary>${rows}</details>`;
   });
+  $('food-list').innerHTML=html||'<div class="empty">Nichts gefunden. Grundregel: Alles was nicht auf der Liste steht → in kleiner Menge probieren und im Kurz-Check notieren.</div>';
+}
+$('food-q').oninput=renderAmpel;
 
-  t += `\n${'━'.repeat(50)}\nErstellt: ${new Date().toLocaleDateString('de-AT')} | Gesundheitsprotokoll-App\n`;
+/* ---------- ESSEN: Wochenplan ---------- */
+const DAYS=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+function mondayOf(k){const d=new Date(k+'T00:00:00');const wd=(d.getDay()+6)%7;d.setDate(d.getDate()-wd);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function pick(pool,used,filter){let c=pool.filter(r=>!used.includes(r.id)&&(!filter||filter(r)));if(!c.length)c=pool.filter(r=>!filter||filter(r));if(!c.length)c=pool;return c[Math.floor(Math.random()*c.length)].id}
+function genWeek(){
+  const w={monday:mondayOf(TK),days:[]};const used=[];let meat=0;
+  for(let i=0;i<7;i++){
+    const f=pick(REZEPTE.filter(r=>r.typ==='f'),used);used.push(f);
+    const mFilter=r=>!(r.fleisch&&meat>=2);
+    const m=pick(REZEPTE.filter(r=>r.typ==='m'),used,mFilter);used.push(m);if(REZ(m).fleisch)meat++;
+    const a=pick(REZEPTE.filter(r=>r.typ==='a'),used,mFilter);used.push(a);if(REZ(a).fleisch)meat++;
+    w.days.push({f,m,a});
+  }
+  return w;
+}
+const REZ=id=>REZEPTE.find(r=>r.id===id)||REZEPTE[0];
+let week=LS.get('gp_week',null);
+function ensureWeek(){ if(!week||week.monday!==mondayOf(TK)){week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});} }
+function renderWoche(){
+  ensureWeek();
+  $('woche-info').textContent='ab '+fmtDate(week.monday);
+  const todayIdx=daysBetween(week.monday,TK);
+  $('woche').innerHTML=week.days.map((d,i)=>`<div class="day"><h3>${DAYS[i]}${i===todayIdx?' · heute':''}</h3>${['f','m','a'].map(t=>{const r=REZ(d[t]);return `<div class="meal"><span class="k">${{f:'Früh',m:'Mittag',a:'Abend'}[t]}</span><div class="n">${r.name} ${(r.tags||[]).map(x=>`<span class="badge" style="font-size:10px">${{schnell:'⚡ schnell',tm:'TM',buero:'🏢 Büro',vorkochen:'🥡 vorkochen'}[x]||x}</span>`).join(' ')}<small>${r.zutaten.map(z=>z.n).join(', ')}</small>${r.tipp?`<small style="color:var(--p)">👨‍🍳 ${r.tipp}</small>`:''}</div><button data-d="${i}" data-t="${t}">↻</button></div>`}).join('')}</div>`).join('');
+  $('woche').querySelectorAll('.meal button').forEach(b=>b.onclick=()=>{const d=week.days[+b.dataset.d];const t=b.dataset.t;const used=week.days.flatMap(x=>[x.f,x.m,x.a]);d[t]=pick(REZEPTE.filter(r=>r.typ===t),used);LS.set('gp_week',week);renderWoche();renderEinkauf();});
+}
+$('woche-neu').onclick=()=>{week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});renderWoche();renderEinkauf();toast('Neue Woche gemischt');};
 
-  window._expText = t;
-  g('exp-out').innerHTML = `<div class="exp-out">${t}</div>`;
-  showToast('Bericht generiert!');
+/* ---------- ESSEN: Einkaufsliste ---------- */
+function renderEinkauf(){
+  ensureWeek();
+  const shop=LS.get('gp_shop',{});
+  const agg={};
+  week.days.forEach(d=>['f','m','a'].forEach(t=>REZ(d[t]).zutaten.forEach(z=>{const k=z.n;if(!agg[k])agg[k]={n:z.n,kat:z.kat||'Sonstiges',cnt:0};agg[k].cnt++;})));
+  VORRAT.forEach(v=>{if(!agg[v.n])agg[v.n]={n:v.n,kat:v.kat,cnt:0,vorrat:true}});
+  const cats={};Object.values(agg).forEach(i=>{(cats[i.kat]=cats[i.kat]||[]).push(i)});
+  const order=['Gemüse','Obst','Eiweiß','Milchprodukte','Getreide & Beilagen','Nüsse & Samen','Öle & Gewürze','Getränke','Sonstiges','Vorrat / Präparate'];
+  let html='';
+  Object.keys(cats).sort((a,b)=>order.indexOf(a)-order.indexOf(b)).forEach(c=>{
+    html+=`<h3>${c}</h3>`+cats[c].sort((a,b)=>a.n.localeCompare(b.n)).map(i=>{const d=!!shop[i.n];return `<div class="chk ${d?'done':''}" data-k="${i.n}"><div class="box">${d?'✓':''}</div><div class="lbl"><b>${i.n}</b>${i.cnt>1?`<span>${i.cnt}× diese Woche</span>`:''}${i.vorrat?'<span>Vorrat prüfen</span>':''}</div></div>`}).join('');
+  });
+  $('einkauf').innerHTML=html;
+  $('einkauf').querySelectorAll('.chk').forEach(el=>el.onclick=()=>{const s=LS.get('gp_shop',{});s[el.dataset.k]=!s[el.dataset.k];LS.set('gp_shop',s);renderEinkauf();});
+}
+$('einkauf-reset').onclick=()=>{LS.set('gp_shop',{});renderEinkauf();};
+
+/* ---------- ESSEN: Tipps ---------- */
+function renderTipps(){
+  const byTag=t=>REZEPTE.filter(r=>(r.tags||[]).includes(t)).map(r=>`<div class="ex"><div class="n"><b>${r.name}</b><span>${r.tipp||r.zutaten.map(z=>z.n).join(', ')}</span></div></div>`).join('');
+  $('tipps').innerHTML=TIPPS.map(g=>`<div class="card"><h2>${g.titel}</h2>${g.punkte?`<ul style="margin:0 0 8px;padding-left:18px;font-size:14.5px">${g.punkte.map(p=>`<li style="margin:4px 0">${p}</li>`).join('')}</ul>`:''}${g.tag?byTag(g.tag):''}</div>`).join('');
 }
 
-function copyExport() {
-  if (!window._expText) { generateExport(); setTimeout(copyExport,300); return; }
-  navigator.clipboard.writeText(window._expText)
-    .then(()=>showToast('Kopiert! ✓'))
-    .catch(()=>showToast('Bitte Text manuell markieren'));
+/* ---------- ESSEN: Regeln ---------- */
+function renderRegeln(){
+  const r=(plan?.regeln)||REGELN_STANDARD;
+  $('regeln').innerHTML=r.map(g=>`<div class="card"><h2>${g.titel}</h2><ul style="margin:0;padding-left:18px;font-size:14.5px">${g.punkte.map(p=>`<li style="margin:4px 0">${p}</li>`).join('')}</ul></div>`).join('');
 }
 
-function showToast(msg) {
-  const t=g('toast'); t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
+/* ---------- ATMEN ---------- */
+let curEx=null,bTimer=null;
+function selectEx(id){curEx=ATEM.find(x=>x.id===id);$('orb').innerHTML=curEx.name+'<small>'+curEx.kurz+'</small>';$('bstat').textContent='Start drücken';renderExList();}
+function renderExList(){
+  $('ex-list').innerHTML=ATEM.map(x=>`<div class="ex"><div class="n"><b>${x.name}</b><span>${x.beschreibung}</span></div><button class="btn ${curEx&&curEx.id===x.id?'':'sec'} sm" data-id="${x.id}">${curEx&&curEx.id===x.id?'gewählt':'wählen'}</button></div>`).join('');
+  $('ex-list').querySelectorAll('button').forEach(b=>b.onclick=()=>selectEx(b.dataset.id));
+}
+function stopBreath(){clearInterval(bTimer);bTimer=null;$('orb').style.transform='scale(.6)';if(curEx)$('bstat').textContent='Gestoppt';}
+function startBreath(){
+  if(!curEx){toast('Zuerst eine Übung wählen');return;}
+  stopBreath();
+  if(curEx.stille){ // reiner Countdown
+    let left=curEx.minuten*60;$('orb').style.transform='scale(1)';$('orb').innerHTML='Stille<small>ruhig atmen</small>';
+    bTimer=setInterval(()=>{left--;$('bstat').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0')+' verbleibend';if(left<=0){stopBreath();$('bstat').textContent='Fertig 🎉';markAtem();}},1000);
+    return;
+  }
+  const steps=curEx.muster; let round=1,si=0,left=steps[0].s;
+  const show=()=>{const st=steps[si];$('orb').innerHTML=st.n+'<small>'+left+'</small>';$('orb').style.transition='transform '+st.s+'s linear';$('orb').style.transform=st.n==='Einatmen'?'scale(1)':st.n==='Ausatmen'?'scale(.6)':$('orb').style.transform;$('bstat').textContent='Runde '+round+' von '+curEx.runden;};
+  show();
+  bTimer=setInterval(()=>{left--;if(left<=0){si++;if(si>=steps.length){si=0;round++;if(round>curEx.runden){stopBreath();$('orb').innerHTML='Fertig 🎉<small>'+curEx.runden+' Runden</small>';$('bstat').textContent='Gut gemacht';markAtem();return;}}left=steps[si].s;show();}else{$('orb').innerHTML=steps[si].n+'<small>'+left+'</small>';}},1000);
+}
+function markAtem(){ // erste noch offene Atem-Position des Tages abhaken
+  const e=entry(TK);const s=ATEM_SLOTS.find(x=>!e.atmen[x.k]);if(s){e.atmen[s.k]=true;saveLog();toast('Atemübung eingetragen ✓');}
+}
+$('b-start').onclick=startBreath;$('b-stop').onclick=stopBreath;
+
+/* ---------- VERLAUF ---------- */
+function renderVerlauf(){
+  const keys=Object.keys(log).sort().slice(-30);
+  const n=keys.length;
+  const avg=(f)=>{const v=keys.map(k=>log[k][f]).filter(x=>x!=null);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):null};
+  const medQ=(()=>{let t=0,d=0;keys.forEach(k=>{const m=log[k].meds||{};Object.values(m).forEach(v=>{t++;if(v)d++;})});return t?Math.round(d/t*100):null})();
+  const halsFree=keys.filter(k=>log[k].hals===0).length;
+  $('stats').innerHTML=`<div><b>${n}</b><span>Tage erfasst</span></div><div><b>${halsFree}</b><span>Tage ohne Halsgefühl</span></div><div><b>${avg('hals')!=null?avg('hals').toFixed(1):'–'}</b><span>Ø Hals (0–3)</span></div><div><b>${medQ!=null?medQ+'%':'–'}</b><span>Tabletten genommen</span></div>`;
+  // Chart
+  const c=$('chart');const dpr=window.devicePixelRatio||1;const W=c.clientWidth||320,H=200;c.width=W*dpr;c.height=H*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);
+  x.clearRect(0,0,W,H);
+  if(n<2){x.fillStyle='#6b7c77';x.font='13px sans-serif';x.fillText('Ab 2 Tagen erscheint hier der Verlauf.',10,100);}
+  else{
+    const pad={l:22,r:8,t:8,b:22};const pw=W-pad.l-pad.r,ph=H-pad.t-pad.b;
+    x.strokeStyle='#e1e7e4';x.lineWidth=1;for(let i=0;i<=3;i++){const y=pad.t+ph-i/3*ph;x.beginPath();x.moveTo(pad.l,y);x.lineTo(W-pad.r,y);x.stroke();x.fillStyle='#6b7c77';x.font='11px sans-serif';x.fillText(i,4,y+4);}
+    const line=(f,col,scale)=>{x.strokeStyle=col;x.lineWidth=2;x.beginPath();let started=false;keys.forEach((k,i)=>{let v=log[k][f];if(v==null)return;v=v*scale;const px=pad.l+i/(n-1)*pw,py=pad.t+ph-Math.min(v,3)/3*ph;if(!started){x.moveTo(px,py);started=true}else x.lineTo(px,py);});x.stroke();};
+    line('stress','#6b7c77',0.3);line('bauch','#c98a00',1);line('hals','#c0392b',1);
+    x.fillStyle='#6b7c77';x.font='11px sans-serif';[0,Math.floor((n-1)/2),n-1].forEach(i=>{const [y,m,d]=keys[i].split('-');x.fillText(d+'.'+m+'.',pad.l+i/(n-1)*pw-14,H-6);});
+  }
+  const sev=['keine','leicht','mittel','stark'];
+  $('entries').innerHTML=keys.slice().reverse().slice(0,14).map(k=>{const e=log[k];const [y,m,d]=k.split('-');const m2=Object.values(e.meds||{});const parts=[e.hals!=null?'Hals '+sev[e.hals]:null,e.bauch!=null?'Bauch '+sev[e.bauch]:null,e.stress!=null?'Stress '+e.stress:null,e.schlaf?e.schlaf+' h':null,e.gewicht?e.gewicht+' kg':null,m2.length?m2.filter(Boolean).length+'/'+m2.length+' Tabl.':null,e.sport?'Sport':null].filter(Boolean);return `<div class="ent"><span class="d">${d}.${m}.</span><span class="s">${parts.join(' · ')||'–'}${e.notiz?'<br>'+e.notiz:''}</span></div>`}).join('')||'<div class="empty">Noch keine Einträge.</div>';
+}
+function renderBefunde(){
+  if(!plan){$('befunde').innerHTML='<div class="card"><div class="empty">Plan laden, dann erscheinen hier deine Befunde.</div></div>';return;}
+  let h='';
+  if(plan.diagnosen)h+=`<div class="card"><h2>Diagnosen <small>Arztbrief ${plan.arztbriefDatum||''}</small></h2><ul style="margin:0;padding-left:18px;font-size:14.5px">${plan.diagnosen.map(d=>`<li>${d}</li>`).join('')}</ul></div>`;
+  if(plan.befunde){const st={hoch:'bad',niedrig:'warn',normal:'ok'};h+=`<div class="card"><h2>Auffällige Werte</h2><table class="bf">${plan.befunde.map(b=>`<tr><td>${b.name}<br><small class="hint">${b.datum||''}</small></td><td>${b.wert}<br><small class="hint">Ref. ${b.ref}</small></td><td><span class="badge ${st[b.status]||''}">${b.status}</span><br><small class="hint">${b.bedeutung||''}</small></td></tr>`).join('')}</table></div>`;}
+  if(plan.training){const p=plan.training.puls;const sa=['rad','gehen','laufen'];const names={rad:'Rad',gehen:'Wandern',laufen:'Laufen'};
+    h+=`<div class="card"><h2>Puls beim Training <small>${p?.quelle||''}</small></h2>${p?`<table class="bf"><tr><td></td>${sa.map(s=>`<td><b>${names[s]}</b></td>`).join('')}</tr>${(plan.training.zonen||[]).map(z=>{return `<tr><td><span class="badge ${z.k==='A'?'ok':z.k==='B'?'warn':'bad'}">${z.k}</span> ${z.name}</td>${sa.map(s=>{const o=p.offsets[s]||0;return `<td>${z.k==='A'?'&lt; '+(p.vt1+o):z.k==='B'?(p.vt1+o)+'–'+(p.vt2+o):'&gt; '+(p.vt2+o)}</td>`}).join('')}</tr>`}).join('')}<tr><td>Maximalpuls</td>${sa.map(s=>`<td>${p.max+(p.offsets[s]||0)}</td>`).join('')}</tr></table>${(plan.training.zonen||[]).map(z=>`<div style="font-size:13.5px;margin-top:6px"><b>Zone ${z.k}:</b> ${z.txt}</div>`).join('')}`:''}<ul style="margin:8px 0 0;padding-left:18px;font-size:14px">${plan.training.hinweise.map(t=>`<li>${t}</li>`).join('')}</ul>${plan.training.woche?`<h2 style="margin-top:12px">Trainingswoche</h2>${['1','2','3','4','5','6','0'].map(d=>`<div class="ex"><div class="n"><b>${DAYS[(+d+6)%7]}</b><span>${(plan.training.woche[d]||[]).map(t=>t.name+(t.zeit?' ('+t.zeit+')':'')).join(', ')||'frei'}</span></div></div>`).join('')}`:''}</div>`;}
+  if(plan.bedarf)h+=`<div class="card"><h2>Bei Bedarf</h2>${plan.bedarf.map(b=>`<div class="ex"><div class="n"><b>${b.name} ${b.dosis||''}</b><span>${b.wann}</span></div></div>`).join('')}</div>`;
+  if(plan.sport)h+=`<div class="card"><h2>Bei Sport</h2>${plan.sport.map(b=>`<div class="ex"><div class="n"><b>${b.name}</b><span>${b.wann}${b.dosis?' · '+b.dosis:''}</span></div></div>`).join('')}</div>`;
+  $('befunde').innerHTML=h;
+}
+function renderTermine(){
+  if(!plan||!plan.termine){$('termine').innerHTML='<div class="card"><div class="empty">Plan laden.</div></div>';return;}
+  $('termine').innerHTML='<div class="card"><h2>Termine & Kontrollen</h2>'+plan.termine.map(t=>`<div class="ex"><div class="n"><b>${t.name}</b><span>${t.rhythmus||''}${t.datum?' · '+t.datum:''}${t.details?'<br>'+t.details:''}</span></div></div>`).join('')+'</div>';
 }
 
-window.addEventListener('load', loadToday);
+/* ---------- MEHR ---------- */
+function renderMehr(){
+  $('plan-stand').textContent=plan?'Stand '+(plan.stand||''):'';
+  $('plan-status').innerHTML=plan?`✅ Plan geladen (${plan.praeparate.length} Präparate, ${plan.quelle||''})`:'❌ Kein Plan geladen.';
+  $('kur-start').value=set.kurStart||'';
+  const kp=kurPhase();
+  $('kur-info').textContent=set.kurStart?(kp?`Heute: Tag ${kp.tag} – ${kp.name}. Detox-Shakes: ${fmtDate(addDays(set.kurStart,2))}–${fmtDate(addDays(set.kurStart,5))}, Präparate wieder ab ${fmtDate(addDays(set.kurStart,6))}.`:`Startet am ${fmtDate(set.kurStart)} (in ${daysBetween(TK,set.kurStart)} Tagen). Vorher: Kaffee langsam reduzieren, Darmdetox+ und Präparate besorgen.`):'Noch nicht gestartet.';
+  $('notif-sw').classList.toggle('on',!!set.notif);
+  $('notif-info').textContent=('Notification' in window)?(Notification.permission==='denied'?'Vom Browser blockiert – in den Seiteneinstellungen erlauben.':'Nur solange die App/der Browser offen ist. Für verlässliche Erinnerungen: Kalender-Export unten.'):'Dieser Browser unterstützt keine Benachrichtigungen.';
+  $('times').innerHTML=SLOTS.map(s=>`<div class="set"><div class="l">${s.name}</div><input type="time" data-s="${s.k}" value="${set.times[s.k]||s.t}"></div>`).join('')+ATEM_SLOTS.map(s=>`<div class="set"><div class="l">🌬️ ${s.name.split(':')[0]}<small>${s.name.split(':')[1]}</small></div><input type="time" data-a="${s.k}" value="${set.atimes[s.k]||s.t}"></div>`).join('');
+  $('times').querySelectorAll('input').forEach(i=>i.onchange=()=>{if(i.dataset.s)set.times[i.dataset.s]=i.value;else set.atimes[i.dataset.a]=i.value;saveSet();});
+  // Dosierung
+  if(!plan){$('med-edit').innerHTML='<div class="empty">Plan laden.</div>';}
+  else $('med-edit').innerHTML=plan.praeparate.map(m=>{const ov=set.medOverride[m.id]||{};const ph=medPhase(m);const d={...(ph||{}),...(ov.dose||{})};
+    return `<div class="medit"><div style="display:flex;align-items:center;gap:8px"><div class="n" style="flex:1">${m.name}<br><small class="hint">${ph?(ph.notiz||''):(m.anker==='kur'?'startet mit der Darmkur':'derzeit keine Phase')}</small></div><button class="sw ${ov.aus?'':'on'}" data-id="${m.id}"></button></div>${ph?`<div class="r">${['m','mi','a','n'].map(s=>`<input type="number" min="0" step="1" data-id="${m.id}" data-s="${s}" value="${d[s]||0}">`).join('<span>–</span>')}<span>${m.einheit||''}${d.nu?' + '+d.nu+' nüchtern':''}</span></div>`:''}</div>`}).join('');
+  $('med-edit').querySelectorAll('.sw').forEach(b=>b.onclick=()=>{const o=set.medOverride[b.dataset.id]||{};o.aus=!o.aus;set.medOverride[b.dataset.id]=o;saveSet();renderMehr();});
+  $('med-edit').querySelectorAll('input').forEach(i=>i.onchange=()=>{const o=set.medOverride[i.dataset.id]||{};o.dose=o.dose||{};o.dose[i.dataset.s]=+i.value||0;set.medOverride[i.dataset.id]=o;saveSet();toast('Gespeichert – gilt für die laufende Phase');});
+  $('data-info').textContent=Object.keys(log).length+' Tage im Protokoll auf diesem Gerät.';
+}
+$('kur-start').onchange=()=>{set.kurStart=$('kur-start').value||null;set.medOverride={};saveSet();renderMehr();toast(set.kurStart?'Darmkur-Start gesetzt':'Darmkur-Start entfernt');};
+$('plan-load').onclick=()=>$('plan-file').click();
+$('plan-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const p=JSON.parse(r.result);if(!p.praeparate)throw 0;plan=p;LS.set('gp_plan',plan);set.medOverride={};saveSet();toast('Plan geladen ✓');renderMehr();}catch(e){toast('Das ist keine gültige mein-plan.json');}};r.readAsText(f);ev.target.value='';};
+$('notif-sw').onclick=async()=>{
+  if(!('Notification' in window)){toast('Nicht unterstützt');return;}
+  if(set.notif){set.notif=false;saveSet();renderMehr();return;}
+  const p=await Notification.requestPermission();
+  if(p==='granted'){set.notif=true;saveSet();toast('Erinnerungen aktiv (solange App offen)');}else toast('Keine Erlaubnis erteilt');
+  renderMehr();
+};
+$('exp').onclick=()=>download('gesundheit-protokoll-'+TK+'.json',JSON.stringify({log,set,week},null,1),'application/json');
+$('imp').onclick=()=>$('imp-file').click();
+$('imp-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.log){Object.assign(log,d.log);saveLog();}if(d.set){set={...set,...d.set};saveSet();}toast('Wiederhergestellt ✓');renderMehr();}catch(e){toast('Datei nicht lesbar');}};r.readAsText(f);ev.target.value='';};
+function download(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);}
+
+/* ---------- Kalender-Export (.ics) ---------- */
+$('ics').onclick=()=>{
+  if(!plan){toast('Zuerst Plan laden');return;}
+  const meds=medsToday();
+  const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Gesundheit App//DE','CALSCALE:GREGORIAN'];
+  const ev=(uid,time,title,desc)=>{const [h,mi]=time.split(':');const d=TK.replace(/-/g,'');lines.push('BEGIN:VEVENT','UID:'+uid+'@gesundheit-app','DTSTAMP:'+d+'T000000','DTSTART:'+d+'T'+h+mi+'00','DURATION:PT10M','RRULE:FREQ=DAILY','SUMMARY:'+title,'DESCRIPTION:'+desc.replace(/\n/g,'\\n'),'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:'+title,'END:VALARM','END:VEVENT');};
+  SLOTS.forEach(s=>{const ms=meds.filter(m=>m.slot===s.k);if(!ms.length)return;ev('med-'+s.k,set.times[s.k]||s.t,'💊 '+s.name,ms.map(m=>m.name+' '+m.menge+' '+m.einheit).join(', ')+'\nDosis kann sich je Phase ändern – Details in der App.');});
+  ATEM_SLOTS.forEach(s=>ev('atem-'+s.k,set.atimes[s.k]||s.t,'🌬️ '+s.name,'Atemübung – App öffnen für den geführten Ablauf.'));
+  lines.push('END:VCALENDAR');
+  download('gesundheit-erinnerungen.ics',lines.join('\r\n'),'text/calendar');
+  toast('Kalenderdatei erstellt – öffnen und importieren');
+};
+
+/* ---------- Erinnerungen im Vordergrund ---------- */
+function checkReminders(){
+  if(!set.notif||Notification.permission!=='granted')return;
+  const now=new Date();const hm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  const fired=LS.get('gp_fired',{});const e=entry(TK);
+  const meds=medsToday();
+  const fire=(key,title,body)=>{if(fired[TK+key])return;fired[TK+key]=1;LS.set('gp_fired',fired);navigator.serviceWorker?.ready.then(r=>r.showNotification(title,{body,icon:'icon-192.png',tag:key})).catch(()=>new Notification(title,{body}));};
+  SLOTS.forEach(s=>{const t=set.times[s.k]||s.t;if(hm!==t)return;const ms=meds.filter(m=>m.slot===s.k&&!e.meds[m.id+'_'+m.slot]&&!m.paused);if(ms.length)fire('m'+s.k,'💊 '+s.name,ms.map(m=>m.name+' '+m.menge+' '+m.einheit).join(', '));});
+  ATEM_SLOTS.forEach(s=>{const t=set.atimes[s.k]||s.t;if(hm===t&&!e.atmen[s.k])fire('a'+s.k,'🌬️ Atemübung',s.name);});
+}
+setInterval(()=>{const nk=todayKey();if(nk!==TK){TK=nk;renderHeute();}checkReminders();},30000);
+
+/* ---------- Navigation ---------- */
+const PAGES={heute:renderHeute,essen:()=>{renderAmpel();renderWoche();renderEinkauf();renderTipps();renderRegeln();},atmen:renderExList,verlauf:()=>{renderVerlauf();renderBefunde();renderTermine();},mehr:renderMehr};
+const TITLES={heute:'Heute',essen:'Essen',atmen:'Atmen',verlauf:'Verlauf',mehr:'Mehr'};
+function gotoPage(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.toggle('on',x.id==='p-'+p));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+  $('hd-title').textContent=TITLES[p];$('hd-sub').textContent=p==='heute'?new Date().toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long'}):'';
+  PAGES[p]();window.scrollTo(0,0);
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
+document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+renderHeute();
+if(!plan)setTimeout(()=>toast('Tipp: unter „Mehr" deinen Plan laden'),800);
 </script>
 </body>
 </html>
