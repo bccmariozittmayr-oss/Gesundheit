@@ -26,7 +26,7 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 - Dosis-Korrekturen in der App (Mehr → Dosierung) überschreiben nur die laufende Phase; Änderungen am Plan gehören in die JSON.
 
 ## Test
-`scratchpad/smoke.js` (Playwright aus dbcc-360-crm) – lädt den echten Plan, klickt alle Seiten, prüft Phasen an 8 Stichtagen. Vor jedem Merge laufen lassen.
+`test/smoke-test.js` (Playwright aus dbcc-360-crm; Aufruf: `node test/smoke-test.js <Ausgabeordner>`) – lädt den echten Plan, klickt alle Seiten, prüft Phasen an 8 Stichtagen. Vor jedem Merge laufen lassen.
 
 ## Offen (Stand 06.09.2026)
 - Darmkur-Startdatum (Mario trägt es in der App ein). Achtung: Detox-Tage pausieren ALLE Präparate – nicht in die Vitamin-D-Hochdosis (18.–24.09.) legen.
