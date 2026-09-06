@@ -195,11 +195,15 @@ table.bf td:first-child{font-weight:600}
       <div style="display:flex;gap:8px;margin-top:6px"><button class="btn" id="scan-start" style="flex:1">📷 Strichcode scannen</button><button class="btn sec" id="scan-stop">Stopp</button></div>
       <div class="row" style="margin-top:10px"><label>oder Strichcode eintippen</label><input type="text" id="scan-code" inputmode="numeric" placeholder="z.B. 4008400402222" style="width:170px"></div>
       <button class="btn sec full" id="scan-lookup">Nachschlagen</button>
+      <div class="lbl-sm" style="margin-top:14px">Kein Treffer? Zutatenliste fotografieren</div>
+      <input type="file" id="ocr-file" accept="image/*" capture="environment" style="display:none">
+      <button class="btn full" id="ocr-btn" style="margin-top:4px">📸 Zutatenliste fotografieren</button>
+      <div id="ocr-status" class="hint" style="margin-top:6px"></div>
       <div class="lbl-sm" style="margin-top:12px">oder Zutatenliste abtippen / einfügen</div>
       <textarea id="scan-text" placeholder="Zutaten: Haferflocken, Zucker, Molkenpulver, Emulgator …"></textarea>
       <button class="btn sec full" id="scan-check">Zutaten prüfen</button>
       <div id="scan-result" style="margin-top:12px"></div>
-      <div class="hint" style="margin-top:8px">Ohne Gewähr: Die Prüfung erkennt Schlagwörter. Fehlt ein Produkt in der Datenbank, Zutaten abtippen. Foto-Erkennung mit KI gibt es bewusst nicht – das würde Bilder an einen externen Dienst schicken und pro Bild kosten.</div>
+      <div class="hint" style="margin-top:8px">Ohne Gewähr: Die Prüfung erkennt Schlagwörter. Reihenfolge: 1. Strichcode, 2. Foto der Zutatenliste (Texterkennung läuft am Handy, nichts wird hochgeladen), 3. abtippen.</div>
     </div>
   </div>
 
@@ -314,7 +318,7 @@ table.bf td:first-child{font-weight:600}
     <div class="hint" style="margin-top:8px" id="data-info"></div>
   </div>
   <div class="card">
-    <div class="hint" id="quelle-hint">Diese App ersetzt keinen Arzt. Grundlage ist der geladene Plan. Bei Änderungen: mein-plan.json anpassen und neu laden.</div>
+    <div class="hint" id="app-version" style="margin-bottom:6px"></div><div class="hint" id="quelle-hint">Diese App ersetzt keinen Arzt. Grundlage ist der geladene Plan. Bei Änderungen: mein-plan.json anpassen und neu laden.</div>
   </div>
 </section>
 
@@ -700,13 +704,32 @@ async function startScan(){
       scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});v.srcObject=scanStream;await v.play();
       scanTimer=setInterval(async()=>{try{const codes=await det.detect(v);if(codes.length){const c=codes[0].rawValue;stopScan();$('scan-code').value=c;lookupCode(c);}}catch(e){}},400);
     }else{
-      if(!window.ZXing){await new Promise((ok,err)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';s.onload=ok;s.onerror=err;document.head.appendChild(s);});}
+      if(!window.ZXing){await new Promise((ok,err)=>{const s=document.createElement('script');s.src='lib/zxing-0.21.3.min.js';s.onload=ok;s.onerror=err;document.head.appendChild(s);});}
       zx=new ZXing.BrowserMultiFormatReader();
       zx.decodeFromVideoDevice(undefined,v,(res)=>{if(res){const c=res.getText();stopScan();$('scan-code').value=c;lookupCode(c);}});
     }
   }catch(e){stopScan();$('scan-result').innerHTML='<div class="banner warn">Kamera nicht verfügbar – Code eintippen oder Zutaten abtippen.</div>';}
 }
 $('scan-start').onclick=startScan;$('scan-stop').onclick=stopScan;
+// OCR: Texterkennung läuft komplett im Browser (Tesseract.js); das Bild verlässt das Handy nicht.
+let ocrWorker=null;
+async function ocrImage(file){
+  stopScan();const st=$('ocr-status');st.textContent='Texterkennung wird geladen …';
+  try{
+    if(!window.Tesseract){await new Promise((ok,err)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';s.onload=ok;s.onerror=err;document.head.appendChild(s);});}
+    if(!ocrWorker){ocrWorker=await Tesseract.createWorker('deu',1,{logger:m=>{if(m.status==='recognizing text')st.textContent='Lese Text … '+Math.round(m.progress*100)+' %';else if(m.status)st.textContent=m.status.replace('loading','lade')+' …';}});}
+    // Bild verkleinern (schneller, weniger Speicher)
+    const img=await createImageBitmap(file);const max=1600;const sc=Math.min(1,max/Math.max(img.width,img.height));
+    const c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    const {data}=await ocrWorker.recognize(c);
+    const text=(data.text||'').replace(/\s+/g,' ').trim();
+    if(text.length<10){st.textContent='Kaum Text erkannt – näher ran, gerade halten, gutes Licht.';return;}
+    $('scan-text').value=text;st.textContent='Erkannt ('+text.length+' Zeichen) – bitte kurz gegenlesen, Erkennung ist nicht perfekt.';
+    scanResult(zutatenCheck(text,persMeiden()));
+  }catch(e){st.textContent='Texterkennung nicht möglich (offline oder Browser zu alt). Zutaten bitte abtippen.';}
+}
+$('ocr-btn').onclick=()=>$('ocr-file').click();
+$('ocr-file').onchange=ev=>{const f=ev.target.files[0];if(f)ocrImage(f);ev.target.value='';};
 $('scan-lookup').onclick=()=>lookupCode($('scan-code').value);
 $('scan-check').onclick=()=>{const t=$('scan-text').value.trim();if(!t){toast('Zutaten eingeben');return;}scanResult(zutatenCheck(t,persMeiden()));};
 
@@ -727,6 +750,7 @@ function renderMehr(){
     return `<div class="medit"><div style="display:flex;align-items:center;gap:8px"><div class="n" style="flex:1">${esc(m.name)}<br><small class="hint">${ph?(ph.notiz||''):(m.anker==='kur'?'startet mit der Darmkur':'derzeit keine Phase')}</small></div><button class="sw ${ov.aus?'':'on'}" data-id="${m.id}"></button></div>${ph?`<div class="r">${['nu','m','mi','a','n'].map(s=>`<input type="number" min="0" step="1" data-id="${esc(m.id)}" data-s="${s}" data-ab="${ph.abTag}" value="${d[s]||0}" title="${s}">`).join('<span>–</span>')}<span>${esc(m.einheit||'')}</span></div>`:''}</div>`}).join('');
   $('med-edit').querySelectorAll('.sw').forEach(b=>b.onclick=()=>{const o=set.medOverride[b.dataset.id]||{};o.aus=!o.aus;set.medOverride[b.dataset.id]=o;saveSet();renderMehr();});
   $('med-edit').querySelectorAll('input').forEach(i=>i.onchange=()=>{const ph=medPhase(plan.praeparate.find(x=>x.id===i.dataset.id));if(!ph||String(ph.abTag)!==i.dataset.ab){toast('Phase hat gewechselt – Ansicht neu geladen');renderMehr();return;}const o=set.medOverride[i.dataset.id]||{};if(o.abTag!==ph.abTag){o.dose={};o.abTag=ph.abTag;}o.dose[i.dataset.s]=+i.value||0;set.medOverride[i.dataset.id]=o;saveSet();toast('Gespeichert – gilt für die laufende Phase');});
+  $('app-version').textContent='App-Version '+APP_VERSION+' · Bei Änderungen: App schließen und neu öffnen.';
   $('quelle-hint').textContent='Diese App ersetzt keinen Arzt. '+(plan?'Grundlage: '+plan.quelle+'.':'Grundlage ist der geladene Plan.')+' Bei Änderungen: mein-plan.json anpassen und neu laden.';
   $('data-info').textContent=Object.keys(log).length+' Tage im Protokoll auf diesem Gerät.';
 }
@@ -784,7 +808,8 @@ function gotoPage(p){
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
 document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+const APP_VERSION='v2026.09.06-9';
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 renderHeute();
 if(!plan)setTimeout(()=>toast('Tipp: unter „Mehr" deinen Plan laden'),800);
 </script>

@@ -1,7 +1,7 @@
 /* Service Worker: macht die App offline nutzbar und zeigt Benachrichtigungen an.
    Bei jeder Änderung an den App-Dateien die VERSION hochzählen, sonst bleibt die alte Fassung im Cache. */
-const VERSION = 'gesundheit-v2026.09.06-8';
-const FILES = ['./', './index.html', './daten.js', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png'];
+const VERSION = 'gesundheit-v2026.09.06-9';
+const FILES = ['./', './index.html', './daten.js', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './lib/zxing-0.21.3.min.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
