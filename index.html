@@ -165,9 +165,6 @@ table.bf td:first-child{font-weight:600}
     <div class="sev" data-f="bauch"></div>
     <div class="lbl-sm">Stress heute: <b id="stress-v">5</b>/10</div>
     <input type="range" id="stress" min="0" max="10" value="5">
-    <div class="row"><label>Schlaf (Stunden)</label><input type="number" id="schlaf" step="0.5" min="0" max="14" placeholder="8"></div>
-    <div class="row"><label>Gewicht (kg)</label><input type="number" id="gewicht" step="0.1" placeholder="83.0"></div>
-    <div class="row"><label>Sport heute</label><button class="sw" id="sport" aria-label="Sport heute"></button></div>
     <div class="lbl-sm">Notiz (Essen, Auffälliges, Stuhlgang …)</div>
     <textarea id="notiz" placeholder="z.B. Hals nach Kaffee stärker …"></textarea>
     <div class="hint" id="save-info" style="margin-top:6px">Wird automatisch gespeichert.</div>
@@ -506,10 +503,10 @@ function whoopDetails(t,k){ // alle Werte eines Tages, aufklappbar
     +zeile('Eingeschlafen',s.start?new Date(s.start).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}):null)+zeile('Aufgewacht',s.ende?new Date(s.ende).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}):null)+zeile('Nickerchen',t.nickerchen?h(t.nickerchen):null):'<div class="empty">Kein bewerteter Schlaf.</div>';
   const wo=(t.workouts||[]).map(w=>`<div style="margin-top:8px"><b>${esc(w.sport)}</b> · ${new Date(w.start).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})} · ${w.minuten} Min.${w.strain!=null?' · Belastung '+dz(w.strain.toFixed(1)):''}${w.pulsAvg?' · Ø '+w.pulsAvg:''}${w.pulsMax?' · max. '+w.pulsMax:''}${w.km?' · '+dz(w.km)+' km':''}${w.hoehenmeter?' · '+w.hoehenmeter+' Hm':''}
     ${w.zonenMin?'<div class="hint" style="margin-top:3px">Zonen: '+w.zonenMin.map((m,i)=>m?z[i].split(' ')[0]+': '+m+' Min.':null).filter(Boolean).join(' · ')+'</div>':''}</div>`).join('')||'<div class="empty">Keine Workouts.</div>';
-  const kp=whoop.koerper?zeile('Größe',kp2(whoop.koerper.groesse))+zeile('Gewicht (WHOOP-Profil)',whoop.koerper.gewicht!=null?dz(whoop.koerper.gewicht)+' kg':null)+zeile('Maximalpuls (WHOOP)',whoop.koerper.maxPuls!=null?whoop.koerper.maxPuls+' /min':null):'';
+  const kp=whoop.koerper?zeile('Größe',kp2(whoop.koerper.groesse))+zeile('Gewicht (WHOOP-Profil)*',whoop.koerper.gewicht!=null?dz(whoop.koerper.gewicht)+' kg':null)+zeile('Maximalpuls (WHOOP)',whoop.koerper.maxPuls!=null?whoop.koerper.maxPuls+' /min':null):'';
   return `<details style="margin-top:8px"><summary class="hint" style="font-weight:400">Alle WHOOP-Werte anzeigen</summary>
     <h2 style="margin-top:10px">Erholung & Tag</h2>${tag}<h2 style="margin-top:12px">Schlaf</h2>${schlaf}<h2 style="margin-top:12px">Workouts</h2>${wo}${kp?'<h2 style="margin-top:12px">Körper</h2>'+kp:''}
-    <div class="hint" style="margin-top:8px">Stand ${new Date(whoop.stand).toLocaleString('de-AT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · Quelle WHOOP</div></details>`;
+    <div class="hint" style="margin-top:8px">* WHOOP gibt über die Schnittstelle nur das Profilgewicht weiter, keine Waagenwerte (Fett, Muskel, Wasser). Für Waagendaten braucht es die Withings-Anbindung.</div><div class="hint" style="margin-top:8px">Stand ${new Date(whoop.stand).toLocaleString('de-AT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · Quelle WHOOP</div></details>`;
 }
 const kp2=g=>g==null?null:Math.round(g*100)+' cm';
 function renderWhoop(){
@@ -594,15 +591,11 @@ function renderHeute(){
   $('kaffee-v').textContent=kv;$('kaffee-v').style.color=kv>kmax?'var(--bad)':kv===kmax?'var(--warn)':'inherit';
   $('kaffee-hint').textContent=plan?.kaffee?(kv>=kmax?' – Limit '+kmax+' erreicht':' – max. '+kmax+', erster 90 Min. nach dem Aufstehen'):'';
   $('stress').value=e.stress??5;$('stress-v').textContent=e.stress??'–';
-  $('schlaf').value=e.schlaf??'';$('gewicht').value=e.gewicht??'';$('notiz').value=e.notiz||'';
-  $('sport').classList.toggle('on',!!e.sport);
-  {const a=e.auto||{};const q=[a.schlaf?'Schlaf':null,a.sport?'Sport':null,a.gewicht?'Gewicht':null].filter(Boolean);$('save-info').textContent=q.length?q.join(', ')+' aus WHOOP übernommen – Handeingabe überschreibt. Wird automatisch gespeichert.':'Wird automatisch gespeichert.';}
+  $('notiz').value=e.notiz||'';
+  {const a=e.auto||{};const q=[a.schlaf?'Schlaf':null,a.sport?'Sport':null,a.gewicht?'Gewicht':null].filter(Boolean);$('save-info').textContent=q.length?'Aus WHOOP: '+q.map(x=>x==='Schlaf'?'Schlaf '+e.schlaf+' h':x==='Gewicht'?'Gewicht '+String(e.gewicht).replace('.',',')+' kg':'Sport').join(' · ')+'. Notiz wird automatisch gespeichert.':'Schlaf, Gewicht und Sport kommen von WHOOP. Notiz wird automatisch gespeichert.';}
 }
 $('stress').oninput=()=>{const e=entry(TK);e.stress=+$('stress').value;$('stress-v').textContent=e.stress;saveLog();};
-$('schlaf').onchange=()=>{const e=entry(TK);e.schlaf=parseFloat($('schlaf').value)||null;if(e.auto)delete e.auto.schlaf;saveLog();};
-$('gewicht').onchange=()=>{const e=entry(TK);e.gewicht=parseFloat($('gewicht').value)||null;if(e.auto)delete e.auto.gewicht;saveLog();};
 $('notiz').oninput=()=>{entry(TK).notiz=$('notiz').value;saveLog();};
-$('sport').onclick=()=>{const e=entry(TK);e.sport=!e.sport;e.auto=e.auto||{};if(!e.sport){e.auto.sportAus=true;delete e.auto.sport;}else delete e.auto.sportAus;saveLog();renderHeute();};
 $('kaffee-plus').onclick=()=>{const e=entry(TK);e.kaffee=(e.kaffee||0)+1;saveLog();renderHeute();if(e.kaffee>(plan?.kaffee?.max||3))toast('Über dem Kaffee-Limit');};
 $('kaffee-minus').onclick=()=>{const e=entry(TK);e.kaffee=Math.max(0,(e.kaffee||0)-1);saveLog();renderHeute();};
 
@@ -930,7 +923,7 @@ function gotoPage(p){
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
 document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.09.08-15';
+const APP_VERSION='v2026.09.08-16';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 renderHeute();
 if(plan)whoopAuto();else if(whoop)renderHeute();

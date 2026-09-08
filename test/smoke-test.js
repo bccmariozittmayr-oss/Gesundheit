@@ -16,7 +16,7 @@ const srv=http.createServer((q,r)=>{let p=decodeURIComponent(q.url.split('?')[0]
  out.push('HEUTE meds: '+await pg.locator('#med-list .chk').count()+' | banner: '+(await pg.locator('#heute-banner').innerText()).replace(/\n/g,' / ').slice(0,220));
  out.push('Training: '+(await pg.locator('#train-list').innerText()).slice(0,200).replace(/\n/g,' / '));
  await pg.locator('#med-list .chk').first().click();out.push('nach Klick: '+await pg.locator('#med-count').innerText());
- await pg.locator('#sport').click();out.push('Sport an → meds: '+await pg.locator('#med-list .chk').count());
+ await pg.evaluate(()=>{entry(TK).sport=true;saveLog();renderHeute();});out.push('Sport (aus WHOOP) an → meds: '+await pg.locator('#med-list .chk').count());
  await pg.locator('#kaffee-plus').click();await pg.locator('#kaffee-plus').click();await pg.locator('#kaffee-plus').click();out.push('Kaffee: '+await pg.locator('#kaffee-v').innerText()+' '+await pg.locator('#kaffee-hint').innerText());
  await pg.screenshot({path:OUT+'/heute.png',fullPage:true});
  await pg.locator('nav button[data-p=essen]').click();await pg.waitForTimeout(200);
