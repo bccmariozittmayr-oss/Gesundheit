@@ -86,6 +86,34 @@ GitHub-Konto anlegen, neues öffentliches Repository „Gesundheit", `index.html
 
 ---
 
+## Erweiterung: Wearable anbinden (WHOOP, 1 Nachmittag)
+
+Seit 08.09.2026 holt sich die App meine WHOOP-Werte selbst: Erholung, HRV, Ruhepuls, Schlafphasen,
+Tagesbelastung und Workouts mit Pulszonen. Schlaf, Sport und Gewicht muss ich nicht mehr eintippen,
+und die App sagt mir morgens, ob Training laut Plan passt oder ein lockerer Tag besser ist.
+
+So funktioniert es, ohne dass Gesundheitsdaten im öffentlichen Code landen:
+
+1. Ein kleines Skript am Laptop (`werkzeuge/whoop-abholen.js`) meldet sich einmalig per OAuth bei WHOOP an.
+2. Zweimal täglich holt es die Werte, legt sie im Klartext nur privat ab (OneDrive) und verschlüsselt sie
+   mit demselben Passwort wie den Plan in die Datei `whoop.enc.json` im Repo.
+3. Die App entschlüsselt sie am Handy. Der Schlüssel bleibt auf dem Gerät, das Passwort wird nie gespeichert.
+
+Anleitung Schritt für Schritt: [WHOOP.md](WHOOP.md). Dasselbe Muster passt für jede Schnittstelle mit
+OAuth, etwa eine Withings-Waage für Körperzusammensetzung. WHOOP selbst liefert über die Schnittstelle
+nur das Profilgewicht, keine Waagenwerte.
+
+**Start-Prompt für Claude Code**, wenn du das nachbauen willst:
+
+> Binde meine WHOOP-Daten an meine Gesundheits-App an. Die App ist eine statische PWA auf GitHub Pages
+> mit öffentlichem Code. Baue ein Node-Skript ohne Fremdbibliotheken, das sich per OAuth (Authorization
+> Code, Rückleitung auf localhost) anmeldet, Recovery, Sleep, Cycle und Workout der letzten 30 Tage holt,
+> je Tag zusammenfasst (Tag = Aufwachdatum) und die Datei AES-verschlüsselt ins Repo legt. Zugangsdaten
+> nur in einer .env, nie in Git. Die App soll die Datei nach dem Entsperren des Plans ohne erneute
+> Passworteingabe nachladen. Zeige die Werte auf Heute mit einer Tagesempfehlung und im Verlauf.
+
+---
+
 ## Vier Regeln, damit das seriös bleibt
 
 0. **Dir muss klar sein: Beim Bauen gibst du deine Gesundheitsdaten an eine KI.**
