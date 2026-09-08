@@ -1,3 +1,8 @@
 mein-plan.json
 *.zip
 *.mp4
+# WHOOP: Zugangsdaten, Token und Klartext-Daten bleiben lokal
+.env
+.whoop-token.json
+whoop.json
+.whoop-login-url.txt
