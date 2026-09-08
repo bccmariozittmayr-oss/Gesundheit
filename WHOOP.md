@@ -20,8 +20,7 @@ Client-Secret, und das darf nicht in einer öffentlichen Web-App liegen.
 
 ## Täglich automatisch (Windows-Aufgabenplanung)
 
-Aufgabe anlegen, die z.B. um 07:30 und 12:00 ausführt:
-`node werkzeuge/whoop-abholen.js holen --push` im App-Ordner. WHOOP bewertet die Nacht kurz nach dem Aufwachen,
+Aufgabe anlegen, die `werkzeuge\whoop-taeglich.cmd` z.B. um 07:30 und 12:30 ausführt (Log: `%LOCALAPPDATA%\whoop-abholen.log`). WHOOP bewertet die Nacht kurz nach dem Aufwachen,
 ein zweiter Lauf mittags holt Nachzügler.
 
 ## In der App
@@ -29,7 +28,8 @@ ein zweiter Lauf mittags holt Nachzügler.
 - Einmal unter **Mehr → Plan entsperren** das Passwort eingeben. Dabei wird der Schlüssel (nicht das Passwort)
   auf dem Gerät gespeichert, damit `whoop.enc.json` ohne erneute Eingabe nachgeladen wird.
 - Nachgeladen wird beim Öffnen der App und beim Zurückkehren, höchstens alle 30 Minuten. **Mehr → WHOOP-Werte jetzt holen** erzwingt es.
-- Schlafstunden übernimmt die App ins Tagesprotokoll, wenn dort noch nichts eingetragen ist.
+- Schlafstunden, Sport (wenn ein Workout vorliegt) und das Gewicht aus dem WHOOP-Profil übernimmt die App ins Tagesprotokoll, solange dort nichts von Hand steht. Handeingabe gewinnt immer.
+- Unter der WHOOP-Karte auf „Heute" lassen sich alle gelieferten Werte aufklappen (Schlafphasen, Kalorien, Tagespuls, Workouts mit Pulszonen, Körperdaten).
 
 ## Sicherheit
 

@@ -17,7 +17,7 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 | `mein-plan.beispiel.json` | Struktur der privaten Plan-Datei ohne echte Werte |
 | `plan.enc.json` | der echte Plan, AES-verschlüsselt – nach jeder Planänderung mit `werkzeuge/plan-verschluesseln.js` neu erzeugen |
 | `mein-plan.demo.json`, `demo-protokoll.json` | Demo ohne Befunde + Beispiel-Verlauf für Videos/Vorführungen – neu erzeugen mit `werkzeuge/demo-erzeugen.js <mein-plan.json> [Enddatum]` |
-| `whoop.enc.json` | WHOOP-Tageswerte (Erholung, HRV, Ruhepuls, Schlaf, Belastung, Workouts), verschlüsselt mit dem Plan-Passwort und dem Salt aus plan.enc.json. Erzeugt `werkzeuge/whoop-abholen.js holen --push` (täglich per Aufgabenplanung). Klartext `whoop.json` liegt nur im OneDrive-Datenordner. Einrichtung: `WHOOP.md` |
+| `whoop.enc.json` | WHOOP-Tageswerte (Erholung, HRV, Ruhepuls, Schlaf, Belastung, Workouts), verschlüsselt mit dem Plan-Passwort und dem Salt aus plan.enc.json. Erzeugt `werkzeuge/whoop-abholen.js holen --push` (täglich per Aufgabenplanung). Klartext `whoop.json` liegt nur im OneDrive-Datenordner. Einrichtung: `WHOOP.md`. Die App übernimmt Schlaf, Sport (bei Workout) und Gewicht (WHOOP-Profil) ins Tagesprotokoll, Handeingabe überschreibt. Aufgabenplanung ruft `werkzeuge/whoop-taeglich.cmd` (07:30 und 12:30), Log in `%LOCALAPPDATA%\whoop-abholen.log` |
 | `.env` / `.whoop-token.json` | WHOOP-Zugang (Client-ID/Secret, Token) – lokal, in .gitignore, nie in OneDrive |
 | `NACHBAUEN.md`, `LICENSE` | öffentliche Nachbau-Anleitung mit Start-Prompt, MIT |
 | OneDrive … `/Gesundheits-App/PLAN-PASSWORT.txt` | Passwort dazu – nie ins Repo, nie in den Chat |

@@ -475,9 +475,13 @@ async function schluesselAus(pw,f){const enc=new TextEncoder();const base=await 
 async function entschluessele(key,f){return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(f.iv)},key,b64(f.data))));}
 function whoopFehler(w){if(!w||typeof w!=='object'||!w.tage||typeof w.tage!=='object')return 'tage fehlt';return null;}
 function uebernehmeWhoop(w){const err=whoopFehler(w);if(err)throw new Error(err);whoop=w;LS.set('gp_whoop',whoop);
-  // Schlafstunden ins Protokoll übernehmen, wo noch nichts eingetragen ist
-  Object.entries(w.tage).forEach(([k,t])=>{if(t.schlaf?.stunden&&log[k]&&log[k].schlaf==null){log[k].schlaf=Math.round(t.schlaf.stunden*2)/2;log[k].schlafQuelle='whoop';}});
-  const h=w.tage[TK];if(h?.schlaf?.stunden&&entry(TK).schlaf==null){entry(TK).schlaf=Math.round(h.schlaf.stunden*2)/2;entry(TK).schlafQuelle='whoop';}saveLog();}
+  // Schlaf, Sport und Gewicht ins Protokoll übernehmen – nur dort, wo noch nichts von Hand eingetragen ist (Quelle wird vermerkt)
+  const fuelle=(k,t)=>{const e=log[k];if(!e)return;e.auto=e.auto||{};
+    if(t.schlaf?.stunden&&(e.schlaf==null||e.auto.schlaf)){e.schlaf=Math.round(t.schlaf.stunden*2)/2;e.auto.schlaf=true;}
+    if((t.workouts||[]).length&&!e.sport&&!e.auto.sportAus){e.sport=true;e.auto.sport=true;}
+    if(w.koerper?.gewicht&&e.gewicht==null){e.gewicht=w.koerper.gewicht;e.auto.gewicht=true;}};
+  Object.entries(w.tage).forEach(([k,t])=>{if(log[k])fuelle(k,t);});
+  if(w.tage[TK]){entry(TK);fuelle(TK,w.tage[TK]);}saveLog();}
 let whoopLetzterCheck=0;
 async function whoopLaden(leise){ // holt whoop.enc.json und entschlüsselt sie mit dem gespeicherten Schlüssel
   const key=await KDB.get();if(!key){if(!leise)toast('Zuerst unter „Mehr" den Plan entsperren');return false;}
@@ -492,6 +496,22 @@ function whoopHeute(){ // heutiger Tag, sonst gestern (mit Kennzeichnung)
 }
 const recCls=r=>r==null?'':r>=67?'ok':r>=34?'warn':'bad';
 const dz=x=>x==null?'–':String(x).replace('.',','); // Dezimalkomma
+function whoopDetails(t,k){ // alle Werte eines Tages, aufklappbar
+  const s=t.schlaf,h=x=>x==null?'–':dz(Number(x).toFixed(1))+' h',z=['0 sehr leicht','1 leicht','2 moderat','3 intensiv','4 sehr hart','5 maximal'];
+  const zeile=(l,v)=>v==null||v===''?'':`<div class="ex" style="padding:6px 4px"><div class="n" style="display:flex;justify-content:space-between"><span>${l}</span><b>${v}</b></div></div>`;
+  const tag=zeile('Erholung',t.recovery!=null?t.recovery+' %':null)+zeile('HRV (RMSSD)',t.hrv!=null?dz(t.hrv)+' ms':null)+zeile('Ruhepuls',t.ruhepuls!=null?t.ruhepuls+' /min':null)+zeile('SpO₂',t.spo2!=null?dz(t.spo2)+' %':null)+zeile('Hauttemperatur',t.hauttemp!=null?dz(t.hauttemp)+' °C':null)
+    +zeile('Tagesbelastung (Strain)',t.strain!=null?dz(t.strain.toFixed(1)):null)+zeile('Kalorien',t.kcal!=null?t.kcal+' kcal':null)+zeile('Ø Puls Tag',t.pulsAvg!=null?t.pulsAvg+' /min':null)+zeile('Max. Puls Tag',t.pulsMax!=null?t.pulsMax+' /min':null)+zeile('Kalibrierung',t.kalibriert===false?'läuft noch':null);
+  const schlaf=s?zeile('Geschlafen',h(s.stunden))+zeile('Im Bett',h(s.imBett))+zeile('Schlafbedarf',h(s.bedarf))+zeile('Schlafleistung',s.leistung!=null?s.leistung+' %':null)+zeile('Effizienz',s.effizienz!=null?dz(s.effizienz)+' %':null)+zeile('Konsistenz',s.konsistenz!=null?s.konsistenz+' %':null)
+    +zeile('Tiefschlaf',h(s.tief))+zeile('REM',h(s.rem))+zeile('Leichtschlaf',h(s.leicht))+zeile('Wach',h(s.wach))+zeile('Schlafzyklen',s.zyklen)+zeile('Störungen',s.stoerungen)+zeile('Atemfrequenz',s.atemfrequenz!=null?dz(s.atemfrequenz)+' /min':null)
+    +zeile('Eingeschlafen',s.start?new Date(s.start).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}):null)+zeile('Aufgewacht',s.ende?new Date(s.ende).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}):null)+zeile('Nickerchen',t.nickerchen?h(t.nickerchen):null):'<div class="empty">Kein bewerteter Schlaf.</div>';
+  const wo=(t.workouts||[]).map(w=>`<div style="margin-top:8px"><b>${esc(w.sport)}</b> · ${new Date(w.start).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})} · ${w.minuten} Min.${w.strain!=null?' · Belastung '+dz(w.strain.toFixed(1)):''}${w.pulsAvg?' · Ø '+w.pulsAvg:''}${w.pulsMax?' · max. '+w.pulsMax:''}${w.km?' · '+dz(w.km)+' km':''}${w.hoehenmeter?' · '+w.hoehenmeter+' Hm':''}
+    ${w.zonenMin?'<div class="hint" style="margin-top:3px">Zonen: '+w.zonenMin.map((m,i)=>m?z[i].split(' ')[0]+': '+m+' Min.':null).filter(Boolean).join(' · ')+'</div>':''}</div>`).join('')||'<div class="empty">Keine Workouts.</div>';
+  const kp=whoop.koerper?zeile('Größe',kp2(whoop.koerper.groesse))+zeile('Gewicht (WHOOP-Profil)',whoop.koerper.gewicht!=null?dz(whoop.koerper.gewicht)+' kg':null)+zeile('Maximalpuls (WHOOP)',whoop.koerper.maxPuls!=null?whoop.koerper.maxPuls+' /min':null):'';
+  return `<details style="margin-top:8px"><summary class="hint" style="font-weight:400">Alle WHOOP-Werte anzeigen</summary>
+    <h2 style="margin-top:10px">Erholung & Tag</h2>${tag}<h2 style="margin-top:12px">Schlaf</h2>${schlaf}<h2 style="margin-top:12px">Workouts</h2>${wo}${kp?'<h2 style="margin-top:12px">Körper</h2>'+kp:''}
+    <div class="hint" style="margin-top:8px">Stand ${new Date(whoop.stand).toLocaleString('de-AT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · Quelle WHOOP</div></details>`;
+}
+const kp2=g=>g==null?null:Math.round(g*100)+' cm';
 function renderWhoop(){
   const w=whoopHeute();const el=$('whoop-card');
   if(!w){el.innerHTML=whoop?'<div class="card"><h2>❤️ WHOOP</h2><div class="empty">Noch keine Werte für heute.</div></div>':'';return;}
@@ -503,6 +523,7 @@ function renderWhoop(){
     <div class="stat">${big(t.recovery!=null?t.recovery+' %':'–','Erholung',cls)}${big(dz(t.hrv),'HRV ms')}${big(t.ruhepuls??'–','Ruhepuls')}${big(s?dz(s.stunden.toFixed(1))+' h':'–','Schlaf'+(s?.leistung?' · '+s.leistung+' %':''))}${big(t.strain!=null?dz(t.strain.toFixed(1)):'–','Belastung 0–21')}${big(t.workouts?.length||0,'Workouts')}</div>
     ${rat?`<div class="banner ${cls==='ok'?'info':cls}" style="margin:8px 0 0;font-size:13.5px">${rat}</div>`:''}
     ${s||t.spo2!=null?`<div class="hint" style="margin-top:8px">${[s?'Tief '+dz(s.tief.toFixed(1))+' h · REM '+dz(s.rem.toFixed(1))+' h · '+s.stoerungen+' Störungen':null,s?.bedarf?'Bedarf '+dz(s.bedarf.toFixed(1))+' h':null,s?.atemfrequenz?'Atmung '+dz(s.atemfrequenz)+'/min':null,t.spo2!=null?'SpO₂ '+dz(t.spo2)+' %':null,t.hauttemp!=null?'Haut '+dz(t.hauttemp)+' °C':null].filter(Boolean).join(' · ')}</div>`:''}
+    ${whoopDetails(t,w.k)}
   </div>`;
 }
 function renderWhoopVerlauf(){
@@ -575,12 +596,13 @@ function renderHeute(){
   $('stress').value=e.stress??5;$('stress-v').textContent=e.stress??'–';
   $('schlaf').value=e.schlaf??'';$('gewicht').value=e.gewicht??'';$('notiz').value=e.notiz||'';
   $('sport').classList.toggle('on',!!e.sport);
+  {const a=e.auto||{};const q=[a.schlaf?'Schlaf':null,a.sport?'Sport':null,a.gewicht?'Gewicht':null].filter(Boolean);$('save-info').textContent=q.length?q.join(', ')+' aus WHOOP übernommen – Handeingabe überschreibt. Wird automatisch gespeichert.':'Wird automatisch gespeichert.';}
 }
 $('stress').oninput=()=>{const e=entry(TK);e.stress=+$('stress').value;$('stress-v').textContent=e.stress;saveLog();};
-$('schlaf').onchange=()=>{entry(TK).schlaf=parseFloat($('schlaf').value)||null;saveLog();};
-$('gewicht').onchange=()=>{entry(TK).gewicht=parseFloat($('gewicht').value)||null;saveLog();};
+$('schlaf').onchange=()=>{const e=entry(TK);e.schlaf=parseFloat($('schlaf').value)||null;if(e.auto)delete e.auto.schlaf;saveLog();};
+$('gewicht').onchange=()=>{const e=entry(TK);e.gewicht=parseFloat($('gewicht').value)||null;if(e.auto)delete e.auto.gewicht;saveLog();};
 $('notiz').oninput=()=>{entry(TK).notiz=$('notiz').value;saveLog();};
-$('sport').onclick=()=>{const e=entry(TK);e.sport=!e.sport;saveLog();renderHeute();};
+$('sport').onclick=()=>{const e=entry(TK);e.sport=!e.sport;e.auto=e.auto||{};if(!e.sport){e.auto.sportAus=true;delete e.auto.sport;}else delete e.auto.sportAus;saveLog();renderHeute();};
 $('kaffee-plus').onclick=()=>{const e=entry(TK);e.kaffee=(e.kaffee||0)+1;saveLog();renderHeute();if(e.kaffee>(plan?.kaffee?.max||3))toast('Über dem Kaffee-Limit');};
 $('kaffee-minus').onclick=()=>{const e=entry(TK);e.kaffee=Math.max(0,(e.kaffee||0)-1);saveLog();renderHeute();};
 
@@ -908,10 +930,10 @@ function gotoPage(p){
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
 document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.09.08-13';
+const APP_VERSION='v2026.09.08-14';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 renderHeute();
-if(plan)whoopAuto();
+if(plan)whoopAuto();else if(whoop)renderHeute();
 /* Demo-Start: ?demo=1 lädt Demo-Plan und Beispiel-Verlauf (für Vorführungen). Ein vorhandener echter Plan wird nur nach Rückfrage ersetzt. */
 (async()=>{ if(!/[?&]demo=1/.test(location.search))return;
   try{ if(plan&&!plan._hinweis&&!confirm('Demo-Modus: Der geladene Plan und das Protokoll werden durch Demo-Daten ersetzt. Fortfahren?'))return;
