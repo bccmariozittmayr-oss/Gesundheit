@@ -143,6 +143,7 @@ table.bf td:first-child{font-weight:600}
 <!-- ================= HEUTE ================= -->
 <section class="page on" id="p-heute">
   <div id="heute-banner"></div>
+  <div id="whoop-card"></div>
   <div class="card">
     <h2>💊 Tabletten <small id="med-count"></small></h2>
     <div class="progress"><i id="med-prog" style="width:0"></i></div>
@@ -274,6 +275,7 @@ table.bf td:first-child{font-weight:600}
       <canvas id="chart"></canvas>
       <div class="legend" style="margin-top:8px"><span><i class="dot" style="background:#c0392b"></i>Hals</span><span><i class="dot" style="background:#c98a00"></i>Bauch</span><span><i class="dot" style="background:#6b7c77"></i>Stress/3</span></div>
     </div>
+    <div id="whoop-verlauf"></div>
     <div class="card"><h2>Einnahme je Präparat <small>letzte 30 Tage</small></h2><div id="med-stats"></div></div>
     <div class="card">
       <h2>Letzte Tage</h2>
@@ -297,6 +299,15 @@ table.bf td:first-child{font-weight:600}
     <details style="margin-top:10px"><summary class="hint" style="font-weight:400">Alternativ: Datei laden</summary>
     <input type="file" id="plan-file" accept=".json,application/json" style="display:none">
     <button class="btn sec full" id="plan-load">📂 mein-plan.json laden</button></details>
+  </div>
+  <div class="card">
+    <h2>WHOOP <small id="whoop-stand"></small></h2>
+    <div id="whoop-status" class="hint" style="margin-bottom:8px"></div>
+    <button class="btn sec full" id="whoop-refresh">🔄 WHOOP-Werte jetzt holen</button>
+    <details style="margin-top:10px"><summary class="hint" style="font-weight:400">Alternativ: Datei laden</summary>
+    <input type="file" id="whoop-file" accept=".json,application/json" style="display:none">
+    <button class="btn sec full" id="whoop-load">📂 whoop.json laden</button></details>
+    <div class="hint" style="margin-top:8px">Die Werte holt das Werkzeug <code>whoop-abholen.js</code> am Laptop von WHOOP und legt sie verschlüsselt in der App ab. Nach dem Entsperren des Plans lädt die App sie automatisch nach – der Schlüssel bleibt nur auf diesem Gerät.</div>
   </div>
   <div class="card">
     <h2>Darmkur</h2>
@@ -370,6 +381,7 @@ const ATEM_SLOTS=[
 ];
 
 let plan=LS.get('gp_plan',null);
+let whoop=LS.get('gp_whoop',null); // Tageswerte von WHOOP (aus whoop.enc.json oder whoop.json)
 let log=LS.get('gp_log',{});
 let set=LS.get('gp_set',{times:{},atimes:{},notif:false,kurStart:null,medOverride:{}});
 let TK=todayKey();
@@ -452,6 +464,61 @@ function pulsKarte(t){
   return `<div class="banner info" style="margin:4px 0 8px;font-size:13.5px"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">${t.sportart==='auto'?chips:''}</div>❤️ Ziel heute: ${ziel}<div class="hint" style="margin-top:4px">Zonen ${names[sel]||sel}: A &lt; ${z.vt1} · B ${z.vt1}–${z.vt2} · C &gt; ${z.vt2} · max. ${z.max}</div></div>`;
 }
 
+/* ---------- WHOOP ---------- */
+// Der aus dem Passwort abgeleitete Schlüssel (nicht exportierbar) liegt in IndexedDB, damit whoop.enc.json ohne erneute Passworteingabe nachgeladen werden kann.
+const KDB={open:()=>new Promise((res,rej)=>{const q=indexedDB.open('gp_keys',1);q.onupgradeneeded=()=>q.result.createObjectStore('k');q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);}),
+  get:async()=>{try{const db=await KDB.open();return await new Promise((res,rej)=>{const q=db.transaction('k').objectStore('k').get('plan');q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error);});}catch(e){return null}},
+  set:async(key)=>{try{const db=await KDB.open();await new Promise((res,rej)=>{const t=db.transaction('k','readwrite');t.objectStore('k').put(key,'plan');t.oncomplete=res;t.onerror=()=>rej(t.error);});}catch(e){}}};
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function schluesselAus(pw,f){const enc=new TextEncoder();const base=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(f.salt),iterations:f.iterations,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);}
+async function entschluessele(key,f){return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(f.iv)},key,b64(f.data))));}
+function whoopFehler(w){if(!w||typeof w!=='object'||!w.tage||typeof w.tage!=='object')return 'tage fehlt';return null;}
+function uebernehmeWhoop(w){const err=whoopFehler(w);if(err)throw new Error(err);whoop=w;LS.set('gp_whoop',whoop);
+  // Schlafstunden ins Protokoll übernehmen, wo noch nichts eingetragen ist
+  Object.entries(w.tage).forEach(([k,t])=>{if(t.schlaf?.stunden&&log[k]&&log[k].schlaf==null){log[k].schlaf=Math.round(t.schlaf.stunden*2)/2;log[k].schlafQuelle='whoop';}});
+  const h=w.tage[TK];if(h?.schlaf?.stunden&&entry(TK).schlaf==null){entry(TK).schlaf=Math.round(h.schlaf.stunden*2)/2;entry(TK).schlafQuelle='whoop';}saveLog();}
+let whoopLetzterCheck=0;
+async function whoopLaden(leise){ // holt whoop.enc.json und entschlüsselt sie mit dem gespeicherten Schlüssel
+  const key=await KDB.get();if(!key){if(!leise)toast('Zuerst unter „Mehr" den Plan entsperren');return false;}
+  try{const r=await fetch('whoop.enc.json?v='+Date.now());if(!r.ok){if(!leise)toast('whoop.enc.json noch nicht vorhanden');return false;}const f=await r.json();
+    if(whoop&&whoop.stand===f.stand){whoopLetzterCheck=Date.now();return true;}
+    uebernehmeWhoop(await entschluessele(key,f));whoopLetzterCheck=Date.now();if(!leise)toast('WHOOP aktualisiert ✓');return true;}
+  catch(e){if(!leise)toast(/OperationError/i.test(String(e))||e.name==='OperationError'?'Schlüssel passt nicht – Plan neu entsperren':'WHOOP: '+(e.message||e));return false;}
+}
+function whoopHeute(){ // heutiger Tag, sonst gestern (mit Kennzeichnung)
+  if(!whoop)return null;const t=whoop.tage[TK];if(t&&(t.recovery!=null||t.schlaf))return {k:TK,t,alt:false};
+  const g=Object.keys(whoop.tage).filter(k=>k<TK).sort().pop();return g?{k:g,t:whoop.tage[g],alt:true}:null;
+}
+const recCls=r=>r==null?'':r>=67?'ok':r>=34?'warn':'bad';
+const dz=x=>x==null?'–':String(x).replace('.',','); // Dezimalkomma
+function renderWhoop(){
+  const w=whoopHeute();const el=$('whoop-card');
+  if(!w){el.innerHTML=whoop?'<div class="card"><h2>❤️ WHOOP</h2><div class="empty">Noch keine Werte für heute.</div></div>':'';return;}
+  const t=w.t,s=t.schlaf;const [y,m,d]=w.k.split('-');
+  const rat=t.recovery==null?'':t.recovery>=67?'Grünes Licht – Training laut Plan.':t.recovery>=34?'Mittlere Erholung – Zone A/B, keine Spitzen.':'Wenig erholt – heute nur Zone A oder Pause, früh ins Bett.';
+  const big=(v,l,cls)=>`<div><b${cls?' style="color:var(--'+cls+')"':''}>${v}</b><span>${l}</span></div>`;
+  const cls=recCls(t.recovery);
+  el.innerHTML=`<div class="card"><h2>❤️ WHOOP ${w.alt?'<small style="color:var(--warn)">Stand '+d+'.'+m+'. – heute noch nicht bewertet</small>':'<small>heute</small>'}</h2>
+    <div class="stat">${big(t.recovery!=null?t.recovery+' %':'–','Erholung',cls)}${big(dz(t.hrv),'HRV ms')}${big(t.ruhepuls??'–','Ruhepuls')}${big(s?dz(s.stunden.toFixed(1))+' h':'–','Schlaf'+(s?.leistung?' · '+s.leistung+' %':''))}${big(t.strain!=null?dz(t.strain.toFixed(1)):'–','Belastung 0–21')}${big(t.workouts?.length||0,'Workouts')}</div>
+    ${rat?`<div class="banner ${cls==='ok'?'info':cls}" style="margin:8px 0 0;font-size:13.5px">${rat}</div>`:''}
+    ${s||t.spo2!=null?`<div class="hint" style="margin-top:8px">${[s?'Tief '+dz(s.tief.toFixed(1))+' h · REM '+dz(s.rem.toFixed(1))+' h · '+s.stoerungen+' Störungen':null,s?.bedarf?'Bedarf '+dz(s.bedarf.toFixed(1))+' h':null,s?.atemfrequenz?'Atmung '+dz(s.atemfrequenz)+'/min':null,t.spo2!=null?'SpO₂ '+dz(t.spo2)+' %':null,t.hauttemp!=null?'Haut '+dz(t.hauttemp)+' °C':null].filter(Boolean).join(' · ')}</div>`:''}
+  </div>`;
+}
+function renderWhoopVerlauf(){
+  const el=$('whoop-verlauf');if(!whoop){el.innerHTML='';return;}
+  const keys=Object.keys(whoop.tage).sort().slice(-30);const T=k=>whoop.tage[k];
+  const avg=f=>{const v=keys.map(k=>f(T(k))).filter(x=>x!=null&&!isNaN(x));return v.length?v.reduce((a,b)=>a+b,0)/v.length:null;};
+  const f1=x=>x==null?'–':dz(x.toFixed(1));const f0=x=>x==null?'–':Math.round(x);
+  const aR=avg(t=>t.recovery),aH=avg(t=>t.hrv),aP=avg(t=>t.ruhepuls),aS=avg(t=>t.schlaf?.stunden),aB=avg(t=>t.strain);
+  const wk=mondayOf(TK);const wkMin=keys.filter(k=>k>=wk).reduce((a,k)=>a+(T(k).workouts||[]).reduce((x,w)=>x+(w.minuten||0),0),0);
+  const rows=keys.slice().reverse().slice(0,14).map(k=>{const t=T(k);const [y,m,d]=k.split('-');const s=t.schlaf;
+    return `<div class="ent"><span class="d">${d}.${m}.</span><span class="s"><span class="badge ${recCls(t.recovery)}">${t.recovery!=null?t.recovery+' %':'–'}</span> HRV ${f0(t.hrv)} · Puls ${f0(t.ruhepuls)} · Schlaf ${s?f1(s.stunden)+' h':'–'} · Belastung ${f1(t.strain)}${(t.workouts||[]).length?'<br>'+t.workouts.map(w=>esc(w.sport)+' '+w.minuten+' Min.'+(w.pulsAvg?' Ø '+w.pulsAvg:'')+(w.km?' · '+f1(w.km)+' km':'')).join(' · '):''}</span></div>`;}).join('');
+  el.innerHTML=`<div class="card"><h2>❤️ WHOOP <small>letzte ${keys.length} Tage</small></h2>
+    <div class="stat"><div><b${aR!=null?' style="color:var(--'+recCls(aR)+')"':''}>${f0(aR)}${aR!=null?' %':''}</b><span>Ø Erholung</span></div><div><b>${f0(aH)}</b><span>Ø HRV ms</span></div><div><b>${f0(aP)}</b><span>Ø Ruhepuls</span></div><div><b>${f1(aS)}${aS!=null?' h':''}</b><span>Ø Schlaf</span></div><div><b>${f1(aB)}</b><span>Ø Belastung</span></div><div><b>${wkMin}</b><span>Workout-Min. diese Woche</span></div></div>
+    <div style="margin-top:8px">${rows}</div></div>`;
+}
+
 /* ---------- HEUTE ---------- */
 function renderHeute(){
   $('hd-title').textContent='Heute';
@@ -467,6 +534,7 @@ function renderHeute(){
   if(plan){const pausen=plan.praeparate.filter(m=>{const ph=medPhase(m);return ph&&!['nu','m','mi','a','n'].some(s=>ph[s]>0)&&ph.notiz&&!(set.medOverride[m.id]||{}).aus;});
     if(pausen.length)b+=`<div class="banner info" style="font-size:13px">${pausen.map(m=>'⏸ <b>'+esc(m.name)+'</b>: '+esc(medPhase(m).notiz)).join('<br>')}</div>`;}
   $('heute-banner').innerHTML=b;
+  renderWhoop();
   // Training heute
   const wd=String(new Date().getDay());const tr=(plan?.training?.woche||{})[wd]||[];
   $('train-card').style.display=plan?'':'none';
@@ -651,6 +719,7 @@ function renderVerlauf(){
   $('med-stats').innerHTML=Object.keys(per).length?Object.entries(per).sort((x,y)=>y[1].t-x[1].t).map(([id,v])=>{const q=Math.round(v.d/v.t*100);return `<div class="ex"><div class="n"><b>${esc(nameOf(id))}</b><span>${v.d} von ${v.t} Einnahmen</span></div><span class="badge ${q>=90?'ok':q>=60?'warn':'bad'}">${q} %</span></div>`}).join(''):'<div class="empty">Erscheint, sobald Tabletten auf „Heute" abgehakt werden.</div>';
   const sev=['keine','leicht','mittel','stark'];
   $('entries').innerHTML=keys.slice().reverse().slice(0,14).map(k=>{const e=log[k];const [y,m,d]=k.split('-');const m2=Object.values(e.meds||{});const parts=[e.hals!=null?'Hals '+sev[e.hals]:null,e.bauch!=null?'Bauch '+sev[e.bauch]:null,e.stress!=null?'Stress '+e.stress:null,e.schlaf?e.schlaf+' h':null,e.gewicht?e.gewicht+' kg':null,m2.length?m2.filter(Boolean).length+'/'+m2.length+' Tabl.':null,e.sport?'Sport':null].filter(Boolean);return `<div class="ent"><span class="d">${d}.${m}.</span><span class="s">${parts.join(' · ')||'–'}${e.notiz?'<br>'+e.notiz:''}</span></div>`}).join('')||'<div class="empty">Noch keine Einträge.</div>';
+  renderWhoopVerlauf();
 }
 function renderBefunde(){
   if(!plan){$('befunde').innerHTML='<div class="card"><div class="empty">Plan laden, dann erscheinen hier deine Befunde.</div></div>';return;}
@@ -762,7 +831,13 @@ function renderMehr(){
   $('app-version').textContent='App-Version '+APP_VERSION+' · Bei Änderungen: App schließen und neu öffnen.';
   $('quelle-hint').textContent='Diese App ersetzt keinen Arzt. '+(plan?'Grundlage: '+plan.quelle+'.':'Grundlage ist der geladene Plan.')+' Bei Änderungen: mein-plan.json anpassen und neu laden.';
   $('data-info').textContent=Object.keys(log).length+' Tage im Protokoll auf diesem Gerät.';
+  const wk=whoop?Object.keys(whoop.tage).sort():[];
+  $('whoop-stand').textContent=whoop?'Stand '+new Date(whoop.stand).toLocaleString('de-AT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+  $('whoop-status').textContent=whoop?wk.length+' Tage geladen ('+wk[0]+' bis '+wk[wk.length-1]+').':'Noch keine WHOOP-Werte. Am Laptop „node werkzeuge/whoop-abholen.js holen" ausführen, dann hier holen.';
 }
+$('whoop-refresh').onclick=async()=>{const b=$('whoop-refresh');b.disabled=true;b.textContent='Hole …';await whoopLaden(false);b.disabled=false;b.textContent='🔄 WHOOP-Werte jetzt holen';renderMehr();};
+$('whoop-load').onclick=()=>$('whoop-file').click();
+$('whoop-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{uebernehmeWhoop(JSON.parse(r.result));toast('WHOOP geladen ✓');renderMehr();}catch(e){toast('Nicht übernommen: '+(e.message||'ungültige Datei'));}};r.readAsText(f);ev.target.value='';};
 $('kur-start').onchange=()=>{set.kurStart=$('kur-start').value||null;set.medOverride={};saveSet();renderMehr();toast(set.kurStart?'Darmkur-Start gesetzt':'Darmkur-Start entfernt');};
 $('plan-load').onclick=()=>$('plan-file').click();
 // Plan entschlüsseln (AES-256-GCM, Schlüssel aus Passwort per PBKDF2) – Gegenstück zu werkzeuge/plan-verschluesseln.js
@@ -772,12 +847,11 @@ $('plan-unlock').onclick=async()=>{
   const btn=$('plan-unlock');btn.disabled=true;btn.textContent='Entschlüssle …';
   try{
     const r=await fetch('plan.enc.json?v='+Date.now());if(!r.ok)throw new Error('plan.enc.json fehlt');const f=await r.json();
-    const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));const enc=new TextEncoder();
-    const base=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);
-    const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(f.salt),iterations:f.iterations,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
-    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(f.iv)},key,b64(f.data));
-    uebernehmePlan(JSON.parse(new TextDecoder().decode(pt)));
+    const key=await schluesselAus(pw,f);
+    uebernehmePlan(await entschluessele(key,f));
+    await KDB.set(key); // für das Nachladen von whoop.enc.json ohne erneute Passworteingabe
     $('plan-pw').value='';toast('Plan entsperrt ✓ (Stand '+(f.stand||'')+')');renderMehr();
+    whoopLaden(true).then(()=>renderMehr());
   }catch(e){toast(/OperationError|decrypt/i.test(String(e))||e.name==='OperationError'?'Passwort falsch':'Fehlgeschlagen: '+(e.message||e));}
   btn.disabled=false;btn.textContent='🔓 Plan entsperren';
 };
@@ -819,7 +893,8 @@ function checkReminders(){
   ATEM_SLOTS.forEach(s=>{const t=set.atimes[s.k]||s.t;if(hm>=t&&!e.atmen[s.k])fire('a'+s.k,'🌬️ Atemübung',s.name);});
 }
 setInterval(()=>{const nk=todayKey();if(nk!==TK){TK=nk;renderHeute();}checkReminders();},30000);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)stopScan();if(!document.hidden){const nk=todayKey();if(nk!==TK){TK=nk;renderHeute();}checkReminders();}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopScan();if(!document.hidden){const nk=todayKey();if(nk!==TK){TK=nk;renderHeute();}checkReminders();whoopAuto();}});
+function whoopAuto(){if(!navigator.onLine||Date.now()-whoopLetzterCheck<30*60000)return;const alt=whoop?.stand;whoopLaden(true).then(ok=>{if(ok&&whoop?.stand!==alt)renderHeute();});}
 
 /* ---------- Navigation ---------- */
 const PAGES={heute:renderHeute,essen:()=>{renderAmpel();renderWoche();renderEinkauf();renderTipps();renderRegeln();},atmen:renderExList,verlauf:()=>{renderVerlauf();renderPlan();renderBefunde();renderTermine();},mehr:renderMehr};
@@ -833,9 +908,10 @@ function gotoPage(p){
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
 document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.09.08-12';
+const APP_VERSION='v2026.09.08-13';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 renderHeute();
+if(plan)whoopAuto();
 /* Demo-Start: ?demo=1 lädt Demo-Plan und Beispiel-Verlauf (für Vorführungen). Ein vorhandener echter Plan wird nur nach Rückfrage ersetzt. */
 (async()=>{ if(!/[?&]demo=1/.test(location.search))return;
   try{ if(plan&&!plan._hinweis&&!confirm('Demo-Modus: Der geladene Plan und das Protokoll werden durch Demo-Daten ersetzt. Fortfahren?'))return;

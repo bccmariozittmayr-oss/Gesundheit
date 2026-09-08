@@ -17,6 +17,8 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 | `mein-plan.beispiel.json` | Struktur der privaten Plan-Datei ohne echte Werte |
 | `plan.enc.json` | der echte Plan, AES-verschlüsselt – nach jeder Planänderung mit `werkzeuge/plan-verschluesseln.js` neu erzeugen |
 | `mein-plan.demo.json`, `demo-protokoll.json` | Demo ohne Befunde + Beispiel-Verlauf für Videos/Vorführungen – neu erzeugen mit `werkzeuge/demo-erzeugen.js <mein-plan.json> [Enddatum]` |
+| `whoop.enc.json` | WHOOP-Tageswerte (Erholung, HRV, Ruhepuls, Schlaf, Belastung, Workouts), verschlüsselt mit dem Plan-Passwort und dem Salt aus plan.enc.json. Erzeugt `werkzeuge/whoop-abholen.js holen --push` (täglich per Aufgabenplanung). Klartext `whoop.json` liegt nur im OneDrive-Datenordner. Einrichtung: `WHOOP.md` |
+| `.env` / `.whoop-token.json` | WHOOP-Zugang (Client-ID/Secret, Token) – lokal, in .gitignore, nie in OneDrive |
 | `NACHBAUEN.md`, `LICENSE` | öffentliche Nachbau-Anleitung mit Start-Prompt, MIT |
 | OneDrive … `/Gesundheits-App/PLAN-PASSWORT.txt` | Passwort dazu – nie ins Repo, nie in den Chat |
 | OneDrive `Mario - Dokumente/Privat/Arzt/Die Fitmacher/Gesundheits-App/mein-plan.json` | **Master der privaten Daten** (Präparate, Phasen, Befunde, Termine, Trainingswoche, Puls) |
@@ -30,6 +32,7 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 - Dosis-Korrekturen in der App (Mehr → Dosierung) überschreiben nur die laufende Phase; Änderungen am Plan gehören in die JSON.
 
 ## Test
+`test/whoop-test.js <Ausgabeordner>` – prüft Entsperren, Nachladen von whoop.enc.json ohne Passwort (Schlüssel in IndexedDB) und die WHOOP-Karten mit Testdaten.
 `test/smoke-test.js` (Playwright aus dbcc-360-crm; Aufruf: `node test/smoke-test.js <Ausgabeordner>`) – lädt den echten Plan, klickt alle Seiten, prüft Phasen an 8 Stichtagen. Vor jedem Merge laufen lassen.
 
 ## Offen
