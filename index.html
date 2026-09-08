@@ -923,15 +923,18 @@ function gotoPage(p){
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
 document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.09.08-17';
+const APP_VERSION='v2026.09.08-18';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 renderHeute();
 if(plan)whoopAuto();else if(whoop)renderHeute();
 /* Demo-Start: ?demo=1 lädt Demo-Plan und Beispiel-Verlauf (für Vorführungen). Ein vorhandener echter Plan wird nur nach Rückfrage ersetzt. */
 (async()=>{ if(!/[?&]demo=1/.test(location.search))return;
   try{ if(plan&&!plan._hinweis&&!confirm('Demo-Modus: Der geladene Plan und das Protokoll werden durch Demo-Daten ersetzt. Fortfahren?'))return;
-    const [pl,pr]=await Promise.all([fetch('mein-plan.demo.json?v='+Date.now()).then(r=>r.json()),fetch('demo-protokoll.json?v='+Date.now()).then(r=>r.json())]);
+    const [pl,pr,wd]=await Promise.all([fetch('mein-plan.demo.json?v='+Date.now()).then(r=>r.json()),fetch('demo-protokoll.json?v='+Date.now()).then(r=>r.json()),fetch('whoop.demo.json?v='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)]);
     uebernehmePlan(pl); log={};Object.assign(log,pr.log||{});saveLog(); if(pr.set){set={...set,...pr.set};saveSet();}
+    if(wd){ // Demo-WHOOP-Tage so verschieben, dass der letzte Tag = heute ist
+      const ks=Object.keys(wd.tage).sort();const shift=daysBetween(ks[ks.length-1],TK);const t2={};ks.forEach(k=>{const d=new Date(k+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+shift);t2[d.toISOString().slice(0,10)]=wd.tage[k];});
+      wd.tage=t2;wd.stand=new Date().toISOString();uebernehmeWhoop(wd);}
     history.replaceState(null,'',location.pathname); renderHeute();renderMehr(); toast('Demo geladen ✓'); }
   catch(e){toast('Demo nicht geladen: '+(e.message||e));} })();
 if(!plan)setTimeout(()=>toast('Tipp: unter „Mehr" den Plan entsperren'),800);
