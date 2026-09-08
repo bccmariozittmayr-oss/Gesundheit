@@ -10,6 +10,12 @@ das umzusetzen, was du mit deinem Arzt oder Therapeuten besprochen hast.
 
 ---
 
+## Erst einmal ansehen (1 Minute)
+
+Diesen Link am Handy öffnen, dann läuft die App mit Demo-Daten (mein Einnahmeplan ohne
+Befunde, sechs Tage Beispiel-Verlauf): **https://bccmariozittmayr-oss.github.io/Gesundheit/?demo=1**
+Es wird nichts installiert und nichts hochgeladen.
+
 ## Weg 1: Meine App direkt verwenden (10 Minuten, kein Coden)
 
 1. Auf GitHub oben rechts auf **Fork** klicken (kostenloses GitHub-Konto nötig).
