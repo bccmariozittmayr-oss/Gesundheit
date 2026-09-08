@@ -144,7 +144,7 @@ table.bf td:first-child{font-weight:600}
 <section class="page on" id="p-heute">
   <div id="heute-banner"></div>
   <div class="card">
-    <h2>💊 Tabletten <small id="med-count"></small></h2>
+    <h2>💊 Supplements <small id="med-count"></small></h2>
     <div class="progress"><i id="med-prog" style="width:0"></i></div>
     <div id="med-list"></div>
   </div>
@@ -716,7 +716,7 @@ function renderVerlauf(){
   const medQ=(()=>{let t=0,d=0;keys.forEach(k=>{const pl=log[k].medsPlanned;if(!pl)return;const m=log[k].meds||{};pl.forEach(key=>{t++;if(m[key])d++;})});return t?Math.round(d/t*100):null})();
   const halsFree=keys.filter(k=>log[k].hals===0).length;
   const wk=mondayOf(TK);const wkKeys=Object.keys(log).filter(k=>k>=wk&&k<=TK);const trN=wkKeys.reduce((a,k)=>a+Object.values(log[k].training||{}).filter(Boolean).length,0);const trMin=wkKeys.reduce((a,k)=>a+Object.values(log[k].trainingMin||{}).reduce((x,y)=>x+y,0),0);const atemN=wkKeys.reduce((a,k)=>a+Object.values(log[k].atmen||{}).filter(Boolean).length,0);
-  $('stats').innerHTML=`<div><b>${trN}</b><span>Trainings diese Woche${trMin?' · '+trMin+' Min.':''}</span></div><div><b>${atemN}/${wkKeys.length*3}</b><span>Atemübungen diese Woche</span></div><div><b>${n}</b><span>Tage erfasst</span></div><div><b>${halsFree}</b><span>Tage ohne Halsgefühl</span></div><div><b>${avg('hals')!=null?avg('hals').toFixed(1):'–'}</b><span>Ø Hals (0–3)</span></div><div><b>${medQ!=null?medQ+'%':'–'}</b><span>Tabletten genommen</span></div>`;
+  $('stats').innerHTML=`<div><b>${trN}</b><span>Trainings diese Woche${trMin?' · '+trMin+' Min.':''}</span></div><div><b>${atemN}/${wkKeys.length*3}</b><span>Atemübungen diese Woche</span></div><div><b>${n}</b><span>Tage erfasst</span></div><div><b>${halsFree}</b><span>Tage ohne Halsgefühl</span></div><div><b>${avg('hals')!=null?avg('hals').toFixed(1):'–'}</b><span>Ø Hals (0–3)</span></div><div><b>${medQ!=null?medQ+'%':'–'}</b><span>Supplements genommen</span></div>`;
   // Chart
   const c=$('chart');const dpr=window.devicePixelRatio||1;const W=c.clientWidth||320,H=200;c.width=W*dpr;c.height=H*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);
   x.clearRect(0,0,W,H);
@@ -731,9 +731,9 @@ function renderVerlauf(){
   // Einnahme je Präparat: geplant vs. abgehakt
   const per={};keys.forEach(k=>{const pl=log[k].medsPlanned||[];const m=log[k].meds||{};pl.forEach(key=>{const id=key.split('_')[0];per[id]=per[id]||{t:0,d:0};per[id].t++;if(m[key])per[id].d++;})});
   const nameOf=id=>(plan?.praeparate.find(m=>m.id===id)||{}).name||id;
-  $('med-stats').innerHTML=Object.keys(per).length?Object.entries(per).sort((x,y)=>y[1].t-x[1].t).map(([id,v])=>{const q=Math.round(v.d/v.t*100);return `<div class="ex"><div class="n"><b>${esc(nameOf(id))}</b><span>${v.d} von ${v.t} Einnahmen</span></div><span class="badge ${q>=90?'ok':q>=60?'warn':'bad'}">${q} %</span></div>`}).join(''):'<div class="empty">Erscheint, sobald Tabletten auf „Heute" abgehakt werden.</div>';
+  $('med-stats').innerHTML=Object.keys(per).length?Object.entries(per).sort((x,y)=>y[1].t-x[1].t).map(([id,v])=>{const q=Math.round(v.d/v.t*100);return `<div class="ex"><div class="n"><b>${esc(nameOf(id))}</b><span>${v.d} von ${v.t} Einnahmen</span></div><span class="badge ${q>=90?'ok':q>=60?'warn':'bad'}">${q} %</span></div>`}).join(''):'<div class="empty">Erscheint, sobald Supplements auf „Heute" abgehakt werden.</div>';
   const sev=['keine','leicht','mittel','stark'];
-  $('entries').innerHTML=keys.slice().reverse().slice(0,14).map(k=>{const e=log[k];const [y,m,d]=k.split('-');const m2=Object.values(e.meds||{});const parts=[e.hals!=null?'Hals '+sev[e.hals]:null,e.bauch!=null?'Bauch '+sev[e.bauch]:null,e.stress!=null?'Stress '+e.stress:null,e.schlaf?e.schlaf+' h':null,e.gewicht?e.gewicht+' kg':null,m2.length?m2.filter(Boolean).length+'/'+m2.length+' Tabl.':null,e.sport?'Sport':null].filter(Boolean);return `<div class="ent"><span class="d">${d}.${m}.</span><span class="s">${parts.join(' · ')||'–'}${e.notiz?'<br>'+e.notiz:''}</span></div>`}).join('')||'<div class="empty">Noch keine Einträge.</div>';
+  $('entries').innerHTML=keys.slice().reverse().slice(0,14).map(k=>{const e=log[k];const [y,m,d]=k.split('-');const m2=Object.values(e.meds||{});const parts=[e.hals!=null?'Hals '+sev[e.hals]:null,e.bauch!=null?'Bauch '+sev[e.bauch]:null,e.stress!=null?'Stress '+e.stress:null,e.schlaf?e.schlaf+' h':null,e.gewicht?e.gewicht+' kg':null,m2.length?m2.filter(Boolean).length+'/'+m2.length+' Suppl.':null,e.sport?'Sport':null].filter(Boolean);return `<div class="ent"><span class="d">${d}.${m}.</span><span class="s">${parts.join(' · ')||'–'}${e.notiz?'<br>'+e.notiz:''}</span></div>`}).join('')||'<div class="empty">Noch keine Einträge.</div>';
   renderWhoopVerlauf();
 }
 function renderBefunde(){
@@ -923,7 +923,7 @@ function gotoPage(p){
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
 document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.09.08-16';
+const APP_VERSION='v2026.09.08-17';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 renderHeute();
 if(plan)whoopAuto();else if(whoop)renderHeute();
