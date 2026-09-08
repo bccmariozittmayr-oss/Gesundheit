@@ -1,7 +1,7 @@
 {
   "name": "Gesundheit",
   "short_name": "Gesundheit",
-  "description": "Tabletten, Atmen, FODMAP-arm essen – persönliche Alltags-App",
+  "description": "Supplements, Atmen, FODMAP-arm essen – persönliche Alltags-App",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
