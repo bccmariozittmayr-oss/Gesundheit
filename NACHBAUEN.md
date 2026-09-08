@@ -97,9 +97,22 @@ GitHub-Konto anlegen, neues öffentliches Repository „Gesundheit", `index.html
 
 ## Was mich das gekostet hat
 
-Werkzeug: ein KI-Abo (ab ca. 20 €/Monat, ein Monat reicht). Hosting: 0 €. Zeit: der
-erste Stand an einem Abend, dann eine Woche lang jeden Tag 20 Minuten Feinschliff beim
-Benutzen. Die aktuelle Fassung in diesem Repository entstand im Wesentlichen an einem
-Sonntagnachmittag im September 2026.
+Werkzeug: Ich habe das große Claude-Paket (Max), weil ich beruflich täglich damit arbeite.
+Für diese App reicht nach meiner Einschätzung das Einstiegspaket (Pro, ca. 20 €/Monat,
+ein Monat genügt) – man stößt dort öfter an die Stundengrenze und muss kurz warten,
+mehr nicht. Hosting: 0 €. Zeit: der erste Stand an einem Abend, dann eine Woche lang
+jeden Tag 20 Minuten Feinschliff beim Benutzen. Die aktuelle Fassung in diesem
+Repository entstand im Wesentlichen an einem Sonntagnachmittag im September 2026.
+
+**Daten in der EU behalten?** Claude (Anthropic) und ChatGPT (OpenAI) sind US-Anbieter.
+Wer die Gesundheitsdaten beim Bauen in Europa lassen will, kann Mistral aus Frankreich
+nehmen (Le Chat im Browser, oder Mistral Vibe als Programmier-Werkzeug). Der Start-Prompt
+oben funktioniert dort genauso. Ich habe diese App aber mit Claude gebaut und Mistral
+dafür nicht getestet – die Qualität kann abweichen. Der sicherste Weg bleibt Regel 0:
+keine echten Daten in den Prompt.
+
+**Tiefer einsteigen?** Die AI Masterclass des BTM Podcast (btm-podcast.com/ai-masterclass)
+zeigt in vier Sessions, wie man mit KI Landingpages, Agenten und Prototypen baut –
+für alle, die nach dieser App weitermachen wollen.
 
 Fragen? Mario Zittmayr – LinkedIn.
