@@ -92,7 +92,8 @@ async function anmelden() {
     }).listen(PORT, '127.0.0.1', () => {
       console.log('Browser öffnet sich – bei WHOOP anmelden und den Zugriff bestätigen.');
       console.log('Falls kein Browser aufgeht, diese Adresse öffnen:\n' + url + '\n');
-      try { execFileSync('cmd', ['/c', 'start', '', url], { stdio: 'ignore' }); } catch (e) { /* Adresse steht oben */ }
+      // rundll32 statt 'cmd /c start': cmd würde die Adresse am ersten & abschneiden
+      try { execFileSync('rundll32', ['url.dll,FileProtocolHandler', url], { stdio: 'ignore' }); } catch (e) { /* Adresse steht oben */ }
     });
   });
   console.log('Angemeldet. Token liegt in', TOKEN_PFAD, '(bleibt lokal).');
