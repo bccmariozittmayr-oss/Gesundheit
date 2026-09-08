@@ -87,11 +87,11 @@ async function anmelden() {
         const code = u.searchParams.get('code'); if (!code) throw new Error('kein Code erhalten');
         const t = await tokenAnfrage({ grant_type: 'authorization_code', code, redirect_uri: REDIRECT });
         speichereToken(t);
-        antwort('WHOOP verbunden ✓'); srv.close(); resolve();
+        antwort('WHOOP verbunden ✓'); srv.close(); try { fs.unlinkSync(path.join(ROOT, '.whoop-login-url.txt')); } catch (e) {} resolve();
       } catch (e) { antwort('Fehlgeschlagen: ' + e.message); srv.close(); reject(e); }
     }).listen(PORT, '127.0.0.1', () => {
       console.log('Browser öffnet sich – bei WHOOP anmelden und den Zugriff bestätigen.');
-      console.log('Falls kein Browser aufgeht, diese Adresse öffnen:\n' + url + '\n');
+      console.log('Falls kein Browser aufgeht: Adresse steht in der Datei .whoop-login-url.txt (lokal).'); fs.writeFileSync(path.join(ROOT, '.whoop-login-url.txt'), url);
       // rundll32 statt 'cmd /c start': cmd würde die Adresse am ersten & abschneiden
       try { execFileSync('rundll32', ['url.dll,FileProtocolHandler', url], { stdio: 'ignore' }); } catch (e) { /* Adresse steht oben */ }
     });
@@ -135,8 +135,13 @@ async function holen(tage, dryRun, push) {
   const tageMap = {};
   const tag = k => (tageMap[k] = tageMap[k] || { workouts: [] });
   const cycleDatum = {};
-  for (const c of cycles) {
-    const k = lokalesDatum(c.start, c.timezone_offset); cycleDatum[c.id] = k; const t = tag(k);
+  // Ein WHOOP-Zyklus beginnt beim Einschlafen am Vorabend – der Tag heißt nach dem Aufwachen (Ende des Hauptschlafs).
+  const hauptschlaf = {}; for (const s of sleeps) if (!s.nap) hauptschlaf[s.cycle_id] = s;
+  const zyklusDatum = c => { const s = hauptschlaf[c.id]; if (s) return lokalesDatum(s.end, s.timezone_offset);
+    const d = new Date(c.start); const m = /^([+-])(d{2}):(d{2})$/.exec(c.timezone_offset || 'Z'); const min = m ? (m[1] === '-' ? -1 : 1) * (+m[2] * 60 + +m[3]) : 0;
+    const lokal = new Date(d.getTime() + min * 60000); return lokal.getUTCHours() >= 15 ? new Date(lokal.getTime() + 86400000).toISOString().slice(0, 10) : lokal.toISOString().slice(0, 10); };
+  for (const c of cycles.slice().sort((x, y) => x.start < y.start ? -1 : 1)) { // aufsteigend: bei zwei Zyklen am selben Tag gewinnt der spätere
+    const k = zyklusDatum(c); cycleDatum[c.id] = k; const t = tag(k);
     t.zyklusStart = c.start; t.zyklusEnde = c.end || null; t.laufend = !c.end;
     if (c.score_state === 'SCORED' && c.score) { t.strain = r1(c.score.strain); t.kcal = Math.round(c.score.kilojoule / 4.184); t.pulsAvg = c.score.average_heart_rate; t.pulsMax = c.score.max_heart_rate; }
   }
