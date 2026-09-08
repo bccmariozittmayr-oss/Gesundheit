@@ -80,8 +80,14 @@ GitHub-Konto anlegen, neues öffentliches Repository „Gesundheit", `index.html
 
 ---
 
-## Drei Regeln, damit das seriös bleibt
+## Vier Regeln, damit das seriös bleibt
 
+0. **Dir muss klar sein: Beim Bauen gibst du deine Gesundheitsdaten an eine KI.**
+   Alles, was du in den Prompt schreibst (Präparate, Diagnosen, Regeln), landet beim
+   Anbieter des KI-Werkzeugs (z.B. Anthropic in den USA, OpenAI). Ich habe das für
+   mich bewusst entschieden. Wer das nicht will: nur allgemein beschreiben („5 Präparate
+   zu 3 Tageszeiten") und die echten Namen erst später selbst in die Plan-Datei
+   eintragen. Die fertige App schickt danach nichts mehr an eine KI.
 1. **Gesundheitsdaten nie in den Code und nie auf GitHub.** Immer in eine eigene Datei,
    die nur bei dir liegt. Wenn du unsicher bist: Repository auf „privat" stellen.
 2. **Die App erinnert, sie entscheidet nicht.** Dosierungen und Phasen kommen von deinem
@@ -94,6 +100,6 @@ GitHub-Konto anlegen, neues öffentliches Repository „Gesundheit", `index.html
 Werkzeug: ein KI-Abo (ab ca. 20 €/Monat, ein Monat reicht). Hosting: 0 €. Zeit: der
 erste Stand an einem Abend, dann eine Woche lang jeden Tag 20 Minuten Feinschliff beim
 Benutzen. Die aktuelle Fassung in diesem Repository entstand im Wesentlichen an einem
-Nachmittag.
+Sonntagnachmittag im September 2026.
 
 Fragen? Mario Zittmayr – LinkedIn.
