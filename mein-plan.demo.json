@@ -1,40 +1,579 @@
 {
-  "_hinweis": "DEMO-Daten, frei erfunden. Zum Ausprobieren der App und für Vorführungen/Videos. Kein echter Plan, keine echten Befunde.",
-  "version": 1,
-  "stand": "01.09.2026",
-  "quelle": "Demo-Plan (erfunden)",
-  "anker": { "plan": "2026-09-01" },
-  "praeparate": [
-    { "id": "omega", "name": "Omega-3", "einheit": "Kapsel", "hinweis": "zum Essen", "anker": "plan",
-      "phasen": [ { "abTag": 0, "bisTag": null, "m": 1, "a": 1, "notiz": "1-0-1" } ] },
-    { "id": "vitd", "name": "Vitamin D3 + K2", "einheit": "Tropfen", "hinweis": "morgens", "anker": "plan",
-      "phasen": [ { "abTag": 0, "bisTag": null, "m": 4, "notiz": "4 Tropfen morgens" } ] },
-    { "id": "mg", "name": "Magnesium", "einheit": "Kapsel", "hinweis": "abends", "anker": "plan",
-      "phasen": [ { "abTag": 0, "bisTag": null, "a": 1, "n": 1, "notiz": "abends + vor dem Schlafen" } ] },
-    { "id": "q10", "name": "Q10", "einheit": "Kapsel", "hinweis": "zum Frühstück", "anker": "plan",
-      "phasen": [ { "abTag": 0, "bisTag": 60, "m": 2, "notiz": "erste 2 Monate: 2 morgens" }, { "abTag": 61, "bisTag": null, "m": 1, "notiz": "danach 1 morgens" } ] },
-    { "id": "zink", "name": "Zink", "einheit": "Tablette", "hinweis": "abends", "anker": "plan",
-      "phasen": [ { "abTag": 0, "bisTag": 90, "a": 1, "notiz": "3 Monate" } ] },
-    { "id": "probio", "name": "Probiotikum", "einheit": "Kapsel", "anker": "kur", "detoxPause": true,
-      "phasen": [ { "abTag": 6, "bisTag": 66, "nu": 1, "n": 1, "notiz": "ab Kur-Tag 7, nüchtern + vor dem Schlafen" } ] },
-    { "id": "detox", "name": "Darm-Shake", "einheit": "Portion", "anker": "kur",
-      "phasen": [ { "abTag": 2, "bisTag": 5, "m": 1, "a": 1, "notiz": "Detox-Tage 3–6" } ] }
-  ],
-  "bedarf": [ { "name": "Elektrolyte", "dosis": "1 Portion", "wann": "nach dem Sport" } ],
-  "sport": [ { "name": "Isotonisches Getränk", "wann": "zum Training", "dosis": "laut Packung" } ],
-  "persoenlich": {
-    "kost": ["FODMAP-arm"],
-    "meiden": [
-      { "name": "Sorbit", "grund": "Unverträglichkeit", "treffer": ["Sorbit", "E420", "Apfel", "Birne"] },
-      { "name": "Zwiebel/Knoblauch", "grund": "FODMAP", "treffer": ["Zwiebel", "Knoblauch"] }
-    ]
+ "version": 1,
+ "stand": "06.09.2026",
+ "quelle": "dieFITMACHER, Einnahmeplan (Demo-Fassung ohne Befunde)",
+ "anker": {
+  "plan": "2026-09-04"
+ },
+ "praeparate": [
+  {
+   "id": "vitd",
+   "name": "Vitamin D3 + K2",
+   "einheit": "Tropfen",
+   "hinweis": "zum Frühstück, mit etwas Fett",
+   "anker": "plan",
+   "phasen": [
+    {
+     "abTag": 0,
+     "bisTag": 13,
+     "m": 0,
+     "notiz": "Pause 2 Wochen (bis 17.09.)"
+    },
+    {
+     "abTag": 14,
+     "bisTag": 20,
+     "m": 16,
+     "notiz": "Hochdosis 40.000 IE – 7 Tage (18.–24.09.)"
+    },
+    {
+     "abTag": 21,
+     "bisTag": null,
+     "m": 2,
+     "notiz": "Erhaltung 5.000 IE, dauerhaft"
+    }
+   ]
   },
-  "diagnosen": ["Demo-Diagnose A", "Demo-Diagnose B"],
-  "befunde": [
-    { "name": "Vitamin D", "wert": "22", "ref": "40–60", "status": "niedrig", "datum": "15.08.2026", "bedeutung": "Demo: Vitamin-D-Spiegel unter Ziel" },
-    { "name": "Omega-3-Index", "wert": "4,1", "ref": "> 8", "status": "niedrig", "datum": "15.08.2026", "bedeutung": "Demo: Omega-3-Versorgung niedrig" },
-    { "name": "Ferritin", "wert": "85", "ref": "30–300", "status": "ok", "datum": "15.08.2026", "bedeutung": "Demo: Eisenspeicher in Ordnung" }
+  {
+   "id": "omega",
+   "name": "Omega 3 (Öl, Übergang)",
+   "einheit": "EL",
+   "hinweis": "Öl bis die Omega 3+ Kapseln der Fitmacher da sind – dann laut Packung",
+   "anker": "plan",
+   "phasen": [
+    {
+     "abTag": 0,
+     "bisTag": null,
+     "m": 1
+    }
+   ]
+  },
+  {
+   "id": "q10",
+   "name": "Q10+",
+   "einheit": "Kapsel",
+   "hinweis": "zur Mahlzeit, unzerkaut",
+   "anker": "plan",
+   "phasen": [
+    {
+     "abTag": 0,
+     "bisTag": 60,
+     "m": 2,
+     "notiz": "Aufsättigung 2 Monate (bis 03.11.)"
+    },
+    {
+     "abTag": 61,
+     "bisTag": null,
+     "m": 1,
+     "notiz": "Erhaltung"
+    }
+   ]
+  },
+  {
+   "id": "mg",
+   "name": "Magnesium 300+",
+   "einheit": "Kapsel",
+   "hinweis": "zwischen den Mahlzeiten, unzerkaut, viel Wasser",
+   "anker": "plan",
+   "phasen": [
+    {
+     "abTag": 0,
+     "bisTag": null,
+     "a": 1
+    }
+   ]
+  },
+  {
+   "id": "multi",
+   "name": "Multi+",
+   "einheit": "Kapsel",
+   "hinweis": "zur Mahlzeit",
+   "anker": "plan",
+   "phasen": [
+    {
+     "abTag": 0,
+     "bisTag": null,
+     "m": 1,
+     "a": 1
+    }
+   ]
+  },
+  {
+   "id": "sperm",
+   "name": "Spermidine+",
+   "einheit": "Kapsel",
+   "hinweis": "zur Mahlzeit, unzerkaut – für die Mitochondrien",
+   "anker": "plan",
+   "phasen": [
+    {
+     "abTag": 0,
+     "bisTag": null,
+     "m": 1,
+     "a": 2
+    }
+   ]
+  },
+  {
+   "id": "msm",
+   "name": "MSM",
+   "einheit": "Messlöffel",
+   "hinweis": "in Wasser",
+   "anker": "plan",
+   "phasen": [
+    {
+     "abTag": 0,
+     "bisTag": null,
+     "m": 1
+    }
+   ]
+  },
+  {
+   "id": "bittersalz",
+   "name": "Bittersalz+",
+   "einheit": "TL",
+   "hinweis": "in 250 ml Wasser – nur bei Verstopfungsneigung",
+   "anker": "kur",
+   "detoxPause": false,
+   "phasen": [
+    {
+     "abTag": 0,
+     "bisTag": 0,
+     "m": 1,
+     "notiz": "Reduziertag 1, optional"
+    }
+   ]
+  },
+  {
+   "id": "detox",
+   "name": "Darmdetox+ Shake",
+   "einheit": "Beutel",
+   "hinweis": "erst Flüssigkeit, dann Pulver, sofort trinken",
+   "anker": "kur",
+   "detoxPause": false,
+   "phasen": [
+    {
+     "abTag": 2,
+     "bisTag": 5,
+     "nu": 1,
+     "m": 1,
+     "mi": 2,
+     "a": 2,
+     "n": 1,
+     "notiz": "7 Shakes: Aufwach 300 ml · Frühstück 400 · Snack 300 + Mittag 400 · Snack 300 + Abend 400 · Gute Nacht 300. Mahlzeit-Shakes nie auslassen."
+    }
+   ]
+  },
+  {
+   "id": "probio",
+   "name": "Probiotikum+",
+   "einheit": "Kapsel",
+   "hinweis": "mit viel Wasser",
+   "anker": "kur",
+   "phasen": [
+    {
+     "abTag": 6,
+     "bisTag": 66,
+     "nu": 1,
+     "n": 1,
+     "notiz": "Monat 1–2: nüchtern + vor dem Schlafen"
+    },
+    {
+     "abTag": 67,
+     "bisTag": 127,
+     "n": 1,
+     "notiz": "Monat 3–4: nur abends"
+    },
+    {
+     "abTag": 128,
+     "bisTag": null,
+     "nu": 1,
+     "notiz": "Erhaltung dauerhaft, nüchtern"
+    }
+   ]
+  },
+  {
+   "id": "glut",
+   "name": "L-Glutamin+",
+   "einheit": "Kapsel",
+   "hinweis": "mit viel Wasser – schließt die Darmwand",
+   "anker": "kur",
+   "phasen": [
+    {
+     "abTag": 6,
+     "bisTag": 66,
+     "m": 1,
+     "a": 1,
+     "notiz": "Monat 1–2"
+    },
+    {
+     "abTag": 67,
+     "bisTag": 127,
+     "m": 1,
+     "notiz": "Monat 3–4: nur morgens"
+    }
+   ]
+  },
+  {
+   "id": "basis",
+   "name": "Darmbasis+",
+   "einheit": "EL",
+   "hinweis": "zum Essen",
+   "anker": "kur",
+   "phasen": [
+    {
+     "abTag": 6,
+     "bisTag": 12,
+     "m": 2,
+     "a": 2,
+     "notiz": "Woche 1: je 2 EL"
+    },
+    {
+     "abTag": 13,
+     "bisTag": 127,
+     "m": 1,
+     "a": 1,
+     "notiz": "je 1 EL, bis Packungsende"
+    },
+    {
+     "abTag": 128,
+     "bisTag": null,
+     "m": 1,
+     "a": 1,
+     "notiz": "Erhaltung dauerhaft"
+    }
+   ]
+  },
+  {
+   "id": "buty",
+   "name": "Butyzol",
+   "einheit": "Kapsel",
+   "hinweis": "Butyrat – Bezug Apriwell.at",
+   "anker": "kur",
+   "offen": "Schreibweise/Bezugsquelle im Arztbrief nicht eindeutig lesbar – beim Bestellen prüfen",
+   "phasen": [
+    {
+     "abTag": 6,
+     "bisTag": 66,
+     "m": 1,
+     "a": 1,
+     "notiz": "Monat 1–2"
+    }
+   ]
+  }
+ ],
+ "bedarf": [
+  {
+   "name": "Immun+",
+   "dosis": "1-0-1",
+   "wann": "Infektsaison oder bei Bedarf"
+  },
+  {
+   "name": "Allergie+",
+   "dosis": "2-0-2",
+   "wann": "bei Pollen/Gräsern konsequent"
+  },
+  {
+   "name": "Kreatin",
+   "dosis": "3 g/Tag",
+   "wann": "für mehr Energie"
+  }
+ ],
+ "sport": [
+  {
+   "name": "SMP+ Zaubertrank",
+   "zeitpunkt": "waehrend",
+   "wann": "während dem Sport – Biken, Wandern, Krafttraining",
+   "dosis": "laut Packung"
+  },
+  {
+   "name": "Recovery+",
+   "zeitpunkt": "danach",
+   "wann": "direkt nach dem Sport – Biken, Berggehen",
+   "dosis": "laut Packung"
+  },
+  {
+   "name": "BCAA+",
+   "zeitpunkt": "bedarf",
+   "wann": "für gezielten Muskelaufbau",
+   "dosis": "laut Packung"
+  },
+  {
+   "name": "Magnesium 300+",
+   "zeitpunkt": "bedarf",
+   "wann": "bei starker Belastung bis 3× täglich",
+   "dosis": ""
+  }
+ ],
+ "persoenlich": {
+  "kost": [
+   "FODMAP-arm",
+   "glutenfrei",
+   "sorbitfrei",
+   "laktosearm",
+   "histaminarm sinnvoll"
   ],
-  "training": { "hfZonen": { "A": "Puls < 125 (Grundlage)", "B": "125–145 (Aufbau)", "C": "> 145 (nur kurz)" }, "hinweise": ["3× pro Woche 45 Minuten Grundlage", "1× Krafttraining"] },
-  "termine": [ { "name": "Kontroll-Blutabnahme", "datum": "Jänner 2027", "details": "Vitamin D, Omega-3-Index, Ferritin" } ]
+  "meiden": [
+   {
+    "name": "Sorbit",
+    "grund": "Unverträglichkeit",
+    "treffer": [
+     "Sorbit",
+     "Apfel",
+     "Birne",
+     "Aprikose",
+     "Pfirsich",
+     "Nektarine",
+     "Pflaume",
+     "Kirsche",
+     "Avocado",
+     "Trockenobst",
+     "Kaugummi",
+     "Diabetiker",
+     "Brombeere"
+    ]
+   },
+   {
+    "name": "Kohl/Zwiebel/Knoblauch",
+    "grund": "Unverträglichkeit",
+    "treffer": [
+     "Zwiebel",
+     "Knoblauch",
+     "Blumenkohl",
+     "Rosenkohl",
+     "Rotkohl",
+     "Wirsing",
+     "Bohnen (außer"
+    ]
+   },
+   {
+    "name": "Paprika",
+    "grund": "Unverträglichkeit",
+    "treffer": [
+     "Paprika"
+    ]
+   },
+   {
+    "name": "Gluten",
+    "grund": "Ernährungsberater: komplett verzichten",
+    "treffer": [
+     "Sauerteig",
+     "Dinkel",
+     "Roggen",
+     "Gerste",
+     "Kamut",
+     "Toast",
+     "Semmel",
+     "Gebäck",
+     "Weizen ("
+    ]
+   }
+  ]
+ },
+ "kaffee": {
+  "max": 3,
+  "hinweis": "Morgens erst Tee. Erster Kaffee frühestens 90 Min. nach dem Aufstehen. Nachmittagskaffee mit Kuchen spätestens 15–16 Uhr – und vorher Eiweiß."
+ },
+ "regeln": [
+  {
+   "titel": "Frühstück (fix)",
+   "punkte": [
+    "Haferschleim mit Wasser (keine Milch) – Hafer als „zertifiziert glutenfrei\" kaufen",
+    "Süße durch Obst statt Honig: Ananas, Erdbeeren, Kiwi, Heidelbeeren (FODMAP-arm). Honig = Fruktose, meiden",
+    "Immer Eiweiß dazu: 1–2 Eier oder 150 g Skyr/Topfen laktosefrei – Vorgabe Ernährungsberater",
+    "Kamillentee; erster Kaffee frühestens 90 Min. nach dem Aufstehen",
+    "Kein Dinkeltoast (Dr. Hoo) – glutenhaltig. Ersatz: glutenfreies Brot aus Buchweizen/Reis/Teff"
+   ]
+  },
+  {
+   "titel": "Kaffee",
+   "punkte": [
+    "Max. 3 Kaffee am Tag",
+    "In der Früh nur Tee – erster Kaffee frühestens 90 Minuten nach dem Aufstehen",
+    "Kaffee mit Kuchen (Kunde, Süßspeise) spätestens 15–16 Uhr – und immer VORHER etwas Eiweiß essen",
+    "In der Darmkur Phase 1: max. 1 Tasse, nur bei Kopfschmerzen"
+   ]
+  },
+  {
+   "titel": "Abend",
+   "punkte": [
+    "Mindestens 2 Stunden vor dem Schlafen nichts mehr essen",
+    "Wenn abends, dann leicht und mit Eiweiß (Ei, Fisch, Skyr, Cottage Cheese, Tofu)",
+    "Kein Alkohol abends",
+    "Nur zu 80 % satt essen"
+   ]
+  },
+  {
+   "titel": "Essenszeiten",
+   "punkte": [
+    "Essfenster max. 11 Stunden, z.B. 8–19 Uhr (16:8)",
+    "Keine Snacks zwischendurch, schon gar keine Kohlenhydrat-Snacks",
+    "Süßes oder Obst nur direkt nach einer Hauptmahlzeit"
+   ]
+  },
+  {
+   "titel": "Reihenfolge beim Essen",
+   "punkte": [
+    "Mit Gemüse, Salat oder einem Glas Essigwasser beginnen",
+    "Kohlenhydrate nie alleine und nie als Erstes",
+    "Gut kauen, langsam essen"
+   ]
+  },
+  {
+   "titel": "Was drauf soll",
+   "punkte": [
+    "Ballaststoffe bei jeder Mahlzeit (Ziel > 30 g/Tag): Hafer, Kartoffeln, Gemüse, Leinsamen, Chia, Flohsamen",
+    "Eiweiß bei jeder Mahlzeit: Ei, Fisch, Skyr, Topfen (laktosefrei), Cottage Cheese",
+    "Fette: Olivenöl, Rapsöl, Leinöl, Walnussöl",
+    "Fermentiertes: Sauerkraut, Kimchi, Kefir, Joghurt (laktosefrei)",
+    "2 Liter Wasser oder Kräutertee"
+   ]
+  },
+  {
+   "titel": "Was weg soll",
+   "punkte": [
+    "FODMAP-reich: Zwiebel, Knoblauch, Kohl, Bohnen, Weizen, Milchzucker (siehe Ampel)",
+    "Sorbit: Steinobst, Apfel, Birne, zuckerfreie Kaugummis",
+    "Fleisch nur 1–2× pro Woche, dann Rind oder Wild; kein Schwein",
+    "Wurst, Speck, Schinken, Leberkäse, Fertigprodukte, Industriezucker",
+    "Sonnenblumenöl, Kokosöl, Margarine"
+   ]
+  }
+ ],
+ "diagnosen": [
+  "Demo: keine Diagnosen hinterlegt"
+ ],
+ "befunde": [
+  {
+   "name": "Beispielwert (Demo)",
+   "wert": "–",
+   "ref": "–",
+   "status": "ok",
+   "datum": "",
+   "bedeutung": "Im echten Plan stehen hier die Laborwerte aus dem Arztbrief, mit Referenzbereich und Bedeutung."
+  }
+ ],
+ "training": {
+  "hfZonen": {
+   "A – Grundlage (Fettverbrennung)": "Puls < 119",
+   "B – Moderat": "Puls 119 – 161",
+   "C – Hoch (Intervalle)": "Puls > 161"
+  },
+  "hinweise": [
+   "Werte fürs Radfahren; Laufen +10, Walking +5, Schwimmen −10",
+   "Grundlagenausdauer ausbaufähig: viel Zone A, keine Belastungsspitzen",
+   "Mind. 150 Min. Bewegung/Woche, davon 20–30 Min. intensiv; 7.000–10.000 Schritte/Tag",
+   "3× Krafttraining pro Woche (klassisch, zusätzlich zu EMS)",
+   "VILPAS: 5× täglich 10–20 Sekunden Puls hochjagen (Stiegen, kurzer Sprint)",
+   "Während der Darmkur (Tag 1–6) nur leichte Bewegung, kein intensiver Sport"
+  ],
+  "woche": {
+   "0": [
+    {
+     "name": "Biken oder Berggehen – lang",
+     "zeit": "",
+     "dauer": "2–3 Std.",
+     "info": "Zone A/B. SMP+ während, Recovery+ danach.",
+     "zone": "AB",
+     "sportart": "auto"
+    }
+   ],
+   "1": [
+    {
+     "name": "Locker: Spaziergang, Beweglichkeit",
+     "zeit": "",
+     "dauer": "30 Min.",
+     "info": "Regeneration. 10.000 Schritte.",
+     "zone": "A",
+     "sportart": "gehen"
+    }
+   ],
+   "2": [
+    {
+     "name": "EMS Stromtraining",
+     "zeit": "08:30–09:30",
+     "dauer": "20 Min. Einheit",
+     "info": "Personal Training. Vorher leicht frühstücken, SMP+ dabei, Recovery+ danach.",
+     "zone": "kraft"
+    }
+   ],
+   "3": [
+    {
+     "name": "Biken – Grundlage (Fitnesscenter oder draußen)",
+     "zeit": "17:00–18:30",
+     "dauer": "60–90 Min.",
+     "info": "Zone A, Puls unter 119. Bei Schlechtwetter Ergometer. SMP+ während, Recovery+ danach.",
+     "zone": "A",
+     "sportart": "auto"
+    }
+   ],
+   "4": [
+    {
+     "name": "Krafttraining (Basic Workout)",
+     "zeit": "18:00–18:45",
+     "dauer": "45 Min.",
+     "info": "Ganzkörper: Kniebeuge, Rudern, Drücken, Rumpf. SMP+ dabei.",
+     "zone": "kraft"
+    }
+   ],
+   "5": [
+    {
+     "name": "Locker: Spaziergang, Beweglichkeit",
+     "zeit": "",
+     "dauer": "30 Min.",
+     "info": "Regeneration. 10.000 Schritte.",
+     "zone": "A",
+     "sportart": "gehen"
+    }
+   ],
+   "6": [
+    {
+     "name": "Krafttraining (Basic Workout)",
+     "zeit": "10:00–10:45",
+     "dauer": "45 Min.",
+     "info": "Ganzkörper. SMP+ dabei. Alternativ Sonntag 10:00.",
+     "zone": "kraft"
+    }
+   ]
+  },
+  "puls": {
+   "vt1": 119,
+   "vt2": 161,
+   "max": 172,
+   "offsets": {
+    "rad": 0,
+    "gehen": 5,
+    "laufen": 10,
+    "schwimmen": -10
+   },
+   "quelle": "Leistungstest am Rad"
+  },
+  "zonen": [
+   {
+    "k": "A",
+    "name": "Grundlage",
+    "puls": "unter VT1",
+    "txt": "Locker, Fettverbrennung, Nasenatmung möglich. Lange Ausfahrten, Berggehen. Keine Spitzen (kein Sprint, kein Schlussanstieg auf Anschlag)."
+   },
+   {
+    "k": "B",
+    "name": "Moderat",
+    "puls": "VT1 bis VT2",
+    "txt": "Anstrengend aber gleichmäßig. Tempo-Anteile, längere Anstiege. Max. 1× pro Woche als Schwerpunkt."
+   },
+   {
+    "k": "C",
+    "name": "Intensiv",
+    "puls": "über VT2",
+    "txt": "Nur kurze Intervalle (30 s – 1000 m). 20–30 Min. pro Woche insgesamt reichen laut Arzt."
+   }
+  ]
+ },
+ "termine": [
+  {
+   "name": "Kontroll-Blutabnahme",
+   "datum": "Jänner 2027",
+   "details": "Demo-Eintrag"
+  }
+ ],
+ "fruehstueckFix": "f9",
+ "_hinweis": "DEMO-Fassung: echter Einnahmeplan, aber ohne Befunde, Diagnosen und Termine. Zum Ausprobieren und für Vorführungen."
 }

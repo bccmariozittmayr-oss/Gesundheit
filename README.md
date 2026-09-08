@@ -18,7 +18,7 @@ Alles Persönliche (Präparate, Dosierungen, Befunde, Termine) steht in **`mein-
 - ist per `.gitignore` vom Repo ausgeschlossen,
 - wird einmalig pro Gerät in der App unter **Mehr → Plan laden** ausgewählt und bleibt dann im Browser-Speicher (localStorage) des Geräts.
 
-`mein-plan.beispiel.json` zeigt die Struktur ohne echte Werte, `mein-plan.demo.json` ist ein erfundener Demo-Plan zum Ausprobieren.
+`mein-plan.beispiel.json` zeigt die Struktur ohne echte Werte, `mein-plan.demo.json` ist eine Demo-Fassung ohne Befunde, `demo-protokoll.json` ein Beispiel-Verlauf dazu (beide mit `werkzeuge/demo-erzeugen.js` erzeugt).
 
 **Selbst nachbauen?** Siehe [NACHBAUEN.md](NACHBAUEN.md) – Anleitung und Start-Prompt.
 

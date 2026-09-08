@@ -1,0 +1,273 @@
+{
+ "log": {
+  "2026-09-04": {
+   "hals": 2,
+   "bauch": 2,
+   "stress": 6,
+   "schlaf": 6.5,
+   "gewicht": 84.2,
+   "kaffee": 3,
+   "notiz": "",
+   "meds": {
+    "omega_m": true,
+    "q10_m": true,
+    "mg_a": true,
+    "multi_m": true,
+    "multi_a": true,
+    "sperm_m": true,
+    "sperm_a": true,
+    "msm_m": true
+   },
+   "medsPlanned": [
+    "omega_m",
+    "q10_m",
+    "mg_a",
+    "multi_m",
+    "multi_a",
+    "sperm_m",
+    "sperm_a",
+    "msm_m"
+   ],
+   "atmen": {
+    "am": true,
+    "at": true,
+    "ab": true
+   },
+   "training": {
+    "t0": true
+   },
+   "trainingMin": {
+    "t0": 30
+   },
+   "sport": false
+  },
+  "2026-09-05": {
+   "hals": 2,
+   "bauch": 1,
+   "stress": 5,
+   "schlaf": 7,
+   "gewicht": 84,
+   "kaffee": 2,
+   "notiz": "",
+   "meds": {
+    "omega_m": true,
+    "q10_m": true,
+    "mg_a": true,
+    "multi_m": true,
+    "multi_a": true,
+    "sperm_m": false,
+    "sperm_a": true,
+    "msm_m": true,
+    "sport_SMPZaubertrank_sp": true,
+    "sport_Recovery_sp": true
+   },
+   "medsPlanned": [
+    "omega_m",
+    "q10_m",
+    "mg_a",
+    "multi_m",
+    "multi_a",
+    "sperm_m",
+    "sperm_a",
+    "msm_m",
+    "sport_SMPZaubertrank_sp",
+    "sport_Recovery_sp"
+   ],
+   "atmen": {
+    "am": true,
+    "at": true,
+    "ab": true
+   },
+   "training": {
+    "t0": true
+   },
+   "trainingMin": {
+    "t0": 45
+   },
+   "sport": true
+  },
+  "2026-09-06": {
+   "hals": 1,
+   "bauch": 1,
+   "stress": 4,
+   "schlaf": 7.5,
+   "gewicht": 83.8,
+   "kaffee": 2,
+   "notiz": "",
+   "meds": {
+    "omega_m": true,
+    "q10_m": true,
+    "mg_a": true,
+    "multi_m": true,
+    "multi_a": true,
+    "sperm_m": true,
+    "sperm_a": true,
+    "msm_m": true,
+    "sport_SMPZaubertrank_sp": true,
+    "sport_Recovery_sp": true
+   },
+   "medsPlanned": [
+    "omega_m",
+    "q10_m",
+    "mg_a",
+    "multi_m",
+    "multi_a",
+    "sperm_m",
+    "sperm_a",
+    "msm_m",
+    "sport_SMPZaubertrank_sp",
+    "sport_Recovery_sp"
+   ],
+   "atmen": {
+    "am": true,
+    "at": false,
+    "ab": true
+   },
+   "training": {
+    "t0": true
+   },
+   "trainingMin": {
+    "t0": 150
+   },
+   "sport": true
+  },
+  "2026-09-07": {
+   "hals": 1,
+   "bauch": 1,
+   "stress": 4,
+   "schlaf": 7,
+   "gewicht": 83.7,
+   "kaffee": 2,
+   "notiz": "",
+   "meds": {
+    "omega_m": true,
+    "q10_m": true,
+    "mg_a": true,
+    "multi_m": true,
+    "multi_a": true,
+    "sperm_m": true,
+    "sperm_a": true,
+    "msm_m": true
+   },
+   "medsPlanned": [
+    "omega_m",
+    "q10_m",
+    "mg_a",
+    "multi_m",
+    "multi_a",
+    "sperm_m",
+    "sperm_a",
+    "msm_m"
+   ],
+   "atmen": {
+    "am": true,
+    "at": true,
+    "ab": true
+   },
+   "training": {
+    "t0": true
+   },
+   "trainingMin": {
+    "t0": 30
+   },
+   "sport": false
+  },
+  "2026-09-08": {
+   "hals": 1,
+   "bauch": 0,
+   "stress": 3,
+   "schlaf": 8,
+   "gewicht": 83.5,
+   "kaffee": 2,
+   "notiz": "",
+   "meds": {
+    "omega_m": true,
+    "q10_m": true,
+    "mg_a": true,
+    "multi_m": true,
+    "multi_a": true,
+    "sperm_m": true,
+    "sperm_a": true,
+    "msm_m": true,
+    "sport_SMPZaubertrank_sp": true,
+    "sport_Recovery_sp": true
+   },
+   "medsPlanned": [
+    "omega_m",
+    "q10_m",
+    "mg_a",
+    "multi_m",
+    "multi_a",
+    "sperm_m",
+    "sperm_a",
+    "msm_m",
+    "sport_SMPZaubertrank_sp",
+    "sport_Recovery_sp"
+   ],
+   "atmen": {
+    "am": true,
+    "at": true,
+    "ab": true
+   },
+   "training": {
+    "t0": true
+   },
+   "trainingMin": {
+    "t0": 20
+   },
+   "sport": true
+  },
+  "2026-09-09": {
+   "hals": 0,
+   "bauch": 0,
+   "stress": 3,
+   "schlaf": 7.5,
+   "gewicht": 83.4,
+   "kaffee": 1,
+   "notiz": "",
+   "meds": {
+    "omega_m": true,
+    "q10_m": true,
+    "mg_a": true,
+    "multi_m": true,
+    "multi_a": true,
+    "sperm_m": true,
+    "sperm_a": true,
+    "msm_m": true,
+    "sport_SMPZaubertrank_sp": true,
+    "sport_Recovery_sp": true
+   },
+   "medsPlanned": [
+    "omega_m",
+    "q10_m",
+    "mg_a",
+    "multi_m",
+    "multi_a",
+    "sperm_m",
+    "sperm_a",
+    "msm_m",
+    "sport_SMPZaubertrank_sp",
+    "sport_Recovery_sp"
+   ],
+   "atmen": {
+    "am": true,
+    "at": true,
+    "ab": true
+   },
+   "training": {
+    "t0": true
+   },
+   "trainingMin": {
+    "t0": 75
+   },
+   "sport": true
+  }
+ },
+ "set": {
+  "times": {},
+  "atimes": {},
+  "notif": false,
+  "kurStart": null,
+  "medOverride": {}
+ }
+}

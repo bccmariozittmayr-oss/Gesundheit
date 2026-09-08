@@ -16,6 +16,8 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 | `sw.js` | Offline-Cache – VERSION bei jeder Änderung hochzählen |
 | `mein-plan.beispiel.json` | Struktur der privaten Plan-Datei ohne echte Werte |
 | `plan.enc.json` | der echte Plan, AES-verschlüsselt – nach jeder Planänderung mit `werkzeuge/plan-verschluesseln.js` neu erzeugen |
+| `mein-plan.demo.json`, `demo-protokoll.json` | Demo ohne Befunde + Beispiel-Verlauf für Videos/Vorführungen – neu erzeugen mit `werkzeuge/demo-erzeugen.js <mein-plan.json> [Enddatum]` |
+| `NACHBAUEN.md`, `LICENSE` | öffentliche Nachbau-Anleitung mit Start-Prompt, MIT |
 | OneDrive … `/Gesundheits-App/PLAN-PASSWORT.txt` | Passwort dazu – nie ins Repo, nie in den Chat |
 | OneDrive `Mario - Dokumente/Privat/Arzt/Die Fitmacher/Gesundheits-App/mein-plan.json` | **Master der privaten Daten** (Präparate, Phasen, Befunde, Termine, Trainingswoche, Puls) |
 | OneDrive … `/Gesundheits-App/befund-extrakt.md` | Volltext-Extrakt aller 13 Befund-PDFs (Quelle für den Plan) |

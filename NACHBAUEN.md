@@ -16,7 +16,7 @@ das umzusetzen, was du mit deinem Arzt oder Therapeuten besprochen hast.
    Du hast dann eine eigene Kopie.
 2. In deiner Kopie die Datei `plan.enc.json` **löschen** – das ist mein verschlüsselter Plan,
    den brauchst du nicht.
-3. Zum Ausprobieren zuerst `mein-plan.demo.json` laden (erfundene Daten). Dann `mein-plan.beispiel.json` herunterladen, als `mein-plan.json` speichern und mit deinen
+3. Zum Ausprobieren zuerst `mein-plan.demo.json` laden (mein echter Einnahmeplan ohne Befunde) und unter Mehr → Protokoll wiederherstellen die `demo-protokoll.json` (ein paar Tage Beispiel-Verlauf). Dann `mein-plan.beispiel.json` herunterladen, als `mein-plan.json` speichern und mit deinen
    Präparaten, Zeiten und Phasen befüllen (Struktur ist selbsterklärend).
 4. In deiner Kopie: **Settings → Pages → Branch main → Save.** Nach einer Minute läuft
    deine App unter `https://<dein-name>.github.io/Gesundheit/`.
