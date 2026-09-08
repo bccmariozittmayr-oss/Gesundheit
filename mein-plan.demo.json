@@ -1,0 +1,40 @@
+{
+  "_hinweis": "DEMO-Daten, frei erfunden. Zum Ausprobieren der App und für Vorführungen/Videos. Kein echter Plan, keine echten Befunde.",
+  "version": 1,
+  "stand": "01.09.2026",
+  "quelle": "Demo-Plan (erfunden)",
+  "anker": { "plan": "2026-09-01" },
+  "praeparate": [
+    { "id": "omega", "name": "Omega-3", "einheit": "Kapsel", "hinweis": "zum Essen", "anker": "plan",
+      "phasen": [ { "abTag": 0, "bisTag": null, "m": 1, "a": 1, "notiz": "1-0-1" } ] },
+    { "id": "vitd", "name": "Vitamin D3 + K2", "einheit": "Tropfen", "hinweis": "morgens", "anker": "plan",
+      "phasen": [ { "abTag": 0, "bisTag": null, "m": 4, "notiz": "4 Tropfen morgens" } ] },
+    { "id": "mg", "name": "Magnesium", "einheit": "Kapsel", "hinweis": "abends", "anker": "plan",
+      "phasen": [ { "abTag": 0, "bisTag": null, "a": 1, "n": 1, "notiz": "abends + vor dem Schlafen" } ] },
+    { "id": "q10", "name": "Q10", "einheit": "Kapsel", "hinweis": "zum Frühstück", "anker": "plan",
+      "phasen": [ { "abTag": 0, "bisTag": 60, "m": 2, "notiz": "erste 2 Monate: 2 morgens" }, { "abTag": 61, "bisTag": null, "m": 1, "notiz": "danach 1 morgens" } ] },
+    { "id": "zink", "name": "Zink", "einheit": "Tablette", "hinweis": "abends", "anker": "plan",
+      "phasen": [ { "abTag": 0, "bisTag": 90, "a": 1, "notiz": "3 Monate" } ] },
+    { "id": "probio", "name": "Probiotikum", "einheit": "Kapsel", "anker": "kur", "detoxPause": true,
+      "phasen": [ { "abTag": 6, "bisTag": 66, "nu": 1, "n": 1, "notiz": "ab Kur-Tag 7, nüchtern + vor dem Schlafen" } ] },
+    { "id": "detox", "name": "Darm-Shake", "einheit": "Portion", "anker": "kur",
+      "phasen": [ { "abTag": 2, "bisTag": 5, "m": 1, "a": 1, "notiz": "Detox-Tage 3–6" } ] }
+  ],
+  "bedarf": [ { "name": "Elektrolyte", "dosis": "1 Portion", "wann": "nach dem Sport" } ],
+  "sport": [ { "name": "Isotonisches Getränk", "wann": "zum Training", "dosis": "laut Packung" } ],
+  "persoenlich": {
+    "kost": ["FODMAP-arm"],
+    "meiden": [
+      { "name": "Sorbit", "grund": "Unverträglichkeit", "treffer": ["Sorbit", "E420", "Apfel", "Birne"] },
+      { "name": "Zwiebel/Knoblauch", "grund": "FODMAP", "treffer": ["Zwiebel", "Knoblauch"] }
+    ]
+  },
+  "diagnosen": ["Demo-Diagnose A", "Demo-Diagnose B"],
+  "befunde": [
+    { "name": "Vitamin D", "wert": "22", "ref": "40–60", "status": "niedrig", "datum": "15.08.2026", "bedeutung": "Demo: Vitamin-D-Spiegel unter Ziel" },
+    { "name": "Omega-3-Index", "wert": "4,1", "ref": "> 8", "status": "niedrig", "datum": "15.08.2026", "bedeutung": "Demo: Omega-3-Versorgung niedrig" },
+    { "name": "Ferritin", "wert": "85", "ref": "30–300", "status": "ok", "datum": "15.08.2026", "bedeutung": "Demo: Eisenspeicher in Ordnung" }
+  ],
+  "training": { "hfZonen": { "A": "Puls < 125 (Grundlage)", "B": "125–145 (Aufbau)", "C": "> 145 (nur kurz)" }, "hinweise": ["3× pro Woche 45 Minuten Grundlage", "1× Krafttraining"] },
+  "termine": [ { "name": "Kontroll-Blutabnahme", "datum": "Jänner 2027", "details": "Vitamin D, Omega-3-Index, Ferritin" } ]
+}
