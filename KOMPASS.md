@@ -42,5 +42,11 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 `test/smoke-test.js` (Playwright aus dbcc-360-crm; Aufruf: `node test/smoke-test.js <Ausgabeordner>`) – lädt den echten Plan, klickt alle Seiten, prüft Phasen an 8 Stichtagen. Vor jedem Merge laufen lassen.
 
 ## Offen
+
+**Technische To-dos aus der Codex-Prüfung vom 10.09.2026:** 7 offene Punkte in
+`REVIEW/2026-09-10-codex.md` – zuerst die Token-Sperre über Prozessgrenzen (hoch),
+dann zwei Datums-/Zeitzonenfehler, die Kur-Phase auf „Mehr" beim Nachtragen, die
+Trainings-Schlüssel und ein Starter, der einen gescheiterten Abruf sichtbar macht.
+Ein Befund wurde begründet abgelehnt.
 Offene Behandlungs- und Dosisfragen stehen NICHT hier (öffentliches Repo), sondern in
 `OneDrive …/Gesundheits-App/NOTIZEN-offen.md` neben der mein-plan.json.
