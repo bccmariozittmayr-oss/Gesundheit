@@ -4,7 +4,7 @@
      node werkzeuge/whoop-abholen.js anmelden          einmalig: Browser öffnet sich, WHOOP-Zugriff freigeben
      node werkzeuge/whoop-abholen.js holen [--tage 30] [--dry-run] [--push] [--log]
                                                        Werte abholen, whoop.json schreiben, optional whoop.enc.json + Git-Push
-                                                       --log schreibt alle Ausgaben zusaetzlich in %LOCALAPPDATA%, Datei whoop-abholen.log
+                                                       --log schreibt alle Ausgaben zusaetzlich in %LOCALAPPDATA%, Datei messwerte-abruf.log
                                                        (so braucht die Aufgabenplanung keine .cmd-Datei als Umweg)
      node werkzeuge/whoop-abholen.js status            zeigt, ob Anmeldung und Konfiguration passen (nur lesen)
 
@@ -68,11 +68,22 @@ async function tokenAnfrage(form, versuch = 1) {
   if (!r.ok) throw new Error(`Token-Anfrage fehlgeschlagen (${r.status}): ${txt.slice(0, 300)}`);
   return JSON.parse(txt);
 }
+// Die Erneuerung darf NIE mehrfach gleichzeitig laufen: holen() startet fuenf Abfragen
+// parallel, und jede holt sich ihr Token. Waeren das fuenf gleichzeitige Erneuerungen mit
+// demselben Refresh-Token, gewaenne nur eine - WHOOP entwertet bei jeder Erneuerung den
+// alten Token. Die anderen scheitern, der gueltige Token geht verloren und der Zugang ist
+// tot, bis man sich von Hand neu anmeldet. Genau das ist am 10.09.2026 zweimal passiert.
+// Deshalb teilen sich alle Aufrufer EINE laufende Erneuerung.
+let erneuerung = null;
 async function gueltigesToken() {
-  let t = ladeToken();
+  const t = ladeToken();
   if (!t) { console.error('Noch nicht angemeldet. Zuerst: node werkzeuge/whoop-abholen.js anmelden'); process.exit(1); }
   if (Date.now() < (t.gueltig_bis || 0)) return t.access_token;
   if (!t.refresh_token) { console.error('Token abgelaufen und kein Refresh-Token vorhanden. Bitte neu anmelden.'); process.exit(1); }
+  if (!erneuerung) erneuerung = erneuere(t).finally(() => { erneuerung = null; });
+  return erneuerung;
+}
+async function erneuere(t) {
   let neu;
   try {
     neu = await tokenAnfrage({ grant_type: 'refresh_token', refresh_token: t.refresh_token, scope: 'offline' });
@@ -250,9 +261,9 @@ function status() {
 // hat ein Virenschutz zweimal als "potentiell unerwuenscht" geloescht (10.09.2026).
 function logDateiAn() {
   const ordner = process.env.LOCALAPPDATA || process.env.TMPDIR || '.';
-  const datei = path.join(ordner, 'whoop-abholen.log');
+  const datei = path.join(ordner, 'messwerte-abruf.log');
   const schreib = (art, args) => {
-    const zeile = new Date().toLocaleString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }) + (art === 'err' ? ' FEHLER ' : ' ') +
+    const zeile = new Date().toLocaleString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' [WHOOP]' + (art === 'err' ? ' FEHLER ' : ' ') +
       args.map(a => typeof a === 'string' ? a : require('util').inspect(a)).join(' ') + String.fromCharCode(10);
     try { fs.appendFileSync(datei, zeile); } catch (e) { /* Log darf den Lauf nie stoppen */ }
   };
