@@ -11,7 +11,7 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 ## Wo liegt was
 | Datei | Zweck |
 |---|---|
-| `index.html` | App-Logik + Oberfläche (5 Seiten: Heute, Essen, Atmen, Verlauf, Mehr). Auf „Heute" wählt eine Leiste den Tag: `HEUTE` ist der echte heutige Tag, `TK` der angezeigte – beim Nachtragen ein früherer (bis 30 Tage zurück, nie in die Zukunft). Erinnerungen, Wochenplan und Export hängen immer an `HEUTE`. |
+| `index.html` | App-Logik + Oberfläche (5 Seiten: Heute, Essen, Atmen, Verlauf, Mehr; unter Verlauf der Reiter „Für den Arzt" mit allen erhobenen Werten, Zeitraum 30/90/180 Tage). Auf „Heute" wählt eine Leiste den Tag: `HEUTE` ist der echte heutige Tag, `TK` der angezeigte – beim Nachtragen ein früherer (bis 30 Tage zurück, nie in die Zukunft). Erinnerungen, Wochenplan und Export hängen immer an `HEUTE`. |
 | `daten.js` | allgemeine Listen: FODMAP (168 Lebensmittel), 30 Rezepte mit Kochtipps, Vorrat, Atemübungen, Tipps, Standard-Regeln |
 | `sw.js` | Offline-Cache – VERSION bei jeder Änderung hochzählen |
 | `mein-plan.beispiel.json` | Struktur der privaten Plan-Datei ohne echte Werte |
@@ -34,6 +34,7 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 - Dosis-Korrekturen in der App (Mehr → Dosierung) überschreiben nur die laufende Phase; Änderungen am Plan gehören in die JSON.
 
 ## Test
+`test/arzt-test.js <Ausgabeordner>` – prüft die Arzt-Seite: vier Blöcke, Kennzahlen, Verlaufskurven, Zeitraumwahl, Verhalten ohne Daten.
 `test/training-test.js <Ausgabeordner>` – prüft die freie Trainingsauswahl: geplante und zusätzliche Einheiten, Abhaken, Minuten, Zuordnung eines WHOOP-Workouts, Migration alter Einträge.
 `test/koerper-test.js <Ausgabeordner>` – prüft die Withings-Karte, die Trendzeile, den Verlauf und dass das Waagengewicht ins Tagesprotokoll wandert, ohne eine Handeingabe zu überschreiben.
 `test/nachtrag-test.js <Ausgabeordner>` – prüft das Nachtragen: Tagesleiste, Kennzeichnung, dass Einträge beim gewählten Tag landen und nicht bei heute, Grenzen (30 Tage zurück, keine Zukunft).
