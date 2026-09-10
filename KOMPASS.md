@@ -34,6 +34,7 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 - Dosis-Korrekturen in der App (Mehr → Dosierung) überschreiben nur die laufende Phase; Änderungen am Plan gehören in die JSON.
 
 ## Test
+`test/training-test.js <Ausgabeordner>` – prüft die freie Trainingsauswahl: geplante und zusätzliche Einheiten, Abhaken, Minuten, Zuordnung eines WHOOP-Workouts, Migration alter Einträge.
 `test/koerper-test.js <Ausgabeordner>` – prüft die Withings-Karte, die Trendzeile, den Verlauf und dass das Waagengewicht ins Tagesprotokoll wandert, ohne eine Handeingabe zu überschreiben.
 `test/nachtrag-test.js <Ausgabeordner>` – prüft das Nachtragen: Tagesleiste, Kennzeichnung, dass Einträge beim gewählten Tag landen und nicht bei heute, Grenzen (30 Tage zurück, keine Zukunft).
 `test/whoop-test.js <Ausgabeordner>` – prüft Entsperren, Nachladen von whoop.enc.json ohne Passwort (Schlüssel in IndexedDB) und die WHOOP-Karten mit Testdaten.

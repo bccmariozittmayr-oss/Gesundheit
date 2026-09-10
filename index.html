@@ -651,13 +651,7 @@ function renderHeute(){
   $('heute-banner').innerHTML=b;
   renderWhoop();
   renderKoerper();
-  // Training heute
-  const wd=String(new Date(TK+'T12:00:00').getDay());const tr=(plan?.training?.woche||{})[wd]||[];
-  $('train-card').style.display=plan?'':'none';
-  $('train-list').innerHTML=tr.length?tr.map((t,i)=>{const k='t'+i;const d=!!(e.training||{})[k];const min=(e.trainingMin||{})[k]||'';return `<div class="chk ${d?'done':''}" data-k="${k}"><div class="box">${d?'✓':''}</div><div class="lbl"><b>${esc(t.name)}</b><span>${[t.zeit,t.dauer].filter(Boolean).map(esc).join(' · ')}${t.info?' – '+esc(t.info):''}</span></div><input type="number" class="tmin" data-k="${k}" value="${min}" placeholder="Min." min="0" style="width:70px"></div>`+pulsKarte(t)}).join('')+'<div class="hint" style="margin-top:6px">Dazu 5× am Tag 10–20 Sekunden Puls hochjagen (Stiegen, kurzer Sprint).</div>':'<div class="empty">Kein Training geplant – 10.000 Schritte reichen heute.</div>'+pulsKarte({zone:'A',sportart:'auto'});
-  $('train-list').querySelectorAll('.chk').forEach(el=>el.onclick=ev=>{if(ev.target.classList.contains('tmin'))return;e.training=e.training||{};e.training[el.dataset.k]=!e.training[el.dataset.k];if(e.training[el.dataset.k])e.sport=true;saveLog();renderHeute();});
-  $('train-list').querySelectorAll('.tmin').forEach(i=>{i.onclick=ev=>ev.stopPropagation();i.onchange=()=>{e.trainingMin=e.trainingMin||{};e.trainingMin[i.dataset.k]=+i.value||0;if(+i.value>0){e.training=e.training||{};e.training[i.dataset.k]=true;e.sport=true;}saveLog();renderHeute();};});
-  $('train-list').querySelectorAll('[data-sa]').forEach(b=>b.onclick=()=>{set.sportart=b.dataset.sa;saveSet();renderHeute();});
+  renderTraining(e);
   // Medikamente
   const meds=medsToday();
   if(e.sport&&plan?.sport){plan.sport.filter(s=>s.zeitpunkt==='waehrend'||s.zeitpunkt==='danach').forEach(s=>meds.push({id:'sport_'+s.name.replace(/\W/g,''),slot:'sp',name:s.name,menge:s.dosis||'',einheit:'',hinweis:s.wann,paused:false}));}
@@ -696,6 +690,99 @@ $('stress').oninput=()=>{const e=entry(TK);e.stress=+$('stress').value;$('stress
 $('notiz').oninput=()=>{entry(TK).notiz=$('notiz').value;saveLog();};
 $('kaffee-plus').onclick=()=>{const e=entry(TK);e.kaffee=(e.kaffee||0)+1;saveLog();renderHeute();if(e.kaffee>(plan?.kaffee?.max||3))toast('Über dem Kaffee-Limit');};
 $('kaffee-minus').onclick=()=>{const e=entry(TK);e.kaffee=Math.max(0,(e.kaffee||0)-1);saveLog();renderHeute();};
+
+/* ---------- TRAINING: frei wählbar aus allen Einheiten des Plans ----------
+   Der Plan ordnet jede Einheit einem Wochentag zu. Gelebt wird selten nach Plan, deshalb
+   ist die Zuordnung nur ein Vorschlag: für den Tag Geplantes steht oben, jede andere Einheit
+   lässt sich hinzufügen. Was zählt, ist das Abgehakte – nicht der Plan.
+   Die Schlüssel kommen aus dem Namen (stabil), nicht mehr aus der Position im Wochentag. */
+const trainId=name=>'tr_'+String(name).toLowerCase().replace(/[äöüß]/g,c=>({'ä':'ae','ö':'oe','ü':'ue','ß':'ss'}[c])).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40);
+function alleTrainings(){ // jede im Plan definierte Einheit genau einmal, samt Wochentagen
+  const out=[],gesehen={};
+  Object.entries(plan?.training?.woche||{}).forEach(([wd,liste])=>(liste||[]).forEach(t=>{
+    const id=trainId(t.name);
+    if(gesehen[id]){gesehen[id].tage.push(+wd);return;}
+    gesehen[id]={...t,id,tage:[+wd]};out.push(gesehen[id]);
+  }));
+  return out;
+}
+function trainingsFuer(k){ // die für diesen Wochentag vorgesehenen Einheiten
+  const wd=new Date(k+'T12:00:00').getDay();
+  return alleTrainings().filter(t=>t.tage.includes(wd));
+}
+function trainingMigrieren(k,e){ // alte Schlüssel t0/t1 auf die neuen Namens-Schlüssel heben
+  if(!e.training&&!e.trainingMin)return;
+  const alt=Object.keys({...e.training,...e.trainingMin}).filter(x=>/^t\d+$/.test(x));
+  if(!alt.length)return;
+  const wd=new Date(k+'T12:00:00').getDay();
+  const liste=(plan?.training?.woche||{})[wd]||[];
+  alt.forEach(x=>{
+    const t=liste[+x.slice(1)];
+    if(t){const id=trainId(t.name);
+      if(e.training?.[x]!=null){e.training[id]=e.training[x];}
+      if(e.trainingMin?.[x]!=null){e.trainingMin[id]=e.trainingMin[x];}}
+    if(e.training)delete e.training[x];
+    if(e.trainingMin)delete e.trainingMin[x];
+  });
+  saveLog();
+}
+const ZONENNAME={A:'Zone A – locker',AB:'Zone A/B',B:'Zone B',C:'Zone C – intensiv',kraft:'Kraft'};
+function renderTraining(e){
+  $('train-card').style.display=plan?'':'none';
+  if(!plan)return;
+  trainingMigrieren(TK,e);
+  e.training=e.training||{};e.trainingMin=e.trainingMin||{};e.trainingExtra=e.trainingExtra||[];
+  const alle=alleTrainings();
+  const geplant=trainingsFuer(TK).map(t=>t.id);
+  // gezeigt wird: für heute geplant + selbst hinzugefügt + alles bereits Abgehakte
+  const sichtbar=alle.filter(t=>geplant.includes(t.id)||e.trainingExtra.includes(t.id)||e.training[t.id]||e.trainingMin[t.id]>0);
+  const offen=alle.filter(t=>!sichtbar.includes(t));
+
+  const zeile=t=>{const d=!!e.training[t.id];const min=e.trainingMin[t.id]||'';
+    const wanted=geplant.includes(t.id);
+    return `<div class="chk ${d?'done':''}" data-k="${t.id}"><div class="box">${d?'✓':''}</div>
+      <div class="lbl"><b>${esc(t.name)}</b><span>${[wanted?'für heute geplant':'zusätzlich',t.dauer,ZONENNAME[t.zone]||t.zone].filter(Boolean).map(esc).join(' · ')}${t.info?' – '+esc(t.info):''}</span></div>
+      <input type="number" class="tmin" data-k="${t.id}" value="${min}" placeholder="Min." min="0" style="width:70px">
+      ${!wanted?`<button class="btn ghost sm" data-weg="${t.id}" title="wieder entfernen">✕</button>`:''}</div>`+pulsKarte(t);};
+
+  let html=sichtbar.length?sichtbar.map(zeile).join(''):'<div class="empty">Für heute ist nichts geplant – such dir aus, was du machst.</div>'+pulsKarte({zone:'A',sportart:'auto'});
+  if(offen.length)html+=`<details style="margin-top:10px"><summary class="hint" style="font-weight:400">➕ Anderes Training eintragen (${offen.length})</summary>
+    ${offen.map(t=>`<div class="chk" data-add="${t.id}"><div class="box">＋</div><div class="lbl"><b>${esc(t.name)}</b><span>${[t.dauer,ZONENNAME[t.zone]||t.zone].filter(Boolean).map(esc).join(' · ')}</span></div></div>`).join('')}
+    </details>`;
+  html+=whoopWorkouts(e,alle);
+  html+='<div class="hint" style="margin-top:6px">Dazu 5× am Tag 10–20 Sekunden Puls hochjagen (Stiegen, kurzer Sprint).</div>';
+  $('train-list').innerHTML=html;
+
+  $('train-list').querySelectorAll('.chk[data-k]').forEach(el=>el.onclick=ev=>{
+    if(ev.target.classList.contains('tmin')||ev.target.dataset.weg)return;
+    const k=el.dataset.k;e.training[k]=!e.training[k];if(e.training[k])e.sport=true;saveLog();renderHeute();});
+  $('train-list').querySelectorAll('.tmin').forEach(i=>{i.onclick=ev=>ev.stopPropagation();
+    i.onchange=()=>{e.trainingMin[i.dataset.k]=+i.value||0;if(+i.value>0){e.training[i.dataset.k]=true;e.sport=true;}saveLog();renderHeute();};});
+  $('train-list').querySelectorAll('[data-add]').forEach(el=>el.onclick=()=>{
+    const id=el.dataset.add;if(!e.trainingExtra.includes(id))e.trainingExtra.push(id);saveLog();renderHeute();});
+  $('train-list').querySelectorAll('[data-weg]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();
+    const id=b.dataset.weg;e.trainingExtra=e.trainingExtra.filter(x=>x!==id);delete e.training[id];delete e.trainingMin[id];saveLog();renderHeute();});
+  $('train-list').querySelectorAll('[data-sa]').forEach(b=>b.onclick=()=>{set.sportart=b.dataset.sa;saveSet();renderHeute();});
+  // WHOOP-Workout einer Einheit zuordnen: übernimmt die gemessene Dauer
+  $('train-list').querySelectorAll('[data-wo]').forEach(sel=>sel.onchange=()=>{
+    const id=sel.value;if(!id)return;
+    const min=+sel.dataset.min||0;
+    if(!alle.some(t=>t.id===id))return;
+    if(!e.trainingExtra.includes(id)&&!trainingsFuer(TK).some(t=>t.id===id))e.trainingExtra.push(id);
+    e.training[id]=true;e.trainingMin[id]=min;e.sport=true;saveLog();renderHeute();
+    toast('Übernommen: '+min+' Min.');});
+}
+function whoopWorkouts(e,alle){ // was die Uhr an diesem Tag aufgezeichnet hat
+  const t=whoop?.tage?.[TK];const wos=t?.workouts||[];
+  if(!wos.length)return '';
+  const zugeordnet=min=>alle.some(x=>e.trainingMin[x.id]===min);
+  return `<div class="banner info" style="margin-top:10px;font-size:13.5px"><b>Von WHOOP aufgezeichnet</b>
+    ${wos.map((w,i)=>`<div style="margin-top:6px">${esc(w.sport)} · ${new Date(w.start).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})} · ${w.minuten} Min.${w.pulsAvg?' · Ø '+w.pulsAvg:''}${w.pulsMax?' · max. '+w.pulsMax:''}${w.km?' · '+dz(w.km)+' km':''}
+      ${zugeordnet(w.minuten)?'<div class="hint">bereits eingetragen ✓</div>':
+        `<select data-wo="${i}" data-min="${w.minuten}" style="margin-top:4px;width:100%"><option value="">– einer Einheit zuordnen –</option>${alle.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>`}
+    </div>`).join('')}
+    <div class="hint" style="margin-top:6px">Dauer und Puls kommen von der Uhr – du musst nichts abtippen.</div></div>`;
+}
 
 /* ---------- Tageswahl: heute oder ein Nachtrag ---------- */
 const tagLang=k=>new Date(k+'T12:00:00').toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long'});
@@ -1052,7 +1139,7 @@ function gotoPage(p){
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
 document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.09.10-20';
+const APP_VERSION='v2026.09.10-21';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 renderHeute();
 if(plan){whoopAuto();koerperAuto();}else if(whoop||koerper)renderHeute();
