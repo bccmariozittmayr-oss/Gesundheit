@@ -23,10 +23,11 @@ Client-Secret, und das darf nicht in einer öffentlichen Web-App liegen.
 Einmal einrichten:
 
 ```
-node werkzeuge/whoop-aufgabe-einrichten.js
+node werkzeuge/tagesabruf-einrichten.js
 ```
 
-Das legt **eine** Aufgabe „Gesundheit WHOOP" an, die täglich um **07:30** und **12:30** läuft. Der Lauf um 07:30
+Das legt **eine** Aufgabe „Gesundheit Messwerte" an, die täglich um **07:30** und **12:30** läuft und dabei
+nacheinander die WHOOP-Werte und die Withings-Waagenwerte holt (siehe `WITHINGS.md`). Der Lauf um 07:30
 bringt die fertigen Werte des Vortags (Belastung, Workouts, Schlaf) und die Erholung von heute; 12:30 ist die zweite
 Chance, falls der Laptop früh aus war.
 
@@ -38,8 +39,9 @@ Die Aufgabe ist bewusst so eingestellt – ohne diese drei Punkte läuft sie an 
 | verpasste Läufe werden nachgeholt | Laptop war um 07:30 aus → Nachholen beim nächsten Anmelden |
 | bricht nach 10 Minuten ab | bleibt nie hängen |
 
-Nachsehen, ob alles stimmt: `node werkzeuge/whoop-aufgabe-einrichten.js pruefen`
-Entfernen: `node werkzeuge/whoop-aufgabe-einrichten.js entfernen`
+Nachsehen, ob alles stimmt: `node werkzeuge/tagesabruf-einrichten.js pruefen`
+Probelauf sofort: `node werkzeuge/tagesabruf-einrichten.js jetzt`
+Entfernen: `node werkzeuge/tagesabruf-einrichten.js entfernen`
 Log der Läufe: `%LOCALAPPDATA%\whoop-abholen.log` (Ortszeit).
 
 > **Kein .cmd-Skript mehr (10.09.2026).** Früher lag hier eine `whoop-taeglich.cmd`, die den Abruf startete.

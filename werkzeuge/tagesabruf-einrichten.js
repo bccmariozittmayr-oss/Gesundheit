@@ -1,9 +1,11 @@
 /* Richtet die taegliche WHOOP-Abholung in der Windows-Aufgabenplanung ein.
 
-   Aufruf:  node werkzeuge/whoop-aufgabe-einrichten.js          Aufgabe anlegen oder erneuern
-            node werkzeuge/whoop-aufgabe-einrichten.js pruefen  nur nachsehen, nichts aendern
-            node werkzeuge/whoop-aufgabe-einrichten.js jetzt     Aufgabe sofort einmal starten (Probelauf)
-            node werkzeuge/whoop-aufgabe-einrichten.js entfernen
+   Aufruf:  node werkzeuge/tagesabruf-einrichten.js          Aufgabe anlegen oder erneuern
+            node werkzeuge/tagesabruf-einrichten.js pruefen  nur nachsehen, nichts aendern
+            node werkzeuge/tagesabruf-einrichten.js jetzt     Aufgabe sofort einmal starten (Probelauf)
+            node werkzeuge/tagesabruf-einrichten.js entfernen
+
+   Richtet EINE Aufgabe ein, die nacheinander die WHOOP-Werte und die Withings-Waagenwerte holt.
 
    Warum kein .cmd-Skript mehr: Am 10.09.2026 hat der Virenschutz die frueher hier
    liegende whoop-taeglich.cmd zweimal als "potentiell unerwuenschtes Programm"
@@ -21,9 +23,14 @@ const path = require('path');
 const os = require('os');
 const { execFileSync } = require('child_process');
 
-const NAME = 'Gesundheit WHOOP';
-const ALTE_NAMEN = ['Gesundheit WHOOP frueh', 'Gesundheit WHOOP mittag']; // Fassung vom 10.09.2026
-const SKRIPT = path.join(__dirname, 'whoop-abholen.js');
+const NAME = 'Gesundheit Messwerte';
+const ALTE_NAMEN = ['Gesundheit WHOOP', 'Gesundheit WHOOP frueh', 'Gesundheit WHOOP mittag']; // fruehere Fassungen vom 10.09.2026
+// Beide Quellen laufen in derselben Aufgabe nacheinander. Scheitert die eine, laeuft die
+// andere trotzdem - die Aufgabenplanung arbeitet die Aktionen der Reihe nach ab.
+const SKRIPTE = [
+  { name: 'WHOOP', datei: path.join(__dirname, 'whoop-abholen.js') },
+  { name: 'Withings', datei: path.join(__dirname, 'withings-abholen.js') },
+];
 const NODE = process.execPath;
 
 const schtasks = (...a) => execFileSync('schtasks', a, { stdio: 'pipe' }).toString();
@@ -64,10 +71,10 @@ ${trigger('12:30')}
     <Priority>7</Priority>
   </Settings>
   <Actions Context="Author">
-    <Exec>
+${SKRIPTE.map(sk => `    <Exec>
       <Command>${NODE}</Command>
-      <Arguments>"${SKRIPT}" holen --push --log</Arguments>
-    </Exec>
+      <Arguments>"${sk.datei}" holen --push --log</Arguments>
+    </Exec>`).join(String.fromCharCode(10))}
   </Actions>
 </Task>
 `;
@@ -99,9 +106,10 @@ function pruefen() {
   console.log('  Auch im Akkubetrieb:     ' + (wert('DisallowStartIfOnBatteries', 'true') === 'false' ? 'ja' : 'NEIN - laeuft am Akku nicht'));
   console.log('  Verpasstes wird geholt:  ' + (wert('StartWhenAvailable', 'false') === 'true' ? 'ja' : 'NEIN'));
   console.log('  Startet:                 ' + (/<Command>(.*?)<\/Command>/.exec(x) || [, '?'])[1]);
-  console.log('  Mit:                     ' + (/<Arguments>(.*?)<\/Arguments>/.exec(x) || [, '?'])[1]);
-  const ziel = /<Arguments>"(.*?)"/.exec(x);
-  if (ziel) console.log('  Zieldatei vorhanden:     ' + (fs.existsSync(ziel[1]) ? 'ja' : 'NEIN - die Datei fehlt!'));
+  const args = [...x.matchAll(/<Arguments>"(.*?)"(.*?)<\/Arguments>/g)];
+  if (!args.length) console.log('  Holt:                    (keine Aktion hinterlegt!)');
+  args.forEach(a => console.log('  Holt:                    ' + path.basename(a[1]) + a[2] +
+    (fs.existsSync(a[1]) ? '' : '   <-- DATEI FEHLT!')));
   const logDatei = path.join(process.env.LOCALAPPDATA || os.tmpdir(), 'whoop-abholen.log');
   if (!fs.existsSync(logDatei)) console.log('  Log:                     noch keines vorhanden');
   else {
@@ -131,7 +139,7 @@ try {
   }
   if (befehl === 'entfernen') { entfernen(false); console.log('Fertig.'); process.exit(0); }
 
-  if (!fs.existsSync(SKRIPT)) { console.error('Fehlt: ' + SKRIPT); process.exit(1); }
+  for (const sk of SKRIPTE) if (!fs.existsSync(sk.datei)) { console.error('Fehlt: ' + sk.datei); process.exit(1); }
   entfernen(true); // Aufgaben der alten Fassung wegraeumen, sie zeigen auf die geloeschte .cmd
   const datei = path.join(os.tmpdir(), 'whoop-aufgabe.xml');
   fs.writeFileSync(datei, '\uFEFF' + xml(), 'utf16le'); // die Aufgabenplanung erwartet UTF-16 mit BOM
@@ -143,7 +151,7 @@ try {
   console.log(`Aufgabe "${NAME}" angelegt.\n`);
   pruefen();
   console.log('\nProtokoll der Laeufe: ' + path.join(process.env.LOCALAPPDATA || os.tmpdir(), 'whoop-abholen.log'));
-  console.log('Rueckgaengig:         node werkzeuge/whoop-aufgabe-einrichten.js entfernen');
+  console.log('Rueckgaengig:         node werkzeuge/tagesabruf-einrichten.js entfernen');
 } catch (e) {
   const txt = (e.stderr || e.stdout || '').toString().trim() || e.message;
   console.error('Fehlgeschlagen: ' + txt);

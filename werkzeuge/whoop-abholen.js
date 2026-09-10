@@ -20,6 +20,7 @@ const path = require('path');
 const http = require('http');
 const { webcrypto, randomBytes } = require('crypto');
 const { execFileSync } = require('child_process');
+const { verschluesseln } = require('./krypto');
 
 const ROOT = path.join(__dirname, '..');
 const ENV_PFAD = path.join(ROOT, '.env');
@@ -206,7 +207,7 @@ async function holen(tage, dryRun, push) {
   console.log('geschrieben:', zielKlartext);
 
   if (ENV.WHOOP_PASSWORT_DATEI) {
-    const ziel = await verschluesseln(JSON.stringify(daten), ENV.WHOOP_PASSWORT_DATEI);
+    const ziel = await verschluesseln(JSON.stringify(daten), ENV.WHOOP_PASSWORT_DATEI, ROOT, 'whoop.enc.json');
     console.log('geschrieben:', ziel);
     if (push) {
       const g = (...a) => execFileSync('git', a, { cwd: ROOT, stdio: 'pipe' }).toString().trim();
@@ -229,23 +230,6 @@ async function holen(tage, dryRun, push) {
   } else console.log('Hinweis: WHOOP_PASSWORT_DATEI nicht gesetzt – keine whoop.enc.json für die App erzeugt.');
 }
 
-// gleiches Verfahren wie plan-verschluesseln.js; das Salt wird aus plan.enc.json übernommen, damit die App mit EINEM Schlüssel beide Dateien öffnet
-async function verschluesseln(klartext, pwPfad) {
-  const subtle = webcrypto.subtle; const enc = new TextEncoder();
-  const pw = fs.readFileSync(pwPfad, 'utf8').trim(); if (pw.length < 12) throw new Error('Passwort zu kurz');
-  const planEnc = path.join(ROOT, 'plan.enc.json');
-  if (!fs.existsSync(planEnc)) throw new Error('plan.enc.json fehlt – zuerst den Plan verschlüsseln');
-  const p = JSON.parse(fs.readFileSync(planEnc, 'utf8'));
-  const salt = Buffer.from(p.salt, 'base64'); const iterations = p.iterations;
-  const iv = webcrypto.getRandomValues(new Uint8Array(12));
-  const base = await subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveKey']);
-  const key = await subtle.deriveKey({ name: 'PBKDF2', salt, iterations, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
-  const ct = new Uint8Array(await subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(klartext)));
-  const b64 = a => Buffer.from(a).toString('base64');
-  const ziel = path.join(ROOT, 'whoop.enc.json');
-  fs.writeFileSync(ziel, JSON.stringify({ v: 1, kdf: 'PBKDF2-SHA256', iterations, salt: p.salt, iv: b64(iv), data: b64(ct), stand: new Date().toISOString() }));
-  return ziel;
-}
 
 function status() {
   const ok = (b, t) => console.log((b ? '  ✓ ' : '  ✗ ') + t);

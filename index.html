@@ -181,6 +181,7 @@ table.bf td:first-child{font-weight:600}
     <div class="hint" id="save-info" style="margin-top:6px">Wird automatisch gespeichert.</div>
   </div>
   <div id="whoop-card"></div>
+  <div id="koerper-card"></div>
 </section>
 
 <!-- ================= ESSEN ================= -->
@@ -284,6 +285,7 @@ table.bf td:first-child{font-weight:600}
       <div class="legend" style="margin-top:8px"><span><i class="dot" style="background:#c0392b"></i>Hals</span><span><i class="dot" style="background:#c98a00"></i>Bauch</span><span><i class="dot" style="background:#6b7c77"></i>Stress/3</span></div>
     </div>
     <div id="whoop-verlauf"></div>
+    <div id="koerper-verlauf"></div>
     <div class="card"><h2>Einnahme je Präparat <small>letzte 30 Tage</small></h2><div id="med-stats"></div></div>
     <div class="card">
       <h2>Letzte Tage</h2>
@@ -316,6 +318,15 @@ table.bf td:first-child{font-weight:600}
     <input type="file" id="whoop-file" accept=".json,application/json" style="display:none">
     <button class="btn sec full" id="whoop-load">📂 whoop.json laden</button></details>
     <div class="hint" style="margin-top:8px">Die Werte holt das Werkzeug <code>whoop-abholen.js</code> am Laptop von WHOOP und legt sie verschlüsselt in der App ab. Nach dem Entsperren des Plans lädt die App sie automatisch nach – der Schlüssel bleibt nur auf diesem Gerät.</div>
+  </div>
+  <div class="card">
+    <h2>Körperwerte <small id="koerper-stand"></small></h2>
+    <div id="koerper-status" class="hint" style="margin-bottom:8px"></div>
+    <button class="btn sec full" id="koerper-refresh">🔄 Waagenwerte jetzt holen</button>
+    <details style="margin-top:10px"><summary class="hint" style="font-weight:400">Alternativ: Datei laden</summary>
+    <input type="file" id="koerper-file" accept=".json,application/json" style="display:none">
+    <button class="btn sec full" id="koerper-load">📂 withings.json laden</button></details>
+    <div class="hint" style="margin-top:8px">Gewicht und Körperzusammensetzung von der Withings-Waage, geholt vom Werkzeug <code>withings-abholen.js</code>. Messungen, die die Waage nicht eindeutig dir zuordnen kann, werden bewusst nicht übernommen.</div>
   </div>
   <div class="card">
     <h2>Darmkur</h2>
@@ -390,6 +401,7 @@ const ATEM_SLOTS=[
 
 let plan=LS.get('gp_plan',null);
 let whoop=LS.get('gp_whoop',null); // Tageswerte von WHOOP (aus whoop.enc.json oder whoop.json)
+let koerper=LS.get('gp_koerper',null); // Waagenwerte von Withings (aus withings.enc.json oder withings.json)
 let log=LS.get('gp_log',{});
 let set=LS.get('gp_set',{times:{},atimes:{},notif:false,kurStart:null,medOverride:{}});
 let HEUTE=todayKey();      // der echte heutige Tag
@@ -502,6 +514,70 @@ async function whoopLaden(leise){ // holt whoop.enc.json und entschlüsselt sie 
     uebernehmeWhoop(await entschluessele(key,f));whoopLetzterCheck=Date.now();if(!leise)toast('WHOOP aktualisiert ✓');return true;}
   catch(e){if(!leise)toast(/OperationError/i.test(String(e))||e.name==='OperationError'?'Schlüssel passt nicht – Plan neu entsperren':'WHOOP: '+(e.message||e));return false;}
 }
+/* ---------- Körperwerte von der Withings-Waage ---------- */
+// Gleiches Verfahren wie bei WHOOP: withings.enc.json wird mit dem Schlüssel aus IndexedDB
+// entschlüsselt, der beim Entsperren des Plans abgelegt wurde.
+function koerperFehler(w){if(!w||typeof w!=='object'||!w.tage||typeof w.tage!=='object')return 'tage fehlt';return null;}
+function uebernehmeKoerper(w){const err=koerperFehler(w);if(err)throw new Error(err);koerper=w;LS.set('gp_koerper',koerper);
+  Object.keys(w.tage).forEach(k=>{if(log[k])koerperInsProtokoll(k);});
+  if(w.tage[HEUTE]){entry(HEUTE);koerperInsProtokoll(HEUTE);}saveLog();}
+function koerperInsProtokoll(k){ // Waagengewicht in den Tag k übernehmen (Handeingabe gewinnt)
+  const t=koerper?.tage?.[k],e=log[k];if(!t||!e||t.gewicht==null)return;e.auto=e.auto||{};
+  if(e.gewicht==null||e.auto.gewicht){e.gewicht=Math.round(t.gewicht*10)/10;e.auto.gewicht=true;}
+}
+let koerperLetzterCheck=0;
+async function koerperLaden(leise){
+  const key=await KDB.get();if(!key){if(!leise)toast('Zuerst unter „Mehr" den Plan entsperren');return false;}
+  try{const r=await fetch('withings.enc.json?v='+Date.now());if(!r.ok){if(!leise)toast('withings.enc.json noch nicht vorhanden');return false;}const f=await r.json();
+    if(koerper&&koerper.stand===f.stand){koerperLetzterCheck=Date.now();return true;}
+    uebernehmeKoerper(await entschluessele(key,f));koerperLetzterCheck=Date.now();if(!leise)toast('Körperwerte aktualisiert ✓');return true;}
+  catch(e){if(!leise)toast(/OperationError/i.test(String(e))||e.name==='OperationError'?'Schlüssel passt nicht – Plan neu entsperren':'Körperwerte: '+(e.message||e));return false;}
+}
+function koerperTag(){ // Messung des angezeigten Tages, sonst die letzte davor
+  if(!koerper)return null;const t=koerper.tage[TK];if(t)return {k:TK,t};
+  const g=Object.keys(koerper.tage).filter(k=>k<TK).sort().pop();return g?{k:g,t:koerper.tage[g]}:null;
+}
+function koerperTrend(k,feld,tage){ // Veränderung gegenüber der letzten Messung vor `tage` Tagen
+  if(!koerper)return null;const ziel=addDays(k,-tage);
+  const frueher=Object.keys(koerper.tage).filter(x=>x<=ziel).sort().pop();
+  if(!frueher)return null;const a=koerper.tage[frueher]?.[feld],b=koerper.tage[k]?.[feld];
+  if(a==null||b==null)return null;return {diff:b-a,von:frueher};
+}
+function renderKoerper(){
+  const w=koerperTag();const el=$('koerper-card');
+  if(!w){el.innerHTML=koerper?'<div class="card"><h2>⚖️ Körperwerte</h2><div class="empty">Noch keine Messung.</div></div>':'';return;}
+  const t=w.t,alter=daysBetween(w.k,TK);
+  const [y,m,d]=w.k.split('-');
+  const marke=alter===0?(TK===HEUTE?'heute':fmtDate(TK)):alter===1?'Stand gestern, '+d+'.'+m+'.':'Stand '+d+'.'+m+'. – vor '+alter+' Tagen';
+  const big=(v,l)=>`<div><b>${v}</b><span>${l}</span></div>`;
+  // Pfeil zeigt nur die Richtung; ob eine Richtung gut ist, hängt vom Wert ab und wird nicht bewertet.
+  const tr=(feld,einheit)=>{const x=koerperTrend(w.k,feld,30);if(!x||Math.abs(x.diff)<0.05)return '';
+    const v=(x.diff>0?'+':'')+dz((Math.round(x.diff*10)/10).toFixed(1));return ' <small style="opacity:.7">'+v+' '+einheit+'</small>';};
+  el.innerHTML=`<div class="card"><h2>⚖️ Körperwerte <small${alter>=3?' style="color:var(--warn)"':''}>${marke}</small></h2>
+    <div class="stat">${big(t.gewicht!=null?dz(t.gewicht.toFixed(1))+' kg':'–','Gewicht')}${big(t.fettAnteil!=null?dz(t.fettAnteil)+' %':'–','Körperfett')}${big(t.muskelmasse!=null?dz(t.muskelmasse.toFixed(1))+' kg':'–','Muskeln')}${big(t.wasserAnteil!=null?dz(t.wasserAnteil)+' %':'–','Wasser')}</div>
+    ${koerperTrend(w.k,'gewicht',30)?`<div class="hint" style="margin-top:8px">Gegenüber vor 30 Tagen: Gewicht${tr('gewicht','kg')||' unverändert'} · Fett${tr('fettAnteil','%')||' unverändert'} · Muskeln${tr('muskelmasse','kg')||' unverändert'}</div>`:''}
+    ${t.zuordnungUnsicher?'<div class="banner warn" style="margin:8px 0 0;font-size:13px">Diese Messung konnte die Waage nicht eindeutig dir zuordnen.</div>':''}
+    <details style="margin-top:8px"><summary class="hint" style="font-weight:400">Alle Waagenwerte anzeigen</summary>
+      ${[['Gewicht',t.gewicht,'kg'],['Körperfett',t.fettAnteil,'%'],['Fettmasse',t.fettMasse,'kg'],['Magermasse',t.magermasse,'kg'],['Muskelmasse',t.muskelmasse,'kg'],['Muskelanteil',t.muskelAnteil,'%'],['Wasser',t.wasser,'kg'],['Wasseranteil',t.wasserAnteil,'%'],['Knochenmasse',t.knochenmasse,'kg']]
+        .map(([l,v,e])=>v==null?'':`<div class="ex" style="padding:6px 4px"><div class="n" style="display:flex;justify-content:space-between"><span>${l}</span><b>${dz(v)} ${e}</b></div></div>`).join('')}
+      <div class="hint" style="margin-top:8px">Gemessen ${t.zeit?new Date(t.zeit).toLocaleString('de-AT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):fmtDate(w.k)} · Quelle Withings</div>
+    </details>
+  </div>`;
+}
+function renderKoerperVerlauf(){
+  const el=$('koerper-verlauf');if(!koerper){el.innerHTML='';return;}
+  const keys=Object.keys(koerper.tage).sort();if(!keys.length){el.innerHTML='';return;}
+  const letzte=keys[keys.length-1];const T=k=>koerper.tage[k];
+  const spanne=(feld)=>{const v=keys.map(k=>T(k)[feld]).filter(x=>x!=null);return v.length?{min:Math.min(...v),max:Math.max(...v)}:null;};
+  const g=spanne('gewicht');
+  const rows=keys.slice().reverse().slice(0,14).map(k=>{const t=T(k);const [y,m,d]=k.split('-');
+    return `<div class="ent"><span class="d">${d}.${m}.</span><span class="s">${t.gewicht!=null?'<b>'+dz(t.gewicht.toFixed(1))+' kg</b>':'–'}${t.fettAnteil!=null?' · Fett '+dz(t.fettAnteil)+' %':''}${t.muskelmasse!=null?' · Muskeln '+dz(t.muskelmasse.toFixed(1))+' kg':''}${t.wasserAnteil!=null?' · Wasser '+dz(t.wasserAnteil)+' %':''}${t.zuordnungUnsicher?' · <span style="color:var(--warn)">Zuordnung unsicher</span>':''}</span></div>`;}).join('');
+  const t0=T(letzte);
+  el.innerHTML=`<div class="card"><h2>⚖️ Körperwerte <small>${keys.length} Messtage</small></h2>
+    <div class="stat"><div><b>${t0.gewicht!=null?dz(t0.gewicht.toFixed(1))+' kg':'–'}</b><span>zuletzt</span></div><div><b>${g?dz(g.min.toFixed(1)):'–'}</b><span>tiefstes kg</span></div><div><b>${g?dz(g.max.toFixed(1)):'–'}</b><span>höchstes kg</span></div><div><b>${t0.fettAnteil!=null?dz(t0.fettAnteil)+' %':'–'}</b><span>Körperfett</span></div></div>
+    <div style="margin-top:8px">${rows}</div></div>`;
+}
+
 function whoopHeute(){ // heutiger Tag, sonst gestern (mit Kennzeichnung)
   if(!whoop)return null;const t=whoop.tage[TK];if(t&&(t.recovery!=null||t.schlaf))return {k:TK,t,alt:false};
   const g=Object.keys(whoop.tage).filter(k=>k<TK).sort().pop();return g?{k:g,t:whoop.tage[g],alt:true}:null;
@@ -562,7 +638,7 @@ function renderHeute(){
   $('hd-sub').textContent=tagLang(TK);
   renderTagnav();
   const neu=!log[TK];const e=entry(TK);
-  if(neu){whoopInsProtokoll(TK);saveLog();} // beim ersten Öffnen eines Tages die WHOOP-Werte übernehmen
+  if(neu){whoopInsProtokoll(TK);koerperInsProtokoll(TK);saveLog();} // beim ersten Öffnen eines Tages die Messwerte übernehmen (Waage nach WHOOP, sie ist tagesgenau)
   // Banner
   let b='';
   if(!plan)b='<div class="banner warn">Noch kein Plan. Unter <b>Mehr → Plan entsperren</b> dein Passwort eingeben – dann erscheinen hier deine Präparate.</div>';
@@ -574,6 +650,7 @@ function renderHeute(){
     if(pausen.length)b+=`<div class="banner info" style="font-size:13px">${pausen.map(m=>'⏸ <b>'+esc(m.name)+'</b>: '+esc(medPhase(m).notiz)).join('<br>')}</div>`;}
   $('heute-banner').innerHTML=b;
   renderWhoop();
+  renderKoerper();
   // Training heute
   const wd=String(new Date(TK+'T12:00:00').getDay());const tr=(plan?.training?.woche||{})[wd]||[];
   $('train-card').style.display=plan?'':'none';
@@ -752,6 +829,7 @@ $('b-start').onclick=startBreath;$('b-stop').onclick=stopBreath;
 
 /* ---------- VERLAUF ---------- */
 function renderVerlauf(){
+  renderKoerperVerlauf();
   const keys=Object.keys(log).sort().slice(-30);
   const n=keys.length;
   const avg=(f)=>{const v=keys.map(k=>log[k][f]).filter(x=>x!=null);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):null};
@@ -889,9 +967,15 @@ function renderMehr(){
   $('quelle-hint').textContent='Diese App ersetzt keinen Arzt. '+(plan?'Grundlage: '+plan.quelle+'.':'Grundlage ist der geladene Plan.')+' Bei Änderungen: mein-plan.json anpassen und neu laden.';
   $('data-info').textContent=Object.keys(log).length+' Tage im Protokoll auf diesem Gerät.';
   const wk=whoop?Object.keys(whoop.tage).sort():[];
+    const kk=koerper?Object.keys(koerper.tage).sort():[];
+  $('koerper-stand').textContent=koerper?'Stand '+new Date(koerper.stand).toLocaleString('de-AT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+  $('koerper-status').textContent=koerper?kk.length+' Messtage geladen ('+kk[0]+' bis '+kk[kk.length-1]+').':'Noch keine Waagenwerte. Am Laptop „node werkzeuge/withings-abholen.js holen" ausführen, dann hier holen.';
   $('whoop-stand').textContent=whoop?'Stand '+new Date(whoop.stand).toLocaleString('de-AT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
   $('whoop-status').textContent=whoop?wk.length+' Tage geladen ('+wk[0]+' bis '+wk[wk.length-1]+').':'Noch keine WHOOP-Werte. Am Laptop „node werkzeuge/whoop-abholen.js holen" ausführen, dann hier holen.';
 }
+$('koerper-refresh').onclick=async()=>{const b=$('koerper-refresh');b.disabled=true;b.textContent='Hole …';await koerperLaden(false);b.disabled=false;b.textContent='🔄 Waagenwerte jetzt holen';renderMehr();renderHeute();};
+$('koerper-load').onclick=()=>$('koerper-file').click();
+$('koerper-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{uebernehmeKoerper(JSON.parse(r.result));toast('Körperwerte geladen ✓');renderMehr();renderHeute();}catch(e){toast('Nicht übernommen: '+(e.message||'ungültige Datei'));}};r.readAsText(f);ev.target.value='';};
 $('whoop-refresh').onclick=async()=>{const b=$('whoop-refresh');b.disabled=true;b.textContent='Hole …';await whoopLaden(false);b.disabled=false;b.textContent='🔄 WHOOP-Werte jetzt holen';renderMehr();};
 $('whoop-load').onclick=()=>$('whoop-file').click();
 $('whoop-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{uebernehmeWhoop(JSON.parse(r.result));toast('WHOOP geladen ✓');renderMehr();}catch(e){toast('Nicht übernommen: '+(e.message||'ungültige Datei'));}};r.readAsText(f);ev.target.value='';};
@@ -909,6 +993,7 @@ $('plan-unlock').onclick=async()=>{
     await KDB.set(key); // für das Nachladen von whoop.enc.json ohne erneute Passworteingabe
     $('plan-pw').value='';toast('Plan entsperrt ✓ (Stand '+(f.stand||'')+')');renderMehr();
     whoopLaden(true).then(()=>renderMehr());
+    koerperLaden(true).then(()=>{renderMehr();renderHeute();});
   }catch(e){toast(/OperationError|decrypt/i.test(String(e))||e.name==='OperationError'?'Passwort falsch':'Fehlgeschlagen: '+(e.message||e));}
   btn.disabled=false;btn.textContent='🔓 Plan entsperren';
 };
@@ -951,8 +1036,9 @@ function checkReminders(){
   ATEM_SLOTS.forEach(s=>{const t=set.atimes[s.k]||s.t;if(hm>=t&&!e.atmen[s.k])fire('a'+s.k,'🌬️ Atemübung',s.name);});
 }
 setInterval(()=>{tagesWechselPruefen();checkReminders();},30000);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)stopScan();if(!document.hidden){tagesWechselPruefen();checkReminders();whoopAuto();}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopScan();if(!document.hidden){tagesWechselPruefen();checkReminders();whoopAuto();koerperAuto();}});
 function whoopAuto(){if(!navigator.onLine||Date.now()-whoopLetzterCheck<30*60000)return;const alt=whoop?.stand;whoopLaden(true).then(ok=>{if(ok&&whoop?.stand!==alt)renderHeute();});}
+function koerperAuto(){if(!navigator.onLine||Date.now()-koerperLetzterCheck<30*60000)return;const alt=koerper?.stand;koerperLaden(true).then(ok=>{if(ok&&koerper?.stand!==alt)renderHeute();});}
 
 /* ---------- Navigation ---------- */
 const PAGES={heute:renderHeute,essen:()=>{renderAmpel();renderWoche();renderEinkauf();renderTipps();renderRegeln();},atmen:renderExList,verlauf:()=>{renderVerlauf();renderPlan();renderBefunde();renderTermine();},mehr:renderMehr};
@@ -966,10 +1052,10 @@ function gotoPage(p){
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
 document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.09.10-19';
+const APP_VERSION='v2026.09.10-20';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 renderHeute();
-if(plan)whoopAuto();else if(whoop)renderHeute();
+if(plan){whoopAuto();koerperAuto();}else if(whoop||koerper)renderHeute();
 /* Demo-Start: ?demo=1 lädt Demo-Plan und Beispiel-Verlauf (für Vorführungen). Ein vorhandener echter Plan wird nur nach Rückfrage ersetzt. */
 (async()=>{ if(!/[?&]demo=1/.test(location.search))return;
   try{ if(plan&&!plan._hinweis&&!confirm('Demo-Modus: Der geladene Plan und das Protokoll werden durch Demo-Daten ersetzt. Fortfahren?'))return;

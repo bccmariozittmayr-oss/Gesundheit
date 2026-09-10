@@ -6,3 +6,7 @@ mein-plan.json
 .whoop-token.json
 whoop.json
 .whoop-login-url.txt
+# Withings: Token und Klartext-Daten bleiben lokal
+.withings-token.json
+withings.json
+.withings-login-url.txt
