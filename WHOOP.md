@@ -20,13 +20,33 @@ Client-Secret, und das darf nicht in einer öffentlichen Web-App liegen.
 
 ## Täglich automatisch (Windows-Aufgabenplanung)
 
-Einmal ausführen: `werkzeuge\whoop-aufgabe-einrichten.cmd` (Doppelklick genügt). Das legt zwei tägliche Aufgaben an, die
-`werkzeuge\whoop-taeglich.cmd` um **07:30** und **12:30** ausführen. Der Lauf um 07:30 bringt die fertigen Werte des Vortags
-(Belastung, Workouts, Schlaf) und die Erholung von heute; 12:30 ist die zweite Chance, falls der Laptop früh aus war.
-Log: `%LOCALAPPDATA%\whoop-abholen.log`.
+Einmal einrichten:
 
-Prüfen: `schtasks /query /tn "Gesundheit WHOOP frueh" /v /fo LIST`
-Entfernen: `schtasks /delete /tn "Gesundheit WHOOP frueh" /f` (und dasselbe für `Gesundheit WHOOP mittag`).
+```
+node werkzeuge/whoop-aufgabe-einrichten.js
+```
+
+Das legt **eine** Aufgabe „Gesundheit WHOOP" an, die täglich um **07:30** und **12:30** läuft. Der Lauf um 07:30
+bringt die fertigen Werte des Vortags (Belastung, Workouts, Schlaf) und die Erholung von heute; 12:30 ist die zweite
+Chance, falls der Laptop früh aus war.
+
+Die Aufgabe ist bewusst so eingestellt – ohne diese drei Punkte läuft sie an einem Laptop fast nie:
+
+| Einstellung | Warum |
+|---|---|
+| läuft auch im Akkubetrieb | Windows setzt das sonst auf „nur am Netz", und der Lauf fällt aus |
+| verpasste Läufe werden nachgeholt | Laptop war um 07:30 aus → Nachholen beim nächsten Anmelden |
+| bricht nach 10 Minuten ab | bleibt nie hängen |
+
+Nachsehen, ob alles stimmt: `node werkzeuge/whoop-aufgabe-einrichten.js pruefen`
+Entfernen: `node werkzeuge/whoop-aufgabe-einrichten.js entfernen`
+Log der Läufe: `%LOCALAPPDATA%\whoop-abholen.log` (Ortszeit).
+
+> **Kein .cmd-Skript mehr (10.09.2026).** Früher lag hier eine `whoop-taeglich.cmd`, die den Abruf startete.
+> Der Virenschutz hat sie zweimal als „potentiell unerwünschtes Programm" gelöscht – eine Batchdatei, die `node`
+> startet, etwas ins Netz pusht und die Ausgabe in eine Logdatei umleitet, sieht für eine Heuristik nach einem
+> Downloader aus. Die Aufgabe ruft `node.exe` jetzt direkt auf, das Log schreibt das Werkzeug selbst (`--log`).
+> Taucht die Datei irgendwo wieder auf: nicht wiederherstellen, sie wird nicht mehr gebraucht.
 
 ### Wenn keine neuen Werte mehr kommen
 

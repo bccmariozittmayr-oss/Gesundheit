@@ -2,8 +2,10 @@
 
    Aufruf:
      node werkzeuge/whoop-abholen.js anmelden          einmalig: Browser öffnet sich, WHOOP-Zugriff freigeben
-     node werkzeuge/whoop-abholen.js holen [--tage 30] [--dry-run] [--push]
+     node werkzeuge/whoop-abholen.js holen [--tage 30] [--dry-run] [--push] [--log]
                                                        Werte abholen, whoop.json schreiben, optional whoop.enc.json + Git-Push
+                                                       --log schreibt alle Ausgaben zusaetzlich in %LOCALAPPDATA%, Datei whoop-abholen.log
+                                                       (so braucht die Aufgabenplanung keine .cmd-Datei als Umweg)
      node werkzeuge/whoop-abholen.js status            zeigt, ob Anmeldung und Konfiguration passen (nur lesen)
 
    Ablage:
@@ -208,10 +210,21 @@ async function holen(tage, dryRun, push) {
     console.log('geschrieben:', ziel);
     if (push) {
       const g = (...a) => execFileSync('git', a, { cwd: ROOT, stdio: 'pipe' }).toString().trim();
-      if (g('status', '--porcelain', '--', 'whoop.enc.json')) {
-        g('add', 'whoop.enc.json'); g('commit', '-m', 'WHOOP-Werte ' + daten.stand.slice(0, 10) + ' (verschlüsselt)'); g('push');
-        console.log('Git: whoop.enc.json committet und gepusht.');
-      } else console.log('Git: keine Änderung.');
+      if (!g('status', '--porcelain', '--', 'whoop.enc.json')) console.log('Git: keine Änderung.');
+      else {
+        const zweig = g('rev-parse', '--abbrev-ref', 'HEAD');
+        let upstream = null;
+        try { upstream = g('rev-parse', '--abbrev-ref', '@{u}'); } catch (e) { /* kein Upstream */ }
+        g('add', 'whoop.enc.json');
+        g('commit', '-m', 'WHOOP-Werte ' + daten.stand.slice(0, 10) + ' (verschlüsselt)');
+        if (!upstream) {
+          console.error('Git: auf Zweig "' + zweig + '" committet, aber NICHT gepusht – dieser Zweig hat kein Gegenstück am Server.');
+          console.error('Die App auf GitHub Pages bekommt die Werte erst, wenn dieser Zweig nach main zusammengeführt ist.');
+        } else {
+          try { g('push'); console.log('Git: whoop.enc.json committet und nach ' + upstream + ' gepusht.'); }
+          catch (e) { console.error('Git: committet, aber Push fehlgeschlagen (' + ((e.stderr || '').toString().trim().split(String.fromCharCode(10))[0] || e.message) + '). Beim nächsten Lauf geht es mit.'); }
+        }
+      }
     }
   } else console.log('Hinweis: WHOOP_PASSWORT_DATEI nicht gesetzt – keine whoop.enc.json für die App erzeugt.');
 }
@@ -247,14 +260,33 @@ function status() {
   if (wj && fs.existsSync(wj)) { const d = JSON.parse(fs.readFileSync(wj, 'utf8')); console.log('    whoop.json: Stand ' + d.stand + ', ' + Object.keys(d.tage || {}).length + ' Tage'); }
 }
 
+// ---------- Protokoll ----------
+// Mit --log gehen alle Ausgaben zusaetzlich in eine Datei. Damit kann die Aufgabenplanung
+// node direkt aufrufen; frueher lag dafuer eine .cmd-Datei mit Umleitung dazwischen - die
+// hat ein Virenschutz zweimal als "potentiell unerwuenscht" geloescht (10.09.2026).
+function logDateiAn() {
+  const ordner = process.env.LOCALAPPDATA || process.env.TMPDIR || '.';
+  const datei = path.join(ordner, 'whoop-abholen.log');
+  const schreib = (art, args) => {
+    const zeile = new Date().toLocaleString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }) + (art === 'err' ? ' FEHLER ' : ' ') +
+      args.map(a => typeof a === 'string' ? a : require('util').inspect(a)).join(' ') + String.fromCharCode(10);
+    try { fs.appendFileSync(datei, zeile); } catch (e) { /* Log darf den Lauf nie stoppen */ }
+  };
+  const log = console.log.bind(console), err = console.error.bind(console);
+  console.log = (...a) => { schreib('log', a); log(...a); };
+  console.error = (...a) => { schreib('err', a); err(...a); };
+  return datei;
+}
+
 // ---------- Start ----------
 (async () => {
   const [cmd, ...rest] = process.argv.slice(2);
   const opt = (n, d) => { const i = rest.indexOf(n); return i >= 0 ? (rest[i + 1] ?? true) : d; };
+  if (rest.includes('--log')) logDateiAn();
   try {
     if (cmd === 'anmelden') await anmelden();
     else if (cmd === 'holen') await holen(parseInt(opt('--tage', 30), 10) || 30, rest.includes('--dry-run'), rest.includes('--push'));
     else if (cmd === 'status') status();
-    else { console.log('Aufruf: node werkzeuge/whoop-abholen.js anmelden | holen [--tage 30] [--dry-run] [--push] | status'); process.exit(cmd ? 1 : 0); }
+    else { console.log('Aufruf: node werkzeuge/whoop-abholen.js anmelden | holen [--tage 30] [--dry-run] [--push] [--log] | status'); process.exit(cmd ? 1 : 0); }
   } catch (e) { console.error('Fehler:', e.message || e); process.exit(1); }
 })();
