@@ -717,7 +717,7 @@ function logReihe(feld,von){
 // Kurve: eine Größe, 2px Linie, Start- und Endwert direkt beschriftet, Achsen zurückhaltend.
 function kurve(punkte,einheit,nachkomma){
   if(punkte.length<2)return '<div class="hint">zu wenige Messungen für einen Verlauf</div>';
-  const B=300,H=64,P=4;
+  const B=300,H=84,P=5;
   const vs=punkte.map(p=>p.v);
   const min=Math.min(...vs),max=Math.max(...vs),spanne=(max-min)||1;
   const x=i=>P+i*(B-2*P)/(punkte.length-1);
@@ -725,9 +725,10 @@ function kurve(punkte,einheit,nachkomma){
   const d=punkte.map((p,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(p.v).toFixed(1)).join(' ');
   const f=v=>dz(v.toFixed(nachkomma));
   const letzterX=x(punkte.length-1),letzterY=y(punkte[punkte.length-1].v);
-  return `<svg viewBox="0 0 ${B} ${H}" style="width:100%;height:64px;display:block;margin:6px 0" role="img"
+  return `<svg viewBox="0 0 ${B} ${H}" style="width:100%;height:84px;display:block;margin:6px 0" role="img"
       aria-label="Verlauf von ${f(punkte[0].v)} auf ${f(punkte[punkte.length-1].v)} ${einheit}">
     <line x1="0" y1="${(H-P).toFixed(1)}" x2="${B}" y2="${(H-P).toFixed(1)}" stroke="currentColor" stroke-opacity=".12"/>
+    <path d="${d} L ${x(punkte.length-1).toFixed(1)} ${H-P} L ${x(0).toFixed(1)} ${H-P} Z" fill="var(--p)" fill-opacity=".10" stroke="none"/>
     <path d="${d}" fill="none" stroke="var(--p)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
     <circle cx="${letzterX.toFixed(1)}" cy="${letzterY.toFixed(1)}" r="3.5" fill="var(--p)" stroke="var(--card)" stroke-width="2"/>
   </svg>
@@ -769,13 +770,14 @@ function renderArzt(){
       <div><b>${jetzt(rp,0)}</b><span>Ruhepuls /min</span></div>
       <div><b>${jetzt(hrv,0)}</b><span>HRV ms</span></div>
       <div><b>${jetzt(wass,1)}</b><span>Wasser %</span></div>
+      <div><b>${jetzt(knoch,2)}</b><span>Knochen kg</span></div>
     </div>
     ${block('Gewicht',gew,'kg',1,'runter')}
     ${block('Körperfett',fett,'%',1,'runter')}
     ${block('Muskelmasse',musk,'kg',1,'rauf')}
     ${block('Ruhepuls',rp,'/min',0,'runter')}
     ${block('HRV (Herzratenvariabilität)',hrv,'ms',0,'rauf')}
-    ${knoch.length?`<div class="hint" style="margin-top:10px">Knochenmasse zuletzt ${dz(knoch[knoch.length-1].v.toFixed(2))} kg · Quelle Withings-Waage</div>`:''}
+    <div class="hint" style="margin-top:10px">Körperwerte von der Withings-Waage, Puls und HRV von WHOOP.</div>
   </div>`;
 
   // --- Schlaf und Erholung ---
@@ -1295,7 +1297,7 @@ function gotoPage(p){
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
 document.querySelectorAll('.tabs:not(.zeitraum)').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.09.10-22';
+const APP_VERSION='v2026.09.10-23';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 renderHeute();
 if(plan){whoopAuto();koerperAuto();}else if(whoop||koerper)renderHeute();
