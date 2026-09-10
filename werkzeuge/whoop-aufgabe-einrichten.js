@@ -2,6 +2,7 @@
 
    Aufruf:  node werkzeuge/whoop-aufgabe-einrichten.js          Aufgabe anlegen oder erneuern
             node werkzeuge/whoop-aufgabe-einrichten.js pruefen  nur nachsehen, nichts aendern
+            node werkzeuge/whoop-aufgabe-einrichten.js jetzt     Aufgabe sofort einmal starten (Probelauf)
             node werkzeuge/whoop-aufgabe-einrichten.js entfernen
 
    Warum kein .cmd-Skript mehr: Am 10.09.2026 hat der Virenschutz die frueher hier
@@ -72,20 +73,41 @@ ${trigger('12:30')}
 `;
 }
 
+// Ergebniscodes der Aufgabenplanung, soweit sie hier vorkommen
+const ERGEBNIS = {
+  '0': 'erfolgreich',
+  '1': 'mit Fehler beendet - ins Log sehen',
+  '2': 'mit Fehler beendet - ins Log sehen',
+  '267011': 'noch nie gelaufen',
+  '267009': 'laeuft gerade',
+  '267014': 'wurde abgebrochen',
+};
+
 function pruefen() {
   if (!gibtEs(NAME)) { console.log(`Aufgabe "${NAME}" ist NICHT eingerichtet.`); return false; }
   const x = schtasks('/query', '/tn', NAME, '/xml');
-  const wert = (feld) => (new RegExp(`<${feld}>(.*?)</${feld}>`).exec(x) || [, '(fehlt)'])[1];
+  const wert = (feld, standard) => (new RegExp(`<${feld}>(.*?)</${feld}>`).exec(x) || [, standard])[1]; // Windows laesst Felder weg, die dem Standard entsprechen
   const zeiten = [...x.matchAll(/<StartBoundary>.*?T(\d{2}:\d{2})/g)].map(m => m[1]);
   console.log(`Aufgabe "${NAME}": eingerichtet`);
   console.log('  Laeuft taeglich um:      ' + (zeiten.join(' und ') || '(kein Zeitplan)'));
-  console.log('  Aktiviert:               ' + wert('Enabled'));
-  console.log('  Auch im Akkubetrieb:     ' + (wert('DisallowStartIfOnBatteries') === 'false' ? 'ja' : 'NEIN - laeuft am Akku nicht'));
-  console.log('  Verpasstes wird geholt:  ' + (wert('StartWhenAvailable') === 'true' ? 'ja' : 'NEIN'));
+  const liste = schtasks('/query', '/tn', NAME, '/fo', 'LIST', '/v');
+  const feld = (bez) => { const m = new RegExp('^(?:' + bez + ')[^:]*:' + '\\s*(.+)$', 'mi').exec(liste); return m ? m[1].trim() : '?'; };
+  const ergebnis = feld('Letztes Ergebnis|Last Result');
+  console.log('  Zustand:                 ' + feld('Status der geplanten Aufgabe|Scheduled Task State') + ' / ' + feld('Status'));
+  console.log('  Naechster Lauf:          ' + feld('N.chste Laufzeit|Next Run Time'));
+  console.log('  Letzter Lauf:            ' + feld('Letzte Laufzeit|Last Run Time') + '  (' + (ERGEBNIS[ergebnis] || 'Code ' + ergebnis) + ')');
+  console.log('  Auch im Akkubetrieb:     ' + (wert('DisallowStartIfOnBatteries', 'true') === 'false' ? 'ja' : 'NEIN - laeuft am Akku nicht'));
+  console.log('  Verpasstes wird geholt:  ' + (wert('StartWhenAvailable', 'false') === 'true' ? 'ja' : 'NEIN'));
   console.log('  Startet:                 ' + (/<Command>(.*?)<\/Command>/.exec(x) || [, '?'])[1]);
   console.log('  Mit:                     ' + (/<Arguments>(.*?)<\/Arguments>/.exec(x) || [, '?'])[1]);
   const ziel = /<Arguments>"(.*?)"/.exec(x);
   if (ziel) console.log('  Zieldatei vorhanden:     ' + (fs.existsSync(ziel[1]) ? 'ja' : 'NEIN - die Datei fehlt!'));
+  const logDatei = path.join(process.env.LOCALAPPDATA || os.tmpdir(), 'whoop-abholen.log');
+  if (!fs.existsSync(logDatei)) console.log('  Log:                     noch keines vorhanden');
+  else {
+    const zeilen = fs.readFileSync(logDatei, 'utf8').trim().split(String.fromCharCode(10)).filter(Boolean);
+    console.log('  Letzte Zeile im Log:     ' + (zeilen[zeilen.length - 1] || '(leer)'));
+  }
   return true;
 }
 
@@ -100,6 +122,13 @@ function entfernen(nurAlte) {
 const befehl = process.argv[2];
 try {
   if (befehl === 'pruefen') { pruefen(); process.exit(0); }
+  if (befehl === 'jetzt') { // Probelauf ueber die Aufgabenplanung - beweist, dass der Weg wirklich funktioniert
+    if (!gibtEs(NAME)) { console.error('Aufgabe ist nicht eingerichtet. Zuerst ohne Zusatz aufrufen.'); process.exit(1); }
+    schtasks('/run', '/tn', NAME);
+    console.log('Gestartet - der Lauf dauert ein paar Sekunden.');
+    setTimeout(pruefen, 20000);
+    return;
+  }
   if (befehl === 'entfernen') { entfernen(false); console.log('Fertig.'); process.exit(0); }
 
   if (!fs.existsSync(SKRIPT)) { console.error('Fehlt: ' + SKRIPT); process.exit(1); }
