@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Withings verbinden</title>
+<style>
+  :root{--bg:#f5f5f7;--card:#fff;--tx:#1c1c1e;--mut:#6b6b70;--p:#0a84ff;--ok:#30a46c;--bad:#e5484d}
+  @media (prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--tx:#f5f5f7;--mut:#98989d}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;
+       display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+  .card{background:var(--card);border-radius:16px;padding:28px;max-width:520px;width:100%}
+  h1{font-size:20px;margin:0 0 4px}
+  p{color:var(--mut);margin:8px 0}
+  code{background:rgba(127,127,127,.15);padding:3px 6px;border-radius:6px;font-size:14px;word-break:break-all}
+  .code{display:block;padding:12px;margin:12px 0;font-size:15px}
+  button{border:0;border-radius:12px;padding:13px 18px;background:var(--p);color:#fff;font-weight:600;font-size:16px;width:100%}
+  .ok{color:var(--ok)} .bad{color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1 id="titel">Withings verbinden …</h1>
+  <div id="inhalt"><p>Einen Moment.</p></div>
+</div>
+<script>
+/* Zwischenstation für die Withings-Anmeldung.
+
+   Withings erlaubt als Rückleitungsadresse kein "localhost", sondern verlangt eine
+   öffentlich erreichbare HTTPS-Adresse. Diese Seite ist genau das - sie nimmt den
+   Rückruf entgegen und schickt ihn an das Werkzeug weiter, das lokal am Laptop läuft.
+   Die Seite speichert nichts und sendet nichts an Dritte. */
+const P = new URLSearchParams(location.search);
+const code = P.get('code'), fehler = P.get('error'), state = P.get('state');
+const ZIEL = 'http://localhost:8768/callback' + location.search;
+const t = document.getElementById('titel'), i = document.getElementById('inhalt');
+
+if (fehler) {
+  t.textContent = 'Abgebrochen';
+  t.className = 'bad';
+  i.innerHTML = '<p>Withings meldet: <code>' + fehler.replace(/[<>&]/g, '') + '</code></p>' +
+                '<p>Du kannst das Fenster schließen und die Anmeldung neu starten.</p>';
+} else if (!code) {
+  t.textContent = 'Nichts zu tun';
+  i.innerHTML = '<p>Diese Seite ist nur die Zwischenstation für die Withings-Anmeldung. ' +
+                'Starte die Anmeldung am Laptop mit <code>node werkzeuge/withings-abholen.js anmelden</code>.</p>';
+} else {
+  // Weiterleitung an den lokalen Server. Eine Seitennavigation nach http://localhost ist
+  // erlaubt (anders als ein Hintergrundabruf, den der Browser als unsicher blocken würde).
+  t.textContent = 'Fast fertig …';
+  i.innerHTML = '<p>Der Zugang wird an dein Werkzeug am Laptop übergeben.</p>';
+  setTimeout(() => { location.replace(ZIEL); }, 400);
+  // Klappt die Weiterleitung nicht (Werkzeug läuft nicht), bleibt der Notweg zum Kopieren.
+  setTimeout(() => {
+    t.textContent = 'Weiterleitung hat nicht geklappt';
+    i.innerHTML =
+      '<p>Läuft am Laptop gerade <code>withings-abholen.js anmelden</code>? Falls nicht: starten und diesen Link öffnen.</p>' +
+      '<p><a href="' + ZIEL.replace(/"/g, '') + '">Nochmal versuchen</a></p>' +
+      '<p>Oder den Zugangscode von Hand ins Terminal geben:</p>' +
+      '<code class="code" id="c"></code>' +
+      '<button id="kopieren">Code kopieren</button>' +
+      '<p>Der Code gilt nur wenige Minuten und lässt sich nur einmal einlösen.</p>';
+    document.getElementById('c').textContent = code + (state ? ' ' + state : '');
+    document.getElementById('kopieren').onclick = () => {
+      navigator.clipboard.writeText(code).then(
+        () => { document.getElementById('kopieren').textContent = 'Kopiert ✓'; },
+        () => { document.getElementById('kopieren').textContent = 'Bitte von Hand markieren'; });
+    };
+  }, 2500);
+}
+</script>
+</body>
+</html>
