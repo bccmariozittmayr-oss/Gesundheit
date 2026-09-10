@@ -36,11 +36,17 @@ const API = 'https://wbsapi.withings.net';
 const AUTH_URL = 'https://account.withings.com/oauth2_user/authorize2';
 const TOKEN_URL = API + '/v2/oauth2';
 const PORT = 8768;
-// Withings verbietet localhost als Rueckleitung und verlangt eine oeffentlich erreichbare
-// HTTPS-Adresse. Die GitHub-Pages-Seite dieses Repos nimmt den Rueckruf entgegen und leitet
-// ihn an den lokalen Server auf PORT weiter (siehe withings-callback.html).
-const REDIRECT = 'https://bccmariozittmayr-oss.github.io/Gesundheit/withings-callback.html';
 const SCOPES = 'user.metrics';
+// Rueckleitungsadresse - muss ZEICHENGENAU mit der im Withings-Dashboard hinterlegten
+// Callback-URL uebereinstimmen, sonst kommt "redirect_uri_mismatch".
+//
+// Bevorzugt wird der direkte Weg auf den eigenen Rechner: dann laeuft der Anmeldecode
+// ueber niemanden sonst. Withings markiert eine App mit localhost-Adresse zwar als
+// "eingeschraenkt", fuer den Zugriff auf die eigenen Daten reicht das.
+// Geht es damit nicht, kann in der .env auf die oeffentliche Zwischenseite umgestellt
+// werden (withings-callback.html auf GitHub Pages, die an den lokalen Server weiterleitet):
+//   WITHINGS_REDIRECT=https://bccmariozittmayr-oss.github.io/Gesundheit/withings-callback.html
+const REDIRECT_STANDARD = `http://localhost:${PORT}/callback`;
 
 // ---------- Konfiguration ----------
 function ladeEnv() {
@@ -58,6 +64,7 @@ const ENV = ladeEnv();
 // Datenordner und Passwortdatei teilen sich beide Anbindungen - es ist derselbe private Ordner.
 const DATEN_ORDNER = ENV.WITHINGS_DATEN_ORDNER || ENV.WHOOP_DATEN_ORDNER;
 const PASSWORT_DATEI = ENV.WITHINGS_PASSWORT_DATEI || ENV.WHOOP_PASSWORT_DATEI;
+const REDIRECT = ENV.WITHINGS_REDIRECT || REDIRECT_STANDARD;
 function brauche(k) {
   if (!ENV[k]) { console.error(`Fehlt: ${k} in .env`); process.exit(1); }
   return ENV[k];
