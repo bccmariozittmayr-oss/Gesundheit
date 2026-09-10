@@ -277,6 +277,7 @@ table.bf td:first-child{font-weight:600}
     <button data-sub="plan">Mein Plan</button>
     <button data-sub="befunde">Befunde</button>
     <button data-sub="termine">Termine</button>
+    <button data-sub="arzt">Für den Arzt</button>
   </div>
   <div class="sub on" id="s-chart">
     <div class="card">
@@ -295,6 +296,14 @@ table.bf td:first-child{font-weight:600}
   <div class="sub" id="s-plan"><div id="planview"></div></div>
   <div class="sub" id="s-befunde"><div id="befunde"></div></div>
   <div class="sub" id="s-termine"><div id="termine"></div></div>
+  <div class="sub" id="s-arzt">
+    <div class="tabs zeitraum" style="margin-bottom:10px" id="arzt-zeitraum">
+      <button data-tage="30">30 Tage</button>
+      <button class="on" data-tage="90">90 Tage</button>
+      <button data-tage="180">180 Tage</button>
+    </div>
+    <div id="arzt"></div>
+  </div>
 </section>
 
 <!-- ================= MEHR ================= -->
@@ -691,6 +700,148 @@ $('notiz').oninput=()=>{entry(TK).notiz=$('notiz').value;saveLog();};
 $('kaffee-plus').onclick=()=>{const e=entry(TK);e.kaffee=(e.kaffee||0)+1;saveLog();renderHeute();if(e.kaffee>(plan?.kaffee?.max||3))toast('Über dem Kaffee-Limit');};
 $('kaffee-minus').onclick=()=>{const e=entry(TK);e.kaffee=Math.max(0,(e.kaffee||0)-1);saveLog();renderHeute();};
 
+/* ---------- FÜR DEN ARZT: alles Aufgezeichnete auf einer Seite ----------
+   Zum Herzeigen am Termin. Keine Bewertung, keine Diagnose – nur die Zahlen, die wir
+   erheben, mit Zeitraum und Veränderung. Jede Kurve zeigt EINE Größe (nie zwei Skalen
+   in einem Bild) und ist direkt beschriftet, damit nichts angetippt werden muss. */
+let arztTage=90;
+function reihe(quelle,feld,von){ // [{k,v}] eines Wertes im Zeitraum, aufsteigend
+  if(!quelle)return [];
+  return Object.keys(quelle.tage||{}).filter(k=>k>=von&&k<=HEUTE).sort()
+    .map(k=>({k,v:feld(quelle.tage[k])})).filter(p=>p.v!=null&&!isNaN(p.v));
+}
+function logReihe(feld,von){
+  return Object.keys(log).filter(k=>k>=von&&k<=HEUTE).sort()
+    .map(k=>({k,v:feld(log[k])})).filter(p=>p.v!=null&&!isNaN(p.v));
+}
+// Kurve: eine Größe, 2px Linie, Start- und Endwert direkt beschriftet, Achsen zurückhaltend.
+function kurve(punkte,einheit,nachkomma){
+  if(punkte.length<2)return '<div class="hint">zu wenige Messungen für einen Verlauf</div>';
+  const B=300,H=64,P=4;
+  const vs=punkte.map(p=>p.v);
+  const min=Math.min(...vs),max=Math.max(...vs),spanne=(max-min)||1;
+  const x=i=>P+i*(B-2*P)/(punkte.length-1);
+  const y=v=>H-P-((v-min)/spanne)*(H-2*P);
+  const d=punkte.map((p,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(p.v).toFixed(1)).join(' ');
+  const f=v=>dz(v.toFixed(nachkomma));
+  const letzterX=x(punkte.length-1),letzterY=y(punkte[punkte.length-1].v);
+  return `<svg viewBox="0 0 ${B} ${H}" style="width:100%;height:64px;display:block;margin:6px 0" role="img"
+      aria-label="Verlauf von ${f(punkte[0].v)} auf ${f(punkte[punkte.length-1].v)} ${einheit}">
+    <line x1="0" y1="${(H-P).toFixed(1)}" x2="${B}" y2="${(H-P).toFixed(1)}" stroke="currentColor" stroke-opacity=".12"/>
+    <path d="${d}" fill="none" stroke="var(--p)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${letzterX.toFixed(1)}" cy="${letzterY.toFixed(1)}" r="3.5" fill="var(--p)" stroke="var(--card)" stroke-width="2"/>
+  </svg>
+  <div class="hint" style="display:flex;justify-content:space-between;margin-top:-4px">
+    <span>${fmtDate(punkte[0].k).slice(0,6)} · ${f(punkte[0].v)}</span>
+    <span>tiefster ${f(min)} · höchster ${f(max)}</span>
+    <span><b>${f(punkte[punkte.length-1].v)} ${einheit}</b></span>
+  </div>`;
+}
+function block(titel,punkte,einheit,nk,besser){ // besser: 'runter' | 'rauf' | null (keine Wertung)
+  if(!punkte.length)return `<div style="margin-top:14px"><div class="lbl-sm">${titel}</div><div class="empty">keine Daten im Zeitraum</div></div>`;
+  const a=punkte[0].v,b=punkte[punkte.length-1].v,diff=b-a;
+  const pfeil=Math.abs(diff)<Math.pow(10,-nk)/2?'▬':(diff>0?'▲':'▼');
+  // Farbe nur, wenn eine Richtung fachlich erwünscht ist – sonst neutral.
+  const farbe=!besser?'var(--mut)':((diff>0&&besser==='rauf')||(diff<0&&besser==='runter'))?'var(--ok)':(Math.abs(diff)<Math.pow(10,-nk)/2?'var(--mut)':'var(--warn)');
+  return `<div style="margin-top:14px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <div class="lbl-sm">${titel}</div>
+      <div style="font-size:13px;color:${farbe}">${pfeil} ${diff>0?'+':''}${dz(diff.toFixed(nk))} ${einheit}</div>
+    </div>${kurve(punkte,einheit,nk)}</div>`;
+}
+function renderArzt(){
+  const el=$('arzt');
+  const von=addDays(HEUTE,-arztTage);
+  const zeitraum=`${fmtDate(von)} bis ${fmtDate(HEUTE)}`;
+  if(!plan&&!whoop&&!koerper&&!Object.keys(log).length){el.innerHTML='<div class="card"><div class="empty">Noch keine Daten.</div></div>';return;}
+
+  // --- Körper und Kreislauf ---
+  const gew=reihe(koerper,t=>t.gewicht,von), fett=reihe(koerper,t=>t.fettAnteil,von),
+        musk=reihe(koerper,t=>t.muskelmasse,von), wass=reihe(koerper,t=>t.wasserAnteil,von),
+        knoch=reihe(koerper,t=>t.knochenmasse,von),
+        rp=reihe(whoop,t=>t.ruhepuls,von), hrv=reihe(whoop,t=>t.hrv,von);
+  const jetzt=(r,nk)=>r.length?dz(r[r.length-1].v.toFixed(nk)):'–';
+  let html=`<div class="card"><h2>🫀 Körper und Kreislauf <small>${zeitraum}</small></h2>
+    <div class="stat">
+      <div><b>${jetzt(gew,1)}</b><span>Gewicht kg</span></div>
+      <div><b>${jetzt(fett,1)}</b><span>Körperfett %</span></div>
+      <div><b>${jetzt(musk,1)}</b><span>Muskeln kg</span></div>
+      <div><b>${jetzt(rp,0)}</b><span>Ruhepuls /min</span></div>
+      <div><b>${jetzt(hrv,0)}</b><span>HRV ms</span></div>
+      <div><b>${jetzt(wass,1)}</b><span>Wasser %</span></div>
+    </div>
+    ${block('Gewicht',gew,'kg',1,'runter')}
+    ${block('Körperfett',fett,'%',1,'runter')}
+    ${block('Muskelmasse',musk,'kg',1,'rauf')}
+    ${block('Ruhepuls',rp,'/min',0,'runter')}
+    ${block('HRV (Herzratenvariabilität)',hrv,'ms',0,'rauf')}
+    ${knoch.length?`<div class="hint" style="margin-top:10px">Knochenmasse zuletzt ${dz(knoch[knoch.length-1].v.toFixed(2))} kg · Quelle Withings-Waage</div>`:''}
+  </div>`;
+
+  // --- Schlaf und Erholung ---
+  const schlaf=reihe(whoop,t=>t.schlaf?.stunden,von), erh=reihe(whoop,t=>t.recovery,von),
+        tief=reihe(whoop,t=>t.schlaf?.tief,von), rem=reihe(whoop,t=>t.schlaf?.rem,von),
+        leist=reihe(whoop,t=>t.schlaf?.leistung,von), atem=reihe(whoop,t=>t.schlaf?.atemfrequenz,von);
+  const mittel=(r,nk)=>r.length?dz((r.reduce((a,p)=>a+p.v,0)/r.length).toFixed(nk)):'–';
+  html+=`<div class="card"><h2>😴 Schlaf und Erholung <small>Ø über ${schlaf.length||erh.length} Nächte</small></h2>
+    <div class="stat">
+      <div><b>${mittel(schlaf,1)}</b><span>Ø Schlaf h</span></div>
+      <div><b>${mittel(erh,0)}</b><span>Ø Erholung %</span></div>
+      <div><b>${mittel(leist,0)}</b><span>Ø Schlafleistung %</span></div>
+      <div><b>${mittel(tief,1)}</b><span>Ø Tiefschlaf h</span></div>
+      <div><b>${mittel(rem,1)}</b><span>Ø REM h</span></div>
+      <div><b>${mittel(atem,1)}</b><span>Ø Atmung /min</span></div>
+    </div>
+    ${block('Schlafdauer',schlaf,'h',1,null)}
+    ${block('Erholung',erh,'%',0,'rauf')}
+  </div>`;
+
+  // --- Therapietreue und Beschwerden ---
+  const tage=Object.keys(log).filter(k=>k>=von&&k<=HEUTE).sort();
+  let genommen=0,moeglich=0;
+  tage.forEach(k=>{const e=log[k];const m=Object.values(e.meds||{});genommen+=m.filter(Boolean).length;moeglich+=m.length;});
+  const quote=moeglich?Math.round(genommen/moeglich*100):null;
+  const hals=logReihe(e=>e.hals,von), bauch=logReihe(e=>e.bauch,von), stress=logReihe(e=>e.stress,von);
+  const halsTage=hals.filter(p=>p.v>0).length, bauchTage=bauch.filter(p=>p.v>0).length;
+  const kp=kurPhase();
+  const notizen=tage.filter(k=>(log[k].notiz||'').trim()).slice(-5).reverse();
+  html+=`<div class="card"><h2>💊 Therapietreue und Beschwerden <small>${tage.length} erfasste Tage</small></h2>
+    <div class="stat">
+      <div><b>${quote!=null?quote+' %':'–'}</b><span>Supplements genommen</span></div>
+      <div><b>${halsTage}</b><span>Tage mit Halsgefühl</span></div>
+      <div><b>${bauchTage}</b><span>Tage mit Bauchbeschwerden</span></div>
+      <div><b>${mittel(stress,1)}</b><span>Ø Stress 0–10</span></div>
+    </div>
+    ${kp?`<div class="banner info" style="margin-top:10px;font-size:13.5px"><b>Darmkur: Tag ${kp.tag} – ${kp.name}</b></div>`:''}
+    ${block('Halsgefühl (0–3)',hals,'',1,'runter')}
+    ${block('Bauchbeschwerden (0–3)',bauch,'',1,'runter')}
+    ${notizen.length?`<div style="margin-top:12px"><div class="lbl-sm">Letzte Notizen</div>${notizen.map(k=>`<div class="ent"><span class="d">${fmtDate(k).slice(0,6)}</span><span class="s">${esc(log[k].notiz)}</span></div>`).join('')}</div>`:''}
+  </div>`;
+
+  // --- Training und Belastung ---
+  let einheiten=0,minuten=0;
+  tage.forEach(k=>{const e=log[k];einheiten+=Object.values(e.training||{}).filter(Boolean).length;
+    minuten+=Object.values(e.trainingMin||{}).reduce((a,b)=>a+(+b||0),0);});
+  const wochen=Math.max(1,tage.length/7);
+  const woMin=reihe(whoop,t=>(t.workouts||[]).reduce((a,w)=>a+(w.minuten||0),0),von).filter(p=>p.v>0);
+  const strain=reihe(whoop,t=>t.strain,von);
+  const sportarten={};
+  Object.keys(whoop?.tage||{}).filter(k=>k>=von&&k<=HEUTE).forEach(k=>(whoop.tage[k].workouts||[]).forEach(w=>{sportarten[w.sport]=(sportarten[w.sport]||0)+1;}));
+  const topSport=Object.entries(sportarten).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  html+=`<div class="card"><h2>🏋️ Training und Belastung <small>${arztTage} Tage</small></h2>
+    <div class="stat">
+      <div><b>${dz((einheiten/wochen).toFixed(1))}</b><span>Einheiten je Woche</span></div>
+      <div><b>${minuten}</b><span>Minuten gesamt</span></div>
+      <div><b>${woMin.length}</b><span>Tage mit Workout (Uhr)</span></div>
+      <div><b>${mittel(strain,1)}</b><span>Ø Belastung 0–21</span></div>
+    </div>
+    ${topSport.length?`<div class="hint" style="margin-top:8px">Aufgezeichnet: ${topSport.map(([s,n])=>esc(s)+' ×'+n).join(' · ')}</div>`:''}
+    ${block('Tagesbelastung (WHOOP Strain)',strain,'',1,null)}
+  </div>
+  <div class="card"><div class="hint">Alle Werte stammen aus der eigenen Aufzeichnung: Withings-Waage, WHOOP-Uhr und den täglichen Einträgen in dieser App. Sie sind kein ärztlicher Befund und keine Diagnose. Stand ${new Date().toLocaleString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}.</div></div>`;
+  el.innerHTML=html;
+}
+
 /* ---------- TRAINING: frei wählbar aus allen Einheiten des Plans ----------
    Der Plan ordnet jede Einheit einem Wochentag zu. Gelebt wird selten nach Plan, deshalb
    ist die Zuordnung nur ein Vorschlag: für den Tag Geplantes steht oben, jede andere Einheit
@@ -917,6 +1068,7 @@ $('b-start').onclick=startBreath;$('b-stop').onclick=stopBreath;
 /* ---------- VERLAUF ---------- */
 function renderVerlauf(){
   renderKoerperVerlauf();
+  renderArzt();
   const keys=Object.keys(log).sort().slice(-30);
   const n=keys.length;
   const avg=(f)=>{const v=keys.map(k=>log[k][f]).filter(x=>x!=null);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):null};
@@ -1060,6 +1212,10 @@ function renderMehr(){
   $('whoop-stand').textContent=whoop?'Stand '+new Date(whoop.stand).toLocaleString('de-AT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
   $('whoop-status').textContent=whoop?wk.length+' Tage geladen ('+wk[0]+' bis '+wk[wk.length-1]+').':'Noch keine WHOOP-Werte. Am Laptop „node werkzeuge/whoop-abholen.js holen" ausführen, dann hier holen.';
 }
+$('arzt-zeitraum').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  arztTage=+b.dataset.tage;
+  $('arzt-zeitraum').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  renderArzt();});
 $('koerper-refresh').onclick=async()=>{const b=$('koerper-refresh');b.disabled=true;b.textContent='Hole …';await koerperLaden(false);b.disabled=false;b.textContent='🔄 Waagenwerte jetzt holen';renderMehr();renderHeute();};
 $('koerper-load').onclick=()=>$('koerper-file').click();
 $('koerper-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{uebernehmeKoerper(JSON.parse(r.result));toast('Körperwerte geladen ✓');renderMehr();renderHeute();}catch(e){toast('Nicht übernommen: '+(e.message||'ungültige Datei'));}};r.readAsText(f);ev.target.value='';};
@@ -1137,9 +1293,9 @@ function gotoPage(p){
   if(p!=='essen')stopScan();PAGES[p]();window.scrollTo(0,0);
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
-document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
+document.querySelectorAll('.tabs:not(.zeitraum)').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.09.10-21';
+const APP_VERSION='v2026.09.10-22';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 renderHeute();
 if(plan){whoopAuto();koerperAuto();}else if(whoop||koerper)renderHeute();
