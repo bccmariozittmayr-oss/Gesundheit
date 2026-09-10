@@ -34,7 +34,7 @@ function whoopDaten(stand,mitHeute){const tage={};for(let i=7;i>=(mitHeute?0:1);
   const st=await pg.locator('#whoop-status').innerText();out.push('Mehr-Status: '+st);if(!/7 Tage geladen/.test(st))fail.push('WHOOP nicht nachgeladen');
   await pg.locator('nav button[data-p=heute]').click();await pg.waitForTimeout(200);
   let card=(await pg.locator('#whoop-card').innerText()).replace(/\n/g,' | ');out.push('Heute (gestern-Stand): '+card.slice(0,260));
-  if(!/heute noch nicht bewertet/.test(card))fail.push('Gestern-Kennzeichnung fehlt');if(!/55 %/.test(card))fail.push('Recovery gestern (55) fehlt');
+  if(!/Stand gestern/.test(card))fail.push('Gestern-Kennzeichnung fehlt');if(!/55 %/.test(card))fail.push('Recovery gestern (55) fehlt');
   await pg.screenshot({path:path.join(OUT,'whoop-heute-alt.png'),fullPage:true});
   // Schlaf ins Protokoll übernommen?
   const schlafGestern=await pg.evaluate(k=>(JSON.parse(localStorage.getItem('gp_log'))[k]||{}).schlaf,tagVor(1));out.push('Schlaf gestern im Protokoll: '+schlafGestern+' (nur wenn Eintrag existierte)');

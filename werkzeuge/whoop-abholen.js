@@ -53,10 +53,15 @@ function speichereToken(t) {
   t.gueltig_bis = Date.now() + (t.expires_in || 3600) * 1000 - 60000;
   fs.writeFileSync(TOKEN_PFAD, JSON.stringify(t, null, 1));
 }
-async function tokenAnfrage(form) {
+async function tokenAnfrage(form, versuch = 1) {
   const body = new URLSearchParams({ ...form, client_id: brauche('WHOOP_CLIENT_ID'), client_secret: brauche('WHOOP_CLIENT_SECRET') });
   const r = await fetch(TOKEN_URL, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body });
   const txt = await r.text();
+  if (r.status >= 500 && versuch < 3) { // Serverfehler bei WHOOP: kurz warten und noch einmal
+    console.error(`WHOOP-Server antwortet mit ${r.status} – Versuch ${versuch + 1} von 3 in 5 Sekunden …`);
+    await new Promise(s => setTimeout(s, 5000));
+    return tokenAnfrage(form, versuch + 1);
+  }
   if (!r.ok) throw new Error(`Token-Anfrage fehlgeschlagen (${r.status}): ${txt.slice(0, 300)}`);
   return JSON.parse(txt);
 }
@@ -65,7 +70,15 @@ async function gueltigesToken() {
   if (!t) { console.error('Noch nicht angemeldet. Zuerst: node werkzeuge/whoop-abholen.js anmelden'); process.exit(1); }
   if (Date.now() < (t.gueltig_bis || 0)) return t.access_token;
   if (!t.refresh_token) { console.error('Token abgelaufen und kein Refresh-Token vorhanden. Bitte neu anmelden.'); process.exit(1); }
-  const neu = await tokenAnfrage({ grant_type: 'refresh_token', refresh_token: t.refresh_token, scope: 'offline' });
+  let neu;
+  try {
+    neu = await tokenAnfrage({ grant_type: 'refresh_token', refresh_token: t.refresh_token, scope: 'offline' });
+  } catch (e) {
+    console.error('Der WHOOP-Zugang ist abgelaufen und lässt sich nicht erneuern.');
+    console.error('Einmal am Laptop ausführen:  node werkzeuge/whoop-abholen.js anmelden');
+    console.error('(technische Meldung: ' + e.message + ')');
+    process.exit(2);
+  }
   if (!neu.refresh_token) neu.refresh_token = t.refresh_token;
   speichereToken(neu);
   return neu.access_token;

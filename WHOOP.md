@@ -20,8 +20,19 @@ Client-Secret, und das darf nicht in einer öffentlichen Web-App liegen.
 
 ## Täglich automatisch (Windows-Aufgabenplanung)
 
-Aufgabe anlegen, die `werkzeuge\whoop-taeglich.cmd` z.B. um 07:30 und 12:30 ausführt (Log: `%LOCALAPPDATA%\whoop-abholen.log`). WHOOP bewertet die Nacht kurz nach dem Aufwachen,
-ein zweiter Lauf mittags holt Nachzügler.
+Einmal ausführen: `werkzeuge\whoop-aufgabe-einrichten.cmd` (Doppelklick genügt). Das legt zwei tägliche Aufgaben an, die
+`werkzeuge\whoop-taeglich.cmd` um **07:30** und **12:30** ausführen. Der Lauf um 07:30 bringt die fertigen Werte des Vortags
+(Belastung, Workouts, Schlaf) und die Erholung von heute; 12:30 ist die zweite Chance, falls der Laptop früh aus war.
+Log: `%LOCALAPPDATA%\whoop-abholen.log`.
+
+Prüfen: `schtasks /query /tn "Gesundheit WHOOP frueh" /v /fo LIST`
+Entfernen: `schtasks /delete /tn "Gesundheit WHOOP frueh" /f` (und dasselbe für `Gesundheit WHOOP mittag`).
+
+### Wenn keine neuen Werte mehr kommen
+
+Die App sagt es selbst: Sind die WHOOP-Werte zwei Tage oder älter, steht auf „Heute" ein oranger Hinweis über der Karte.
+Dann ins Log sehen. Steht dort „Der WHOOP-Zugang ist abgelaufen", einmal `node werkzeuge/whoop-abholen.js anmelden`
+ausführen (Browser-Login bei WHOOP) – danach läuft die Automatik weiter.
 
 ## In der App
 

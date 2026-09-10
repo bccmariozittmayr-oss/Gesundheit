@@ -39,6 +39,11 @@ button{font:inherit;cursor:pointer}
 .btn.sec{background:var(--p2);color:var(--p)}.btn.ghost{background:transparent;color:var(--p);padding:6px 8px}.btn.sm{padding:7px 12px;font-size:13px}
 .btn.full{width:100%;margin-top:8px}
 .btn:disabled{opacity:.5}
+.tagnav{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:var(--r);padding:8px 10px;margin-bottom:14px}
+.tagnav .t{flex:1;text-align:center;line-height:1.25}
+.tagnav .t small{display:block;font-size:12.5px;color:var(--mut)}
+.tagnav.nachtrag{background:var(--warn2)}
+.tagnav.nachtrag .t small{color:inherit;opacity:.75}
 /* Checkliste */
 .slot{margin-bottom:10px}
 .slot-h{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 2px}
@@ -142,6 +147,12 @@ table.bf td:first-child{font-weight:600}
 
 <!-- ================= HEUTE ================= -->
 <section class="page on" id="p-heute">
+  <div class="tagnav" id="tagnav">
+    <button class="btn sec sm" id="tag-zurueck" title="Tag zurück">◀</button>
+    <div class="t"><b id="tag-name">Heute</b><small id="tag-datum"></small></div>
+    <button class="btn sec sm" id="tag-vor" title="Tag vor">▶</button>
+    <button class="btn sec sm" id="tag-heute">Heute</button>
+  </div>
   <div id="heute-banner"></div>
   <div class="card">
     <h2>💊 Supplements <small id="med-count"></small></h2>
@@ -381,7 +392,9 @@ let plan=LS.get('gp_plan',null);
 let whoop=LS.get('gp_whoop',null); // Tageswerte von WHOOP (aus whoop.enc.json oder whoop.json)
 let log=LS.get('gp_log',{});
 let set=LS.get('gp_set',{times:{},atimes:{},notif:false,kurStart:null,medOverride:{}});
-let TK=todayKey();
+let HEUTE=todayKey();      // der echte heutige Tag
+let TK=HEUTE;              // der angezeigte Tag – beim Nachtragen ein früherer
+const NACHTRAG_MAX=30;     // so weit zurück darf nachgetragen werden
 
 /* ---------- Migration aus der alten App (localStorage 'hpro') ---------- */
 (function migrate(){
@@ -473,12 +486,14 @@ async function entschluessele(key,f){return JSON.parse(new TextDecoder().decode(
 function whoopFehler(w){if(!w||typeof w!=='object'||!w.tage||typeof w.tage!=='object')return 'tage fehlt';return null;}
 function uebernehmeWhoop(w){const err=whoopFehler(w);if(err)throw new Error(err);whoop=w;LS.set('gp_whoop',whoop);
   // Schlaf, Sport und Gewicht ins Protokoll übernehmen – nur dort, wo noch nichts von Hand eingetragen ist (Quelle wird vermerkt)
-  const fuelle=(k,t)=>{const e=log[k];if(!e)return;e.auto=e.auto||{};
-    if(t.schlaf?.stunden&&(e.schlaf==null||e.auto.schlaf)){e.schlaf=Math.round(t.schlaf.stunden*2)/2;e.auto.schlaf=true;}
-    if((t.workouts||[]).length&&!e.sport&&!e.auto.sportAus){e.sport=true;e.auto.sport=true;}
-    if(w.koerper?.gewicht&&e.gewicht==null){e.gewicht=w.koerper.gewicht;e.auto.gewicht=true;}};
-  Object.entries(w.tage).forEach(([k,t])=>{if(log[k])fuelle(k,t);});
-  if(w.tage[TK]){entry(TK);fuelle(TK,w.tage[TK]);}saveLog();}
+  Object.keys(w.tage).forEach(k=>{if(log[k])whoopInsProtokoll(k);});
+  if(w.tage[HEUTE]){entry(HEUTE);whoopInsProtokoll(HEUTE);}saveLog();}
+function whoopInsProtokoll(k){ // Schlaf, Sport und Gewicht aus WHOOP in den Tag k übernehmen (Handeingabe gewinnt)
+  const t=whoop?.tage?.[k],e=log[k];if(!t||!e)return;e.auto=e.auto||{};
+  if(t.schlaf?.stunden&&(e.schlaf==null||e.auto.schlaf)){e.schlaf=Math.round(t.schlaf.stunden*2)/2;e.auto.schlaf=true;}
+  if((t.workouts||[]).length&&!e.sport&&!e.auto.sportAus){e.sport=true;e.auto.sport=true;}
+  if(whoop.koerper?.gewicht&&e.gewicht==null){e.gewicht=whoop.koerper.gewicht;e.auto.gewicht=true;}
+}
 let whoopLetzterCheck=0;
 async function whoopLaden(leise){ // holt whoop.enc.json und entschlüsselt sie mit dem gespeicherten Schlüssel
   const key=await KDB.get();if(!key){if(!leise)toast('Zuerst unter „Mehr" den Plan entsperren');return false;}
@@ -511,12 +526,16 @@ function whoopDetails(t,k){ // alle Werte eines Tages, aufklappbar
 const kp2=g=>g==null?null:Math.round(g*100)+' cm';
 function renderWhoop(){
   const w=whoopHeute();const el=$('whoop-card');
-  if(!w){el.innerHTML=whoop?'<div class="card"><h2>❤️ WHOOP</h2><div class="empty">Noch keine Werte für heute.</div></div>':'';return;}
+  if(!w){el.innerHTML=whoop?'<div class="card"><h2>❤️ WHOOP</h2><div class="empty">'+(TK===HEUTE?'Noch keine Werte für heute.':'Für diesen Tag hat WHOOP keine Werte.')+'</div></div>':'';return;}
   const t=w.t,s=t.schlaf;const [y,m,d]=w.k.split('-');
   const rat=t.recovery==null?'':t.recovery>=67?'Grünes Licht – Training laut Plan.':t.recovery>=34?'Mittlere Erholung – Zone A/B, keine Spitzen.':'Wenig erholt – heute nur Zone A oder Pause, früh ins Bett.';
   const big=(v,l,cls)=>`<div><b${cls?' style="color:var(--'+cls+')"':''}>${v}</b><span>${l}</span></div>`;
   const cls=recCls(t.recovery);
-  el.innerHTML=`<div class="card"><h2>❤️ WHOOP ${w.alt?'<small style="color:var(--warn)">Stand '+d+'.'+m+'. – heute noch nicht bewertet</small>':'<small>heute</small>'}</h2>
+  const alter=daysBetween(w.k,TK); // 0 = Werte des angezeigten Tages, sonst so viele Tage älter
+  const veraltet=alter>=2;
+  const marke=alter===0?(TK===HEUTE?'heute':fmtDate(TK)):alter===1?'Stand gestern, '+d+'.'+m+'.':'Stand '+d+'.'+m+'. – '+alter+' Tage alt';
+  el.innerHTML=`<div class="card"><h2>❤️ WHOOP <small${veraltet?' style="color:var(--warn)"':''}>${marke}</small></h2>
+    ${veraltet?'<div class="banner warn" style="margin:0 0 8px;font-size:13px">WHOOP liefert seit '+alter+' Tagen nichts Neues. Am Laptop <code>node werkzeuge/whoop-abholen.js holen --push</code> ausführen; meldet er einen Token-Fehler, einmal <code>… anmelden</code>.</div>':''}
     <div class="stat">${big(t.recovery!=null?t.recovery+' %':'–','Erholung',cls)}${big(dz(t.hrv),'HRV ms')}${big(t.ruhepuls??'–','Ruhepuls')}${big(s?dz(s.stunden.toFixed(1))+' h':'–','Schlaf'+(s?.leistung?' · '+s.leistung+' %':''))}${big(t.strain!=null?dz(t.strain.toFixed(1)):'–','Belastung 0–21')}${big(t.workouts?.length||0,'Workouts')}</div>
     ${rat?`<div class="banner ${cls==='ok'?'info':cls}" style="margin:8px 0 0;font-size:13.5px">${rat}</div>`:''}
     ${s||t.spo2!=null?`<div class="hint" style="margin-top:8px">${[s?'Tief '+dz(s.tief.toFixed(1))+' h · REM '+dz(s.rem.toFixed(1))+' h · '+s.stoerungen+' Störungen':null,s?.bedarf?'Bedarf '+dz(s.bedarf.toFixed(1))+' h':null,s?.atemfrequenz?'Atmung '+dz(s.atemfrequenz)+'/min':null,t.spo2!=null?'SpO₂ '+dz(t.spo2)+' %':null,t.hauttemp!=null?'Haut '+dz(t.hauttemp)+' °C':null].filter(Boolean).join(' · ')}</div>`:''}
@@ -529,7 +548,7 @@ function renderWhoopVerlauf(){
   const avg=f=>{const v=keys.map(k=>f(T(k))).filter(x=>x!=null&&!isNaN(x));return v.length?v.reduce((a,b)=>a+b,0)/v.length:null;};
   const f1=x=>x==null?'–':dz(x.toFixed(1));const f0=x=>x==null?'–':Math.round(x);
   const aR=avg(t=>t.recovery),aH=avg(t=>t.hrv),aP=avg(t=>t.ruhepuls),aS=avg(t=>t.schlaf?.stunden),aB=avg(t=>t.strain);
-  const wk=mondayOf(TK);const wkMin=keys.filter(k=>k>=wk).reduce((a,k)=>a+(T(k).workouts||[]).reduce((x,w)=>x+(w.minuten||0),0),0);
+  const wk=mondayOf(HEUTE);const wkMin=keys.filter(k=>k>=wk).reduce((a,k)=>a+(T(k).workouts||[]).reduce((x,w)=>x+(w.minuten||0),0),0);
   const rows=keys.slice().reverse().slice(0,14).map(k=>{const t=T(k);const [y,m,d]=k.split('-');const s=t.schlaf;
     return `<div class="ent"><span class="d">${d}.${m}.</span><span class="s"><span class="badge ${recCls(t.recovery)}">${t.recovery!=null?t.recovery+' %':'–'}</span> HRV ${f0(t.hrv)} · Puls ${f0(t.ruhepuls)} · Schlaf ${s?f1(s.stunden)+' h':'–'} · Belastung ${f1(t.strain)}${(t.workouts||[]).length?'<br>'+t.workouts.map(w=>esc(w.sport)+' '+w.minuten+' Min.'+(w.pulsAvg?' Ø '+w.pulsAvg:'')+(w.km?' · '+f1(w.km)+' km':'')).join(' · '):''}</span></div>`;}).join('');
   el.innerHTML=`<div class="card"><h2>❤️ WHOOP <small>letzte ${keys.length} Tage</small></h2>
@@ -539,9 +558,11 @@ function renderWhoopVerlauf(){
 
 /* ---------- HEUTE ---------- */
 function renderHeute(){
-  $('hd-title').textContent='Heute';
-  $('hd-sub').textContent=new Date().toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long'});
-  const e=entry(TK);
+  $('hd-title').textContent=TK===HEUTE?'Heute':'Nachtrag';
+  $('hd-sub').textContent=tagLang(TK);
+  renderTagnav();
+  const neu=!log[TK];const e=entry(TK);
+  if(neu){whoopInsProtokoll(TK);saveLog();} // beim ersten Öffnen eines Tages die WHOOP-Werte übernehmen
   // Banner
   let b='';
   if(!plan)b='<div class="banner warn">Noch kein Plan. Unter <b>Mehr → Plan entsperren</b> dein Passwort eingeben – dann erscheinen hier deine Präparate.</div>';
@@ -554,7 +575,7 @@ function renderHeute(){
   $('heute-banner').innerHTML=b;
   renderWhoop();
   // Training heute
-  const wd=String(new Date().getDay());const tr=(plan?.training?.woche||{})[wd]||[];
+  const wd=String(new Date(TK+'T12:00:00').getDay());const tr=(plan?.training?.woche||{})[wd]||[];
   $('train-card').style.display=plan?'':'none';
   $('train-list').innerHTML=tr.length?tr.map((t,i)=>{const k='t'+i;const d=!!(e.training||{})[k];const min=(e.trainingMin||{})[k]||'';return `<div class="chk ${d?'done':''}" data-k="${k}"><div class="box">${d?'✓':''}</div><div class="lbl"><b>${esc(t.name)}</b><span>${[t.zeit,t.dauer].filter(Boolean).map(esc).join(' · ')}${t.info?' – '+esc(t.info):''}</span></div><input type="number" class="tmin" data-k="${k}" value="${min}" placeholder="Min." min="0" style="width:70px"></div>`+pulsKarte(t)}).join('')+'<div class="hint" style="margin-top:6px">Dazu 5× am Tag 10–20 Sekunden Puls hochjagen (Stiegen, kurzer Sprint).</div>':'<div class="empty">Kein Training geplant – 10.000 Schritte reichen heute.</div>'+pulsKarte({zone:'A',sportart:'auto'});
   $('train-list').querySelectorAll('.chk').forEach(el=>el.onclick=ev=>{if(ev.target.classList.contains('tmin'))return;e.training=e.training||{};e.training[el.dataset.k]=!e.training[el.dataset.k];if(e.training[el.dataset.k])e.sport=true;saveLog();renderHeute();});
@@ -599,6 +620,27 @@ $('notiz').oninput=()=>{entry(TK).notiz=$('notiz').value;saveLog();};
 $('kaffee-plus').onclick=()=>{const e=entry(TK);e.kaffee=(e.kaffee||0)+1;saveLog();renderHeute();if(e.kaffee>(plan?.kaffee?.max||3))toast('Über dem Kaffee-Limit');};
 $('kaffee-minus').onclick=()=>{const e=entry(TK);e.kaffee=Math.max(0,(e.kaffee||0)-1);saveLog();renderHeute();};
 
+/* ---------- Tageswahl: heute oder ein Nachtrag ---------- */
+const tagLang=k=>new Date(k+'T12:00:00').toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long'});
+function renderTagnav(){
+  const diff=daysBetween(TK,HEUTE),heute=diff===0;
+  const name=heute?'Heute':diff===1?'Gestern':diff===2?'Vorgestern':new Date(TK+'T12:00:00').toLocaleDateString('de-AT',{weekday:'long'});
+  $('tagnav').className='tagnav'+(heute?'':' nachtrag');
+  $('tag-name').textContent=(heute?'':'📝 Nachtrag · ')+name;
+  $('tag-datum').textContent=heute?tagLang(TK):fmtDate(TK)+' – Einträge zählen für diesen Tag';
+  $('tag-zurueck').disabled=diff>=NACHTRAG_MAX;
+  $('tag-vor').disabled=heute;
+  $('tag-heute').style.display=heute?'none':'';
+}
+function tagWechsel(d){const k=addDays(TK,d);if(k>HEUTE||daysBetween(k,HEUTE)>NACHTRAG_MAX)return;TK=k;renderHeute();}
+$('tag-zurueck').onclick=()=>tagWechsel(-1);
+$('tag-vor').onclick=()=>tagWechsel(1);
+$('tag-heute').onclick=()=>{TK=HEUTE;renderHeute();};
+function tagesWechselPruefen(){ // um Mitternacht HEUTE nachziehen; die Ansicht nur, wenn sie auf „heute" stand
+  const nk=todayKey();if(nk===HEUTE)return;
+  const warHeute=TK===HEUTE;HEUTE=nk;if(warHeute)TK=nk;renderHeute();
+}
+
 /* ---------- ESSEN: Ampel ---------- */
 function persMeiden(){ return (plan?.persoenlich?.meiden)||[]; }
 function foodTags(item){ // persönliche Marker aus dem Plan
@@ -626,7 +668,7 @@ const DAYS=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Son
 function mondayOf(k){const d=new Date(k+'T00:00:00');const wd=(d.getDay()+6)%7;d.setDate(d.getDate()-wd);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function pick(pool,used,filter){let c=pool.filter(r=>!used.includes(r.id)&&(!filter||filter(r)));if(!c.length)c=pool.filter(r=>!filter||filter(r));if(!c.length)return null;return c[Math.floor(Math.random()*c.length)].id}
 function genWeek(){
-  const w={monday:mondayOf(TK),days:[]};const used=[];let meat=0;
+  const w={monday:mondayOf(HEUTE),days:[]};const used=[];let meat=0;
   for(let i=0;i<7;i++){
     const fx=plan?.fruehstueckFix;const f=(fx&&REZ(fx).id===fx&&rezOk(REZ(fx)))?fx:pick(pool('f'),used);if(!plan?.fruehstueckFix)used.push(f);
     const mFilter=r=>!(r.fleisch&&meat>=2);
@@ -642,11 +684,11 @@ const REZ=id=>REZEPTE.find(r=>r.id===id)||LEER;
 const rezOk=r=>r.id!=null&&!r.zutaten.some(z=>persMeiden().some(p=>(p.treffer||[]).some(t=>z.n.toLowerCase().includes(t.toLowerCase()))));
 const pool=t=>REZEPTE.filter(r=>r.typ===t&&rezOk(r));
 let week=LS.get('gp_week',null);
-function ensureWeek(){ if(!week||week.monday!==mondayOf(TK)){week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});} }
+function ensureWeek(){ if(!week||week.monday!==mondayOf(HEUTE)){week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});} }
 function renderWoche(){
   ensureWeek();
   $('woche-info').textContent='ab '+fmtDate(week.monday)+' · Fleisch '+week.days.flatMap(x=>[x.f,x.m,x.a]).filter(id=>id&&REZ(id).fleisch).length+'×';
-  const todayIdx=daysBetween(week.monday,TK);
+  const todayIdx=daysBetween(week.monday,HEUTE);
   $('woche').innerHTML=week.days.map((d,i)=>`<div class="day"><h3>${DAYS[i]}${i===todayIdx?' · heute':''}</h3>${['f','m','a'].map(t=>{const r=REZ(d[t]);return `<div class="meal"><span class="k">${{f:'Früh',m:'Mittag',a:'Abend'}[t]}</span><div class="n">${r.name} ${(r.tags||[]).map(x=>`<span class="badge" style="font-size:10px">${{schnell:'⚡ schnell',tm:'TM',buero:'🏢 Büro',vorkochen:'🥡 vorkochen'}[x]||x}</span>`).join(' ')}<small>${r.zutaten.map(z=>z.n).join(', ')}</small>${r.tipp?`<small style="color:var(--p)">👨‍🍳 ${r.tipp}</small>`:''}</div><button data-d="${i}" data-t="${t}">↻</button></div>`}).join('')}</div>`).join('');
   $('woche').querySelectorAll('.meal button').forEach(b=>b.onclick=()=>{const di=+b.dataset.d,t=b.dataset.t;const d=week.days[di];const used=week.days.flatMap(x=>[x.f,x.m,x.a]);const meat=week.days.flatMap((x,i)=>['f','m','a'].filter(tt=>!(i===di&&tt===t)).map(tt=>x[tt])).filter(id=>id&&REZ(id).fleisch).length;const nx=pick(pool(t),used,r=>!(r.fleisch&&meat>=2));if(nx===null){toast('Kein weiteres passendes Rezept');return;}d[t]=nx;LS.set('gp_week',week);renderWoche();renderEinkauf();});
 }
@@ -704,7 +746,7 @@ function startBreath(){
   bTimer=setInterval(()=>{left--;if(left<=0){si++;if(si>=steps.length){si=0;round++;if(round>curEx.runden){stopBreath();$('orb').innerHTML='Fertig 🎉<small>'+curEx.runden+' Runden</small>';$('bstat').textContent='Gut gemacht';markAtem();return;}}left=steps[si].s;show();}else{$('orb').innerHTML=steps[si].n+'<small>'+left+'</small>';}},1000);
 }
 function markAtem(){ // erste noch offene Atem-Position des Tages abhaken
-  const e=entry(TK);const s=ATEM_SLOTS.find(x=>!e.atmen[x.k]);if(s){e.atmen[s.k]=true;saveLog();toast('Atemübung eingetragen ✓');}
+  const e=entry(HEUTE);const s=ATEM_SLOTS.find(x=>!e.atmen[x.k]);if(s){e.atmen[s.k]=true;saveLog();toast('Atemübung eingetragen ✓');}
 }
 $('b-start').onclick=startBreath;$('b-stop').onclick=stopBreath;
 
@@ -715,7 +757,7 @@ function renderVerlauf(){
   const avg=(f)=>{const v=keys.map(k=>log[k][f]).filter(x=>x!=null);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):null};
   const medQ=(()=>{let t=0,d=0;keys.forEach(k=>{const pl=log[k].medsPlanned;if(!pl)return;const m=log[k].meds||{};pl.forEach(key=>{t++;if(m[key])d++;})});return t?Math.round(d/t*100):null})();
   const halsFree=keys.filter(k=>log[k].hals===0).length;
-  const wk=mondayOf(TK);const wkKeys=Object.keys(log).filter(k=>k>=wk&&k<=TK);const trN=wkKeys.reduce((a,k)=>a+Object.values(log[k].training||{}).filter(Boolean).length,0);const trMin=wkKeys.reduce((a,k)=>a+Object.values(log[k].trainingMin||{}).reduce((x,y)=>x+y,0),0);const atemN=wkKeys.reduce((a,k)=>a+Object.values(log[k].atmen||{}).filter(Boolean).length,0);
+  const wk=mondayOf(HEUTE);const wkKeys=Object.keys(log).filter(k=>k>=wk&&k<=HEUTE);const trN=wkKeys.reduce((a,k)=>a+Object.values(log[k].training||{}).filter(Boolean).length,0);const trMin=wkKeys.reduce((a,k)=>a+Object.values(log[k].trainingMin||{}).reduce((x,y)=>x+y,0),0);const atemN=wkKeys.reduce((a,k)=>a+Object.values(log[k].atmen||{}).filter(Boolean).length,0);
   $('stats').innerHTML=`<div><b>${trN}</b><span>Trainings diese Woche${trMin?' · '+trMin+' Min.':''}</span></div><div><b>${atemN}/${wkKeys.length*3}</b><span>Atemübungen diese Woche</span></div><div><b>${n}</b><span>Tage erfasst</span></div><div><b>${halsFree}</b><span>Tage ohne Halsgefühl</span></div><div><b>${avg('hals')!=null?avg('hals').toFixed(1):'–'}</b><span>Ø Hals (0–3)</span></div><div><b>${medQ!=null?medQ+'%':'–'}</b><span>Supplements genommen</span></div>`;
   // Chart
   const c=$('chart');const dpr=window.devicePixelRatio||1;const W=c.clientWidth||320,H=200;c.width=W*dpr;c.height=H*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);
@@ -832,7 +874,7 @@ function renderMehr(){
   $('plan-status').innerHTML=plan?`✅ Plan geladen (${plan.praeparate.length} Präparate, ${esc(plan.quelle||'')})`:'❌ Kein Plan geladen.';
   $('kur-start').value=set.kurStart||'';
   const kp=kurPhase();
-  $('kur-info').textContent=set.kurStart?(kp?`Heute: Tag ${kp.tag} – ${kp.name}. Detox-Shakes: ${fmtDate(addDays(set.kurStart,2))}–${fmtDate(addDays(set.kurStart,5))}, Präparate wieder ab ${fmtDate(addDays(set.kurStart,6))}.`:`Startet am ${fmtDate(set.kurStart)} (in ${daysBetween(TK,set.kurStart)} Tagen). Vorher: Kaffee langsam reduzieren, Darmdetox+ und Präparate besorgen.`):'Noch nicht gestartet.';
+  $('kur-info').textContent=set.kurStart?(kp?`Heute: Tag ${kp.tag} – ${kp.name}. Detox-Shakes: ${fmtDate(addDays(set.kurStart,2))}–${fmtDate(addDays(set.kurStart,5))}, Präparate wieder ab ${fmtDate(addDays(set.kurStart,6))}.`:`Startet am ${fmtDate(set.kurStart)} (in ${daysBetween(HEUTE,set.kurStart)} Tagen). Vorher: Kaffee langsam reduzieren, Darmdetox+ und Präparate besorgen.`):'Noch nicht gestartet.';
   $('notif-sw').classList.toggle('on',!!set.notif);
   $('notif-info').textContent=('Notification' in window)?(Notification.permission==='denied'?'Vom Browser blockiert – in den Seiteneinstellungen erlauben.':'Nur solange die App/der Browser offen ist. Für verlässliche Erinnerungen: Kalender-Export unten.'):'Dieser Browser unterstützt keine Benachrichtigungen.';
   $('times').innerHTML=SLOTS.map(s=>`<div class="set"><div class="l">${s.name}</div><input type="time" data-s="${s.k}" value="${set.times[s.k]||s.t}"></div>`).join('')+ATEM_SLOTS.map(s=>`<div class="set"><div class="l">🌬️ ${s.name.split(':')[0]}<small>${s.name.split(':')[1]}</small></div><input type="time" data-a="${s.k}" value="${set.atimes[s.k]||s.t}"></div>`).join('');
@@ -878,7 +920,7 @@ $('notif-sw').onclick=async()=>{
   if(p==='granted'){set.notif=true;saveSet();toast('Erinnerungen aktiv (solange App offen)');}else toast('Keine Erlaubnis erteilt');
   renderMehr();
 };
-$('exp').onclick=()=>{if(!confirm('Die Datei enthält deine Gesundheitsdaten (Symptome, Gewicht, Notizen). Nur an einem sicheren Ort ablegen.'))return;download('gesundheit-protokoll-'+TK+'.json',JSON.stringify({log,set,week},null,1),'application/json');};
+$('exp').onclick=()=>{if(!confirm('Die Datei enthält deine Gesundheitsdaten (Symptome, Gewicht, Notizen). Nur an einem sicheren Ort ablegen.'))return;download('gesundheit-protokoll-'+HEUTE+'.json',JSON.stringify({log,set,week},null,1),'application/json');};
 $('imp').onclick=()=>$('imp-file').click();
 $('imp-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.log){Object.assign(log,d.log);saveLog();}if(d.set){set={...set,...d.set};saveSet();}toast('Wiederhergestellt ✓');renderMehr();}catch(e){toast('Datei nicht lesbar');}};r.readAsText(f);ev.target.value='';};
 function download(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);}
@@ -889,7 +931,7 @@ $('ics').onclick=()=>{
   const slotsAll=new Set();plan.praeparate.forEach(m=>m.phasen.forEach(p=>['nu','m','mi','a','n'].forEach(s=>{if(p[s]>0)slotsAll.add(s)})));
   const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Gesundheit App//DE','CALSCALE:GREGORIAN'];
   const ie=s=>String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');const stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
-  const ev=(uid,time,title,desc)=>{const [h,mi]=time.split(':');const d=TK.replace(/-/g,'');lines.push('BEGIN:VEVENT','UID:'+uid+'@gesundheit-app','DTSTAMP:'+stamp,'DTSTART:'+d+'T'+h+mi+'00','DURATION:PT10M','RRULE:FREQ=DAILY','SUMMARY:'+ie(title),'DESCRIPTION:'+ie(desc),'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:'+ie(title),'END:VALARM','END:VEVENT');};
+  const ev=(uid,time,title,desc)=>{const [h,mi]=time.split(':');const d=HEUTE.replace(/-/g,'');lines.push('BEGIN:VEVENT','UID:'+uid+'@gesundheit-app','DTSTAMP:'+stamp,'DTSTART:'+d+'T'+h+mi+'00','DURATION:PT10M','RRULE:FREQ=DAILY','SUMMARY:'+ie(title),'DESCRIPTION:'+ie(desc),'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:'+ie(title),'END:VALARM','END:VEVENT');};
   SLOTS.forEach(s=>{if(!slotsAll.has(s.k))return;ev('med-'+s.k,set.times[s.k]||s.t,'💊 '+s.name,'Präparate laut Plan – Details in der App.');});
   ATEM_SLOTS.forEach(s=>ev('atem-'+s.k,set.atimes[s.k]||s.t,'🌬️ '+s.name,'Atemübung – App öffnen für den geführten Ablauf.'));
   lines.push('END:VCALENDAR');
@@ -901,14 +943,15 @@ $('ics').onclick=()=>{
 function checkReminders(){
   if(!set.notif||Notification.permission!=='granted')return;
   const now=new Date();const hm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-  const fired=LS.get('gp_fired',{});const e=entry(TK);
-  const meds=medsToday();
-  const fire=(key,title,body)=>{if(fired[TK+key])return;fired[TK+key]=1;LS.set('gp_fired',fired);navigator.serviceWorker?.ready.then(r=>r.showNotification(title,{body,icon:'icon-192.png',tag:key})).catch(()=>new Notification(title,{body}));};
+  const fired=LS.get('gp_fired',{});const e=entry(HEUTE);
+  const merk=TK;TK=HEUTE; // Erinnerungen betreffen immer den heutigen Tag, auch während eines Nachtrags
+  const meds=medsToday();TK=merk;
+  const fire=(key,title,body)=>{if(fired[HEUTE+key])return;fired[HEUTE+key]=1;LS.set('gp_fired',fired);navigator.serviceWorker?.ready.then(r=>r.showNotification(title,{body,icon:'icon-192.png',tag:key})).catch(()=>new Notification(title,{body}));};
   SLOTS.forEach(s=>{const t=set.times[s.k]||s.t;if(hm<t)return;const ms=meds.filter(m=>m.slot===s.k&&!e.meds[m.id+'_'+m.slot]&&!m.paused);if(ms.length)fire('m'+s.k,'💊 '+s.name,ms.length+' Präparat'+(ms.length>1?'e':'')+' – tippen für Details');});
   ATEM_SLOTS.forEach(s=>{const t=set.atimes[s.k]||s.t;if(hm>=t&&!e.atmen[s.k])fire('a'+s.k,'🌬️ Atemübung',s.name);});
 }
-setInterval(()=>{const nk=todayKey();if(nk!==TK){TK=nk;renderHeute();}checkReminders();},30000);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)stopScan();if(!document.hidden){const nk=todayKey();if(nk!==TK){TK=nk;renderHeute();}checkReminders();whoopAuto();}});
+setInterval(()=>{tagesWechselPruefen();checkReminders();},30000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopScan();if(!document.hidden){tagesWechselPruefen();checkReminders();whoopAuto();}});
 function whoopAuto(){if(!navigator.onLine||Date.now()-whoopLetzterCheck<30*60000)return;const alt=whoop?.stand;whoopLaden(true).then(ok=>{if(ok&&whoop?.stand!==alt)renderHeute();});}
 
 /* ---------- Navigation ---------- */
@@ -917,13 +960,13 @@ const TITLES={heute:'Heute',essen:'Essen',atmen:'Atmen',verlauf:'Verlauf',mehr:'
 function gotoPage(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.toggle('on',x.id==='p-'+p));
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
-  $('hd-title').textContent=TITLES[p];$('hd-sub').textContent=p==='heute'?new Date().toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long'}):'';
+  $('hd-title').textContent=TITLES[p];$('hd-sub').textContent=p==='heute'?tagLang(TK):'';
   if(p!=='essen')stopScan();PAGES[p]();window.scrollTo(0,0);
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
 document.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.09.08-18';
+const APP_VERSION='v2026.09.10-19';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 renderHeute();
 if(plan)whoopAuto();else if(whoop)renderHeute();
@@ -933,7 +976,7 @@ if(plan)whoopAuto();else if(whoop)renderHeute();
     const [pl,pr,wd]=await Promise.all([fetch('mein-plan.demo.json?v='+Date.now()).then(r=>r.json()),fetch('demo-protokoll.json?v='+Date.now()).then(r=>r.json()),fetch('whoop.demo.json?v='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)]);
     uebernehmePlan(pl); log={};Object.assign(log,pr.log||{});saveLog(); if(pr.set){set={...set,...pr.set};saveSet();}
     if(wd){ // Demo-WHOOP-Tage so verschieben, dass der letzte Tag = heute ist
-      const ks=Object.keys(wd.tage).sort();const shift=daysBetween(ks[ks.length-1],TK);const t2={};ks.forEach(k=>{const d=new Date(k+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+shift);t2[d.toISOString().slice(0,10)]=wd.tage[k];});
+      const ks=Object.keys(wd.tage).sort();const shift=daysBetween(ks[ks.length-1],HEUTE);const t2={};ks.forEach(k=>{const d=new Date(k+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+shift);t2[d.toISOString().slice(0,10)]=wd.tage[k];});
       wd.tage=t2;wd.stand=new Date().toISOString();uebernehmeWhoop(wd);}
     history.replaceState(null,'',location.pathname); renderHeute();renderMehr(); toast('Demo geladen ✓'); }
   catch(e){toast('Demo nicht geladen: '+(e.message||e));} })();
