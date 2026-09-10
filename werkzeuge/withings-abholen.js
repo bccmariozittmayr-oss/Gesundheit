@@ -72,10 +72,10 @@ function brauche(k) {
 
 // ---------- Protokoll ----------
 function logDateiAn() {
-  const datei = path.join(process.env.LOCALAPPDATA || os.tmpdir(), 'withings-abholen.log');
+  const datei = path.join(process.env.LOCALAPPDATA || os.tmpdir(), 'messwerte-abruf.log');
   const schreib = (art, args) => {
     const zeit = new Date().toLocaleString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const txt = zeit + (art === 'err' ? ' FEHLER ' : ' ') + args.map(a => typeof a === 'string' ? a : require('util').inspect(a)).join(' ') + String.fromCharCode(10);
+    const txt = zeit + ' [Withings]' + (art === 'err' ? ' FEHLER ' : ' ') + args.map(a => typeof a === 'string' ? a : require('util').inspect(a)).join(' ') + String.fromCharCode(10);
     try { fs.appendFileSync(datei, txt); } catch (e) { /* Log darf den Lauf nie stoppen */ }
   };
   const log = console.log.bind(console), err = console.error.bind(console);

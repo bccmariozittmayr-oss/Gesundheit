@@ -110,13 +110,28 @@ function pruefen() {
   if (!args.length) console.log('  Holt:                    (keine Aktion hinterlegt!)');
   args.forEach(a => console.log('  Holt:                    ' + path.basename(a[1]) + a[2] +
     (fs.existsSync(a[1]) ? '' : '   <-- DATEI FEHLT!')));
-  const logDatei = path.join(process.env.LOCALAPPDATA || os.tmpdir(), 'whoop-abholen.log');
-  if (!fs.existsSync(logDatei)) console.log('  Log:                     noch keines vorhanden');
-  else {
-    const zeilen = fs.readFileSync(logDatei, 'utf8').trim().split(String.fromCharCode(10)).filter(Boolean);
-    console.log('  Letzte Zeile im Log:     ' + (zeilen[zeilen.length - 1] || '(leer)'));
-  }
+  logPruefen();
   return true;
+}
+
+// Die Aufgabenplanung bewertet nur die LETZTE Aktion. Scheitert der erste Abruf und der
+// zweite laeuft durch, meldet Windows trotzdem "erfolgreich" - das hat am 10.09.2026 einen
+// echten Fehler verdeckt. Deshalb wird zusaetzlich das Protokoll ausgewertet.
+function logPruefen() {
+  const logDatei = path.join(process.env.LOCALAPPDATA || os.tmpdir(), 'messwerte-abruf.log');
+  if (!fs.existsSync(logDatei)) { console.log('  Protokoll:               noch keines vorhanden'); return; }
+  const zeilen = fs.readFileSync(logDatei, 'utf8').trim().split(String.fromCharCode(10)).filter(Boolean);
+  if (!zeilen.length) { console.log('  Protokoll:               leer'); return; }
+  // Der letzte Lauf: alle Zeilen ab dem letzten "Hole ..."-Beginn der jeweiligen Quelle
+  const letzterBeginn = zeilen.map((z, i) => /Hole (WHOOP|Withings)/.test(z) ? i : -1).filter(i => i >= 0).slice(-2)[0];
+  const letzter = letzterBeginn >= 0 ? zeilen.slice(letzterBeginn) : zeilen.slice(-20);
+  const fehler = letzter.filter(z => z.includes(' FEHLER '));
+  console.log('  Letzter Eintrag:         ' + zeilen[zeilen.length - 1]);
+  if (!fehler.length) { console.log('  Fehler im letzten Lauf:  keine'); return; }
+  const quellen = [...new Set(fehler.map(z => (/\[(WHOOP|Withings)\]/.exec(z) || [, '?'])[1]))];
+  console.log('  Fehler im letzten Lauf:  JA – bei ' + quellen.join(' und '));
+  fehler.slice(0, 3).forEach(z => console.log('      ' + z.slice(0, 150)));
+  console.log('  Achtung: Windows meldet den Lauf trotzdem als erfolgreich, weil es nur die letzte Aktion bewertet.');
 }
 
 function entfernen(nurAlte) {
@@ -150,7 +165,7 @@ try {
   }
   console.log(`Aufgabe "${NAME}" angelegt.\n`);
   pruefen();
-  console.log('\nProtokoll der Laeufe: ' + path.join(process.env.LOCALAPPDATA || os.tmpdir(), 'whoop-abholen.log'));
+  console.log('\nProtokoll der Laeufe: ' + path.join(process.env.LOCALAPPDATA || os.tmpdir(), 'messwerte-abruf.log'));
   console.log('Rueckgaengig:         node werkzeuge/tagesabruf-einrichten.js entfernen');
 } catch (e) {
   const txt = (e.stderr || e.stdout || '').toString().trim() || e.message;
