@@ -32,6 +32,10 @@ const SKRIPTE = [
   { name: 'Withings', datei: path.join(__dirname, 'withings-abholen.js') },
 ];
 const NODE = process.execPath;
+// node.exe ist ein Konsolenprogramm: direkt gestartet oeffnet die Aufgabenplanung bei jedem
+// Lauf ein schwarzes Fenster, das sich in den Vordergrund draengt. conhost.exe --headless
+// (Windows-Bordmittel) startet es ohne Fenster.
+const OHNE_FENSTER = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'conhost.exe');
 
 const schtasks = (...a) => execFileSync('schtasks', a, { stdio: 'pipe' }).toString();
 const gibtEs = (tn) => { try { schtasks('/query', '/tn', tn); return true; } catch (e) { return false; } };
@@ -72,8 +76,8 @@ ${trigger('12:30')}
   </Settings>
   <Actions Context="Author">
 ${SKRIPTE.map(sk => `    <Exec>
-      <Command>${NODE}</Command>
-      <Arguments>"${sk.datei}" holen --push --log</Arguments>
+      <Command>${OHNE_FENSTER}</Command>
+      <Arguments>--headless "${NODE}" "${sk.datei}" holen --push --log</Arguments>
     </Exec>`).join(String.fromCharCode(10))}
   </Actions>
 </Task>
@@ -106,7 +110,8 @@ function pruefen() {
   console.log('  Auch im Akkubetrieb:     ' + (wert('DisallowStartIfOnBatteries', 'true') === 'false' ? 'ja' : 'NEIN - laeuft am Akku nicht'));
   console.log('  Verpasstes wird geholt:  ' + (wert('StartWhenAvailable', 'false') === 'true' ? 'ja' : 'NEIN'));
   console.log('  Startet:                 ' + (/<Command>(.*?)<\/Command>/.exec(x) || [, '?'])[1]);
-  const args = [...x.matchAll(/<Arguments>"(.*?)"(.*?)<\/Arguments>/g)];
+  console.log('  Ohne Fenster:            ' + (/<Arguments>--headless /.test(x) ? 'ja' : 'NEIN - oeffnet bei jedem Lauf ein schwarzes Fenster'));
+  const args = [...x.matchAll(/<Arguments>.*?"([^"]*\.js)"(.*?)<\/Arguments>/g)];
   if (!args.length) console.log('  Holt:                    (keine Aktion hinterlegt!)');
   args.forEach(a => console.log('  Holt:                    ' + path.basename(a[1]) + a[2] +
     (fs.existsSync(a[1]) ? '' : '   <-- DATEI FEHLT!')));

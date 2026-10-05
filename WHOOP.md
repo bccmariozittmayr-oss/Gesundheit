@@ -38,6 +38,7 @@ Die Aufgabe ist bewusst so eingestellt – ohne diese drei Punkte läuft sie an 
 | läuft auch im Akkubetrieb | Windows setzt das sonst auf „nur am Netz", und der Lauf fällt aus |
 | verpasste Läufe werden nachgeholt | Laptop war um 07:30 aus → Nachholen beim nächsten Anmelden |
 | bricht nach 10 Minuten ab | bleibt nie hängen |
+| startet ohne Fenster (`conhost.exe --headless`) | sonst geht bei jedem Lauf ein schwarzes Fenster auf und drängt sich in den Vordergrund (geändert 05.10.2026) |
 
 Nachsehen, ob alles stimmt: `node werkzeuge/tagesabruf-einrichten.js pruefen`
 Probelauf sofort: `node werkzeuge/tagesabruf-einrichten.js jetzt`
