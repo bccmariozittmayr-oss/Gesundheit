@@ -2,7 +2,7 @@
 
 **Was:** Persönliche Alltags-App (PWA, eine Seite) – Tabletten-Checkliste mit Phasen, Atemübungen, FODMAP-Ampel, Wochenplan + Einkaufsliste, Puls-Zonen, Verlauf.
 **Live:** https://bccmariozittmayr-oss.github.io/Gesundheit/ (GitHub Pages, Repo ÖFFENTLICH).
-**Stand:** Umbau 06.09.2026 auf Basis der ärztlichen Befunde (Details nur im privaten Plan).
+**Stand:** Umbau 06.09.2026 auf Basis der ärztlichen Befunde; 07.11.2026 Darmkur-Tagesablauf (Details nur im privaten Plan).
 
 ## Grundsatz
 Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Persönliche steht in
@@ -32,6 +32,8 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 - `phasen[]` mit `abTag`/`bisTag` (Tag 0 = Anker) und Slots `nu` (nüchtern), `m`, `mi`, `a`, `n` (vor dem Schlafen).
 - Darmkur: Tag 1–2 Reduzieren, 3–6 Detox (alle anderen Präparate pausiert), 7–8 Aufbau, bis 67 Monat 1–2, bis 128 Monat 3–4, danach Erhaltung.
 - Dosis-Korrekturen in der App (Mehr → Dosierung) überschreiben nur die laufende Phase; Änderungen am Plan gehören in die JSON.
+- `darmkur` (seit 07.11.2026) = Tagesablauf je Kurtag für die Karte „Darmkur heute“ auf Heute: Uhrzeiten (aus den Einnahmezeiten), Essen, Erlaubt/Nicht erlaubt, Trinken, Bewegung, „Morgen vorbereiten“, Gesamtübersicht mit Präparaten. `start` setzt das Kur-Startdatum, solange in der App keines von Hand gesetzt ist. Struktur: `mein-plan.beispiel.json`. 💡-Tipps = nicht aus den Unterlagen.
+- Nach Planänderung: `node werkzeuge/plan-verschluesseln.js <mein-plan.json> <PLAN-PASSWORT.txt>` – der Salt bleibt gleich, die App lädt den neuen Plan beim nächsten Öffnen ohne Passwort nach. `--neuer-salt` nur nach Passwortwechsel (dann App neu entsperren, WHOOP/Withings neu abholen).
 
 ## Test
 `test/arzt-test.js <Ausgabeordner>` – prüft die Arzt-Seite: vier Blöcke, Kennzahlen, Verlaufskurven, Zeitraumwahl, Verhalten ohne Daten.
@@ -39,6 +41,7 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 `test/koerper-test.js <Ausgabeordner>` – prüft die Withings-Karte, die Trendzeile, den Verlauf und dass das Waagengewicht ins Tagesprotokoll wandert, ohne eine Handeingabe zu überschreiben.
 `test/nachtrag-test.js <Ausgabeordner>` – prüft das Nachtragen: Tagesleiste, Kennzeichnung, dass Einträge beim gewählten Tag landen und nicht bei heute, Grenzen (30 Tage zurück, keine Zukunft).
 `test/whoop-test.js <Ausgabeordner>` – prüft Entsperren, Nachladen von whoop.enc.json ohne Passwort (Schlüssel in IndexedDB) und die WHOOP-Karten mit Testdaten.
+`test/darmkur-test.js <Ausgabeordner> <mein-plan.json> [<Passwortdatei> <alter plan.enc.json>]` – prüft die Darmkur-Karte an 11 Stichtagen, Detox-Pausen (auch Sport-Shakes), Trainingshinweis, Übersicht, Startdatum aus dem Plan und das Nachladen ohne Passwort.
 `test/smoke-test.js` (Playwright aus dbcc-360-crm; Aufruf: `node test/smoke-test.js <Ausgabeordner>`) – lädt den echten Plan, klickt alle Seiten, prüft Phasen an 8 Stichtagen. Vor jedem Merge laufen lassen.
 
 ## Offen

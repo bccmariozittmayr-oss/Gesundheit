@@ -33,6 +33,27 @@ main{padding:8px 16px 24px;max-width:720px;margin:0 auto}
 .badge.ok{background:var(--ok2);color:var(--ok)}.badge.warn{background:var(--warn2);color:var(--warn)}.badge.bad{background:var(--bad2);color:var(--bad)}
 .banner{border-radius:var(--r);padding:12px 16px;margin-bottom:14px;font-size:14.5px}
 .banner.warn{background:var(--warn2)}.banner.info{background:var(--p2)}.banner.bad{background:var(--bad2)}
+/* Darmkur-Tagesablauf */
+.dk{border-top:5px solid var(--p)}.dk.detox{border-top-color:var(--bad)}.dk.phase1,.dk.aufbau{border-top-color:var(--warn)}
+.dk-top{display:flex;gap:12px;align-items:center}
+.dk-tag{flex:none;width:54px;height:54px;border-radius:14px;background:var(--p2);color:var(--p);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-size:22px;line-height:1}
+.dk-tag small{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.dk.detox .dk-tag{background:var(--bad2);color:var(--bad)}.dk.phase1 .dk-tag,.dk.aufbau .dk-tag{background:var(--warn2);color:#b36b00}
+.dk-top b{font-size:17px}
+.dk-bar{height:6px;border-radius:3px;background:var(--line);margin:12px 0 4px;overflow:hidden}.dk-bar i{display:block;height:100%;background:var(--p)}
+.dk h3{font-size:12.5px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 4px}
+.dk-row{display:flex;gap:12px;padding:9px 0;border-top:1px solid var(--line);font-size:14.5px}
+.dk-t{flex:none;width:74px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--p)}
+.dk-med{font-size:12.5px;color:var(--mut);margin-top:3px}
+.dk-list{margin:4px 0 0;padding-left:18px;font-size:14px}.dk-list li{margin:3px 0}
+.dk-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px}
+@media(min-width:560px){.dk-grid{grid-template-columns:1fr 1fr}}
+.dk-ok,.dk-no,.dk-box{border-radius:12px;padding:10px 12px;font-size:14px}
+.dk-ok{background:var(--ok2)}.dk-no{background:var(--bad2)}.dk-box{background:var(--bg);margin-top:10px}
+.dk-ok ul,.dk-no ul{margin:4px 0 0;padding-left:18px}.dk-ok li,.dk-no li{margin:3px 0}
+.dk-tipp{background:var(--warn2);border-radius:12px;padding:10px 12px;font-size:14px;margin-top:10px}
+.dk-plan{font-size:13.5px}.dk-plan>div{padding:8px 0;border-top:1px solid var(--line)}.dk-plan .jetzt{background:var(--p2);border-radius:10px;padding:8px;border-top:0}
+.dk-plan b{font-size:14px}
 button{font:inherit;cursor:pointer}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;padding:13px 18px;background:var(--p);color:#fff;font-weight:600;font-size:16px;transition:transform .1s,opacity .15s}
 .btn:active{transform:scale(.97);opacity:.85}
@@ -454,11 +475,11 @@ function kurPhase(){
   if(t<=128)return {tag:t,name:'Aufbau – Monat '+(t<=98?3:4),txt:'Reduzierte Darm-Präparate, FODMAP-arm, Kohlenhydrate wieder vielfältiger.',detox:false};
   return {tag:t,name:'Erhaltung',txt:'Darmbasis+ und Probiotikum dauerhaft. Darmsanierung 1× jährlich.',detox:false};
 }
-function medPhase(m){ // aktive Phase eines Präparats heute, oder null
+function medPhase(m,datum){ // aktive Phase eines Präparats am angezeigten Tag (oder am Tag „datum“), sonst null
   // anker: "kur" = Darmkur-Start, "plan"/leer = Plandatum, sonst ein festes Datum JJJJ-MM-TT
   let anchor=m.anker==='kur'?set.kurStart:((!m.anker||m.anker==='plan')?plan?.anker?.plan:m.anker);
   if(!anchor)return null; // ohne Datum keine Freigabe
-  const day=daysBetween(anchor,TK);
+  const day=daysBetween(anchor,datum||TK);
   for(const p of m.phasen){ if(day>=p.abTag && (p.bisTag==null||day<=p.bisTag)) return p; }
   return null;
 }
@@ -475,6 +496,80 @@ function medsToday(){
     ['nu','m','mi','a','n'].forEach(s=>{ if(dose[s]>0) out.push({id:m.id,slot:s,name:m.name,menge:dose[s],einheit:m.einheit||'',hinweis:ph.notiz||m.hinweis||'',paused,offen:m.offen}); });
   });
   return out;
+}
+
+/* ---------- Darmkur-Tagesablauf ----------
+   Die Inhalte stehen im privaten Plan unter "darmkur": abschnitte je Kurtag (Tag 1 = Start),
+   vorlagen für Wiederholtes. Fehlt der Block, bleibt es beim kurzen Hinweis aus kurPhase(). */
+const SLOT_KURZ={nu:'nüchtern',m:'Frühstück',mi:'mittags',a:'abends',n:'Schlafen'};
+const tagKurz=k=>new Date(k+'T00:00:00').toLocaleDateString('de-AT',{weekday:'short',day:'2-digit',month:'2-digit'});
+function kurAbschnitt(tag){
+  const dk=plan?.darmkur; if(!dk||!tag)return null;
+  const a=(dk.abschnitte||[]).find(x=>tag>=x.von&&(x.bis==null||tag<=x.bis)); if(!a)return null;
+  const s={...(dk.vorlagen?.[a.basis]||{}),...a};
+  if(a.regelnPlus)s.regeln=[...(s.regeln||[]),...a.regelnPlus];
+  s.tag=tag; s.titelHeute=String(s.name||s.titel||'').replace('{n}',tag-a.von+1).replace('{tag}',tag);
+  return s;
+}
+function slotZeit(k){ return set.times[k]||(SLOTS.find(s=>s.k===k)||{}).t||''; }
+function zeitPlus(hhmm,plus){ if(!plus||!/^\d\d:\d\d$/.test(hhmm))return hhmm; const [h,m]=hhmm.split(':').map(Number); const t=h*60+m+plus; return String(Math.floor(t/60)%24).padStart(2,'0')+':'+String(t%60).padStart(2,'0'); }
+function kurPraeparateAm(datum){ // was an diesem Tag eingenommen wird, getrennt nach Kur- und Dauer-Präparaten
+  const tag=daysBetween(set.kurStart,datum)+1; const ab=kurAbschnitt(tag);
+  const detox=ab?ab.art==='detox':(tag>=3&&tag<=6);
+  const kur=[],dauer=[];
+  plan.praeparate.forEach(m=>{ const ov=set.medOverride[m.id]||{}; if(ov.aus)return;
+    const ph=medPhase(m,datum); if(!ph)return;
+    const dose={...ph,...((ov.abTag===ph.abTag&&ov.dose)||{})};
+    const sl=['nu','m','mi','a','n'].filter(s=>dose[s]>0); if(!sl.length)return;
+    if(detox&&m.detoxPause!==false)return;
+    (m.anker==='kur'?kur:dauer).push(m.name+' ('+sl.map(s=>SLOT_KURZ[s]+' '+dose[s]).join(' · ')+' '+(m.einheit||'')+')');
+  });
+  return {kur,dauer,detox};
+}
+function kurPlanListe(tag){
+  let vorher='';
+  const rows=(plan.darmkur.abschnitte||[]).map(a=>{
+    const von=addDays(set.kurStart,a.von-1), bis=a.bis!=null?addDays(set.kurStart,a.bis-1):null;
+    const p=kurPraeparateAm(von); const jetzt=tag>=a.von&&(a.bis==null||tag<=a.bis);
+    const zeit=a.von===a.bis?`Tag ${a.von} · ${tagKurz(von)}`:`Tag ${a.von}–${a.bis??'…'} · ${tagKurz(von)} bis ${bis?tagKurz(bis):'dauerhaft'}`;
+    const pr=[p.detox?'⏸ alle anderen Präparate pausiert':'',p.kur.length?'🌱 Wegen der Kur: '+p.kur.map(esc).join(' · '):'',p.dauer.length?(p.dauer.join()===vorher?'💊 Dauer-Präparate wie oben':'💊 Dauer-Präparate: '+p.dauer.map(esc).join(' · ')):''].filter(Boolean).join('<br>');
+    if(p.dauer.length)vorher=p.dauer.join();
+    return `<div class="${jetzt?'jetzt':''}"><b>${esc(a.titel||a.name)}</b> <span class="hint">${zeit}</span><div>${esc(a.kurz||'')}</div><div class="dk-med">${pr}</div></div>`;}).join('');
+  return `<details style="margin:14px 0 0"><summary>📅 Ganzer Kurplan mit Präparaten</summary><div class="dk-plan">${rows}</div></details>`;
+}
+function darmkurKarte(){ // Tageskarte für „Heute“ – leer, wenn kein darmkur-Block oder kein Startdatum
+  if(!plan?.darmkur||!set.kurStart)return '';
+  const dk=plan.darmkur; const tag=daysBetween(set.kurStart,TK)+1;
+  if(tag<1){ // vor dem Start
+    const n=1-tag; const a1=kurAbschnitt(1);
+    return `<div class="card dk"><div class="dk-top"><div class="dk-tag"><small>in</small>${n}</div><div><b>Darmkur startet ${n===1?'morgen':'in '+n+' Tagen'}</b><div class="hint">${esc(tagKurz(set.kurStart))} – Tag 1: ${esc(a1?.titel||'')}</div></div></div>
+      ${n===1&&a1?.vorbereiten?`<div class="dk-tipp">🧺 <b>Heute vorbereiten:</b> ${esc(a1.vorbereiten)}</div>`:''}${kurPlanListe(0)}</div>`;
+  }
+  const ab=kurAbschnitt(tag); if(!ab)return '';
+  const li=a=>(a||[]).map(x=>`<li>${esc(x)}</li>`).join('');
+  const fort=tag<=30?`Tag ${tag} von 30 · Kur bis ${tagKurz(addDays(set.kurStart,29))}`:(tag<=67?`Tag ${tag} von 67 · Darm-Präparate bis ${tagKurz(addDays(set.kurStart,66))}`:`Tag ${tag} seit Kurstart`);
+  const pct=Math.min(100,Math.round(tag/(tag<=30?30:67)*100));
+  const meds=ab.medsZeigen===false?[]:medsToday().filter(x=>!x.paused);
+  const rows=(ab.ablauf||[]).map(r=>{
+    const t=r.slot?zeitPlus(slotZeit(r.slot),r.plus):(r.zeit||'');
+    const ms=(r.slot&&!r.plus)?meds.filter(x=>x.slot===r.slot):[];
+    return `<div class="dk-row"><span class="dk-t">${esc(t)}</span><div>${esc(r.was)}${ms.length?`<div class="dk-med">💊 ${ms.map(x=>esc(x.name+' '+x.menge+' '+x.einheit)).join(' · ')}</div>`:''}</div></div>`;}).join('');
+  const morgen=kurAbschnitt(tag+1);
+  return `<div class="card dk ${esc(ab.art||'')}">
+    <div class="dk-top"><div class="dk-tag"><small>Tag</small>${tag}</div><div><b>${esc(ab.titelHeute)}</b><div style="font-size:14.5px;margin-top:2px">${esc(ab.kurz||'')}</div></div></div>
+    <div class="dk-bar"><i style="width:${pct}%"></i></div><div class="hint">${fort}</div>
+    <h3>So läuft dein Tag</h3>${ab.art==='detox'?'<div class="dk-tipp" style="margin:0 0 8px">⏸ Alle anderen Präparate pausieren – nur die Shakes.</div>':''}${rows}
+    ${ab.regeln?.length?`<h3>Wichtig heute</h3><ul class="dk-list">${li(ab.regeln)}</ul>`:''}
+    <div class="dk-grid"><div class="dk-ok"><b>✅ Erlaubt</b><ul>${li(ab.erlaubt)}</ul></div><div class="dk-no"><b>⛔ Nicht erlaubt</b><ul>${li(ab.verboten)}</ul></div></div>
+    ${ab.trinken?.length?`<div class="dk-box">💧 <b>Trinken</b><ul class="dk-list">${li(ab.trinken)}</ul></div>`:''}
+    ${ab.bewegung||ab.ruhe?`<div class="dk-box">🚶 <b>Bewegung und Ruhe</b><div style="margin-top:3px">${esc([ab.bewegung,ab.ruhe].filter(Boolean).join(' '))}</div></div>`:''}
+    ${(ab.tipps||[]).map(t=>`<div class="dk-tipp">💡 ${esc(t)}<div class="hint" style="margin-top:2px">Tipp – steht so nicht in den Unterlagen.</div></div>`).join('')}
+    ${morgen&&morgen.von===tag+1&&morgen.vorbereiten?`<div class="banner info" style="margin:12px 0 0">🧺 <b>Morgen: ${esc(morgen.titelHeute)}</b><br>${esc(morgen.vorbereiten)}</div>`:''}
+    ${kurPlanListe(tag)}
+    <div class="hint" style="margin-top:10px">Quelle: ${esc(ab.quelle||dk.quelle||'')}</div></div>`;
+}
+function kurStartAusPlan(){ // Startdatum aus dem Plan übernehmen, solange in der App keines von Hand gesetzt wurde
+  if(!set.kurStart&&!set.kurStartManuell&&plan?.darmkur?.start){set.kurStart=plan.darmkur.start;saveSet();}
 }
 function entry(k){ if(!log[k])log[k]={hals:null,bauch:null,stress:null,schlaf:null,gewicht:null,notiz:'',meds:{},atmen:{},sport:false}; return log[k]; }
 function saveLog(){ LS.set('gp_log',log); }
@@ -652,7 +747,9 @@ function renderHeute(){
   let b='';
   if(!plan)b='<div class="banner warn">Noch kein Plan. Unter <b>Mehr → Plan entsperren</b> dein Passwort eingeben – dann erscheinen hier deine Präparate.</div>';
   const kp=kurPhase();
-  if(kp)b+=`<div class="banner ${kp.detox?'bad':'info'}"><b>Darmkur Tag ${kp.tag}: ${kp.name}</b><br>${kp.txt}</div>`;
+  const dkKarte=darmkurKarte();
+  if(dkKarte)b+=dkKarte;
+  else if(kp)b+=`<div class="banner ${kp.detox?'bad':'info'}"><b>Darmkur Tag ${kp.tag}: ${kp.name}</b><br>${kp.txt}</div>`;
   else if(plan&&!set.kurStart)b+='<div class="banner info">Darmkur noch nicht gestartet – Startdatum unter <b>Mehr</b> eintragen, sobald es losgeht.</div>';
   // Präparate, die gerade bewusst pausieren (Phase ohne Dosis)
   if(plan){const pausen=plan.praeparate.filter(m=>{const ph=medPhase(m);return ph&&!['nu','m','mi','a','n'].some(s=>ph[s]>0)&&ph.notiz&&!(set.medOverride[m.id]||{}).aus;});
@@ -663,7 +760,7 @@ function renderHeute(){
   renderTraining(e);
   // Medikamente
   const meds=medsToday();
-  if(e.sport&&plan?.sport){plan.sport.filter(s=>s.zeitpunkt==='waehrend'||s.zeitpunkt==='danach').forEach(s=>meds.push({id:'sport_'+s.name.replace(/\W/g,''),slot:'sp',name:s.name,menge:s.dosis||'',einheit:'',hinweis:s.wann,paused:false}));}
+  if(e.sport&&plan?.sport){plan.sport.filter(s=>s.zeitpunkt==='waehrend'||s.zeitpunkt==='danach').forEach(s=>meds.push({id:'sport_'+s.name.replace(/\W/g,''),slot:'sp',name:s.name,menge:s.dosis||'',einheit:'',hinweis:s.wann,paused:!!(kp&&kp.detox)}));}
   const list=$('med-list');
   if(!meds.length){list.innerHTML='<div class="empty">Keine Präparate für heute.</div>';$('med-count').textContent='';$('med-prog').style.width='0';}
   else{
@@ -903,7 +1000,9 @@ function renderTraining(e){
     ${offen.map(t=>`<div class="chk" data-add="${t.id}"><div class="box">＋</div><div class="lbl"><b>${esc(t.name)}</b><span>${[t.dauer,ZONENNAME[t.zone]||t.zone].filter(Boolean).map(esc).join(' · ')}</span></div></div>`).join('')}
     </details>`;
   html+=whoopWorkouts(e,alle);
-  html+='<div class="hint" style="margin-top:6px">Dazu 5× am Tag 10–20 Sekunden Puls hochjagen (Stiegen, kurzer Sprint).</div>';
+  const kab=kurAbschnitt(kurTag());
+  if(kab?.sportHinweis)html=`<div class="banner ${kab.keinIntensiv?'warn':'info'}" style="margin:0 0 8px;font-size:13.5px">🌿 ${esc(kab.sportHinweis)}</div>`+html;
+  if(!kab?.keinIntensiv)html+='<div class="hint" style="margin-top:6px">Dazu 5× am Tag 10–20 Sekunden Puls hochjagen (Stiegen, kurzer Sprint).</div>';
   $('train-list').innerHTML=html;
 
   $('train-list').querySelectorAll('.chk[data-k]').forEach(el=>el.onclick=ev=>{
@@ -1224,10 +1323,10 @@ $('koerper-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=
 $('whoop-refresh').onclick=async()=>{const b=$('whoop-refresh');b.disabled=true;b.textContent='Hole …';await whoopLaden(false);b.disabled=false;b.textContent='🔄 WHOOP-Werte jetzt holen';renderMehr();};
 $('whoop-load').onclick=()=>$('whoop-file').click();
 $('whoop-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{uebernehmeWhoop(JSON.parse(r.result));toast('WHOOP geladen ✓');renderMehr();}catch(e){toast('Nicht übernommen: '+(e.message||'ungültige Datei'));}};r.readAsText(f);ev.target.value='';};
-$('kur-start').onchange=()=>{set.kurStart=$('kur-start').value||null;set.medOverride={};saveSet();renderMehr();toast(set.kurStart?'Darmkur-Start gesetzt':'Darmkur-Start entfernt');};
+$('kur-start').onchange=()=>{set.kurStart=$('kur-start').value||null;set.kurStartManuell=true;set.medOverride={};saveSet();renderMehr();toast(set.kurStart?'Darmkur-Start gesetzt':'Darmkur-Start entfernt');};
 $('plan-load').onclick=()=>$('plan-file').click();
 // Plan entschlüsseln (AES-256-GCM, Schlüssel aus Passwort per PBKDF2) – Gegenstück zu werkzeuge/plan-verschluesseln.js
-function uebernehmePlan(p){const err=planFehler(p);if(err)throw new Error(err);plan=p;LS.set('gp_plan',plan);set.medOverride={};saveSet();if(week&&!week.days.every(x=>['f','m','a'].every(t=>rezOk(REZ(x[t]))))){week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});}}
+function uebernehmePlan(p,overrideBehalten){const err=planFehler(p);if(err)throw new Error(err);plan=p;LS.set('gp_plan',plan);if(!overrideBehalten)set.medOverride={};saveSet();kurStartAusPlan();if(week&&!week.days.every(x=>['f','m','a'].every(t=>rezOk(REZ(x[t]))))){week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});}}
 $('plan-unlock').onclick=async()=>{
   const pw=$('plan-pw').value.trim();if(!pw){toast('Passwort eingeben');return;}
   const btn=$('plan-unlock');btn.disabled=true;btn.textContent='Entschlüssle …';
@@ -1236,6 +1335,7 @@ $('plan-unlock').onclick=async()=>{
     const key=await schluesselAus(pw,f);
     uebernehmePlan(await entschluessele(key,f));
     await KDB.set(key); // für das Nachladen von whoop.enc.json ohne erneute Passworteingabe
+    LS.set('gp_plan_iv',f.iv);
     $('plan-pw').value='';toast('Plan entsperrt ✓ (Stand '+(f.stand||'')+')');renderMehr();
     whoopLaden(true).then(()=>renderMehr());
     koerperLaden(true).then(()=>{renderMehr();renderHeute();});
@@ -1281,7 +1381,19 @@ function checkReminders(){
   ATEM_SLOTS.forEach(s=>{const t=set.atimes[s.k]||s.t;if(hm>=t&&!e.atmen[s.k])fire('a'+s.k,'🌬️ Atemübung',s.name);});
 }
 setInterval(()=>{tagesWechselPruefen();checkReminders();},30000);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)stopScan();if(!document.hidden){tagesWechselPruefen();checkReminders();whoopAuto();koerperAuto();}});
+/* Plan nachladen: Wurde plan.enc.json neu verschlüsselt (gleicher Salt, also gleicher Schlüssel),
+   übernimmt die App den neuen Plan ohne erneute Passworteingabe. Dosis-Korrekturen bleiben. */
+let planLetzterCheck=0;
+async function planLaden(){
+  if(!navigator.onLine||Date.now()-planLetzterCheck<30*60000)return false;
+  const key=await KDB.get();if(!key)return false;
+  try{const r=await fetch('plan.enc.json?v='+Date.now());if(!r.ok)return false;const f=await r.json();planLetzterCheck=Date.now();
+    if(LS.get('gp_plan_iv',null)===f.iv)return false;
+    uebernehmePlan(await entschluessele(key,f),true);LS.set('gp_plan_iv',f.iv);return true;}
+  catch(e){return false;} // Schlüssel passt nicht (neues Passwort/Salt) – dann bleibt der alte Plan, Entsperren unter „Mehr“
+}
+function planAuto(){planLaden().then(neu=>{if(neu){renderHeute();toast('Plan aktualisiert ✓');}});}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopScan();if(!document.hidden){tagesWechselPruefen();checkReminders();planAuto();whoopAuto();koerperAuto();}});
 function whoopAuto(){if(!navigator.onLine||Date.now()-whoopLetzterCheck<30*60000)return;const alt=whoop?.stand;whoopLaden(true).then(ok=>{if(ok&&whoop?.stand!==alt)renderHeute();});}
 function koerperAuto(){if(!navigator.onLine||Date.now()-koerperLetzterCheck<30*60000)return;const alt=koerper?.stand;koerperLaden(true).then(ok=>{if(ok&&koerper?.stand!==alt)renderHeute();});}
 
@@ -1297,10 +1409,11 @@ function gotoPage(p){
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
 document.querySelectorAll('.tabs:not(.zeitraum)').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.09.10-23';
+const APP_VERSION='v2026.11.07-1830';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
+kurStartAusPlan();
 renderHeute();
-if(plan){whoopAuto();koerperAuto();}else if(whoop||koerper)renderHeute();
+if(plan){planAuto();whoopAuto();koerperAuto();}else if(whoop||koerper)renderHeute();
 /* Demo-Start: ?demo=1 lädt Demo-Plan und Beispiel-Verlauf (für Vorführungen). Ein vorhandener echter Plan wird nur nach Rückfrage ersetzt. */
 (async()=>{ if(!/[?&]demo=1/.test(location.search))return;
   try{ if(plan&&!plan._hinweis&&!confirm('Demo-Modus: Der geladene Plan und das Protokoll werden durch Demo-Daten ersetzt. Fortfahren?'))return;

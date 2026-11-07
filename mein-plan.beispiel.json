@@ -23,5 +23,109 @@
   "diagnosen": ["Diagnose 1", "Diagnose 2"],
   "befunde": [ { "name": "Wert", "wert": "123", "ref": "< 100", "status": "hoch", "datum": "TT.MM.JJJJ", "bedeutung": "kurz erklärt" } ],
   "training": { "hfZonen": { "A": "Puls < 120" }, "hinweise": ["…"] },
-  "termine": [ { "name": "Kontrolle", "datum": "Monat JJJJ", "details": "…" } ]
+  "termine": [ { "name": "Kontrolle", "datum": "Monat JJJJ", "details": "…" } ],
+  "darmkur": {
+    "start": "JJJJ-MM-TT (Tag 1 der Kur; wird übernommen, solange in der App unter Mehr kein Datum von Hand gesetzt ist)",
+    "quelle": "Woher die Inhalte stammen (wird klein unter der Karte gezeigt)",
+    "vorlagen": {
+      "normal": {
+        "art": "normal",
+        "ablauf": [
+          {
+            "slot": "nu",
+            "was": "Aufstehen – Präparate nüchtern"
+          },
+          {
+            "slot": "nu",
+            "plus": 90,
+            "was": "Erster Kaffee frühestens jetzt"
+          },
+          {
+            "slot": "m",
+            "was": "Frühstück: …"
+          },
+          {
+            "zeit": "Nachmittag",
+            "was": "Keine Snacks"
+          },
+          {
+            "slot": "a",
+            "was": "Abendessen: …"
+          },
+          {
+            "slot": "n",
+            "was": "Vor dem Schlafen"
+          }
+        ],
+        "regeln": [
+          "…"
+        ],
+        "erlaubt": [
+          "…"
+        ],
+        "verboten": [
+          "…"
+        ],
+        "trinken": [
+          "…"
+        ],
+        "bewegung": "…",
+        "quelle": "…"
+      }
+    },
+    "abschnitte": [
+      {
+        "von": 1,
+        "bis": 2,
+        "art": "phase1",
+        "keinIntensiv": true,
+        "sportHinweis": "Wird in der Trainingskarte gezeigt",
+        "titel": "Kurzname für die Übersicht",
+        "name": "Titel am Tag – {n} = Tag im Abschnitt, {tag} = Kurtag",
+        "kurz": "Ein Satz für den Tag",
+        "vorbereiten": "Wird am Vortag als „Morgen: …“ gezeigt",
+        "ablauf": [
+          {
+            "slot": "m",
+            "was": "…"
+          }
+        ],
+        "erlaubt": [
+          "…"
+        ],
+        "verboten": [
+          "…"
+        ],
+        "tipps": [
+          "💡 Tipp, der nicht aus den Unterlagen stammt"
+        ]
+      },
+      {
+        "von": 3,
+        "bis": 6,
+        "art": "detox",
+        "medsZeigen": false,
+        "titel": "…",
+        "name": "… Tag {n} von 4",
+        "kurz": "…",
+        "ablauf": [
+          {
+            "slot": "nu",
+            "was": "…"
+          }
+        ]
+      },
+      {
+        "von": 7,
+        "bis": null,
+        "basis": "normal",
+        "titel": "…",
+        "name": "… Tag {tag}",
+        "kurz": "…",
+        "regelnPlus": [
+          "wird an die Regeln der Vorlage angehängt"
+        ]
+      }
+    ]
+  }
 }
