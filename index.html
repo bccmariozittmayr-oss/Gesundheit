@@ -52,6 +52,9 @@ main{padding:8px 16px 24px;max-width:720px;margin:0 auto}
 .dk-ok{background:var(--ok2)}.dk-no{background:var(--bad2)}.dk-box{background:var(--bg);margin-top:10px}
 .dk-ok ul,.dk-no ul{margin:4px 0 0;padding-left:18px}.dk-ok li,.dk-no li{margin:3px 0}
 .dk-tipp{background:var(--warn2);border-radius:12px;padding:10px 12px;font-size:14px;margin-top:10px}
+.dk-meal{margin-top:6px;padding:8px 10px;border-radius:10px;background:var(--bg);font-size:14px}.dk-meal small{display:block;color:var(--mut);margin-top:2px}.dk-meal .badge{font-size:11px;padding:2px 7px}
+.dk-meal details{margin-top:4px}.dk-meal summary{font-size:13px;color:var(--p);cursor:pointer}.dk-swap{margin-top:6px;border:1px solid var(--line);background:var(--card);color:var(--p);border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer}
+.dk-prep{background:var(--p2);border-radius:12px;padding:10px 12px;font-size:14px;margin-top:10px}.dk-prep ul{margin:4px 0 0;padding-left:18px}.dk-prep li{margin:3px 0}
 .dk-plan{font-size:13.5px}.dk-plan>div{padding:8px 0;border-top:1px solid var(--line)}.dk-plan .jetzt{background:var(--p2);border-radius:10px;padding:8px;border-top:0}
 .dk-plan b{font-size:14px}
 /* Kosten */
@@ -265,7 +268,7 @@ table.bf td:first-child{font-weight:600}
   <div class="sub" id="s-woche">
     <div class="card">
       <h2>Wochenplan <small id="woche-info"></small></h2>
-      <div class="hint" style="margin-bottom:8px">FODMAP-arm, Fleisch max. 2× pro Woche (Rind/Huhn), Abendessen leicht. Tipp auf ↻ tauscht ein Gericht.</div>
+      <div class="hint" style="margin-bottom:8px" id="woche-hint">FODMAP-arm, Fleisch max. 2× pro Woche (Rind/Huhn), Abendessen leicht. Tipp auf ↻ tauscht ein Gericht.</div>
       <div id="woche"></div>
       <button class="btn sec full" id="woche-neu">↻ Ganze Woche neu mischen</button>
     </div>
@@ -273,7 +276,7 @@ table.bf td:first-child{font-weight:600}
 
   <div class="sub" id="s-einkauf">
     <div class="card shop">
-      <h2>Einkaufsliste <small>aus dem Wochenplan</small></h2>
+      <h2>Einkaufsliste <small id="einkauf-titel">aus dem Wochenplan</small></h2>
       <div id="einkauf"></div>
       <button class="btn ghost" id="einkauf-reset">Haken zurücksetzen</button>
     </div>
@@ -422,7 +425,7 @@ table.bf td:first-child{font-weight:600}
    Aufbau: index.html (App) + daten.js (allgemeine Listen: FODMAP, Rezepte,
    Atemübungen) + mein-plan.json (PRIVAT, nur lokal geladen).
    Speicher: localStorage  gp_plan (Plan), gp_log (Tagesprotokoll),
-   gp_set (Einstellungen), gp_week (Wochenplan), gp_shop (Einkaufs-Haken)
+   gp_set (Einstellungen), gp_week (Wochenplan), gp_shop (Einkaufs-Haken), gp_kurmenue/gp_kurmischung/gp_kurshop (Kur-Speiseplan: Tausch, Mischung, Haken)
    ===================================================================== */
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -533,15 +536,15 @@ function zeitPlus(hhmm,plus){ if(!plus||!/^\d\d:\d\d$/.test(hhmm))return hhmm; c
 function kurPraeparateAm(datum){ // was an diesem Tag eingenommen wird, getrennt nach Kur- und Dauer-Präparaten
   const tag=daysBetween(set.kurStart,datum)+1; const ab=kurAbschnitt(tag);
   const detox=ab?ab.art==='detox':(tag>=3&&tag<=6);
-  const kur=[],dauer=[];
+  const kur=[],dauer=[],bedarf=[]; // bedarf = im Plan als optional vermerkt
   plan.praeparate.forEach(m=>{ const ov=set.medOverride[m.id]||{}; if(ov.aus)return;
     const ph=medPhase(m,datum); if(!ph)return;
     const dose={...ph,...((ov.abTag===ph.abTag&&ov.dose)||{})};
     const sl=['nu','m','mi','a','n'].filter(s=>dose[s]>0); if(!sl.length)return;
     if(detox&&m.detoxPause!==false)return;
-    (m.anker==='kur'?kur:dauer).push(m.name+' ('+sl.map(s=>SLOT_KURZ[s]+' '+dose[s]).join(' · ')+' '+(m.einheit||'')+')');
+    ((/optional/i.test(ph.notiz||''))?bedarf:(m.anker==='kur'?kur:dauer)).push(m.name+' ('+sl.map(s=>SLOT_KURZ[s]+' '+dose[s]).join(' · ')+' '+(m.einheit||'')+')');
   });
-  return {kur,dauer,detox};
+  return {kur,dauer,bedarf,detox};
 }
 function kurPlanListe(tag){
   let vorher='';
@@ -549,7 +552,7 @@ function kurPlanListe(tag){
     const von=addDays(set.kurStart,a.von-1), bis=a.bis!=null?addDays(set.kurStart,a.bis-1):null;
     const p=kurPraeparateAm(von); const jetzt=tag>=a.von&&(a.bis==null||tag<=a.bis);
     const zeit=a.von===a.bis?`Tag ${a.von} · ${tagKurz(von)}`:`Tag ${a.von}–${a.bis??'…'} · ${tagKurz(von)} bis ${bis?tagKurz(bis):'dauerhaft'}`;
-    const pr=[p.detox?'⏸ alle anderen Präparate pausiert':'',p.kur.length?'🌱 Wegen der Kur: '+p.kur.map(esc).join(' · '):'',p.dauer.length?(p.dauer.join()===vorher?'💊 Dauer-Präparate wie oben':'💊 Dauer-Präparate: '+p.dauer.map(esc).join(' · ')):''].filter(Boolean).join('<br>');
+    const pr=[p.detox?'⏸ alle anderen Präparate pausiert':'',p.kur.length?'🌱 Wegen der Kur: '+p.kur.map(esc).join(' · '):'',p.bedarf.length?'➕ Bei Bedarf: '+p.bedarf.map(esc).join(' · '):'',p.dauer.length?(p.dauer.join()===vorher?'💊 Dauer-Präparate wie oben':'💊 Dauer-Präparate: '+p.dauer.map(esc).join(' · ')):''].filter(Boolean).join('<br>');
     if(p.dauer.length)vorher=p.dauer.join();
     return `<div class="${jetzt?'jetzt':''}"><b>${esc(a.titel||a.name)}</b> <span class="hint">${zeit}</span><div>${esc(a.kurz||'')}</div><div class="dk-med">${pr}</div></div>`;}).join('');
   return `<details style="margin:14px 0 0"><summary>📅 Ganzer Kurplan mit Präparaten</summary><div class="dk-plan">${rows}</div></details>`;
@@ -560,22 +563,25 @@ function darmkurKarte(){ // Tageskarte für „Heute“ – leer, wenn kein darm
   if(tag<1){ // vor dem Start
     const n=1-tag; const a1=kurAbschnitt(1);
     return `<div class="card dk"><div class="dk-top"><div class="dk-tag"><small>in</small>${n}</div><div><b>Darmkur startet ${n===1?'morgen':'in '+n+' Tagen'}</b><div class="hint">${esc(tagKurz(set.kurStart))} – Tag 1: ${esc(a1?.titel||'')}</div></div></div>
-      ${n===1&&a1?.vorbereiten?`<div class="dk-tipp">🧺 <b>Heute vorbereiten:</b> ${esc(a1.vorbereiten)}</div>`:''}${kurPlanListe(0)}</div>`;
+      ${n===1&&a1?.vorbereiten?`<div class="dk-tipp">🧺 <b>Heute vorbereiten:</b> ${esc(a1.vorbereiten)}</div>`:''}${n===1?kurVorbereitenBox(0)+kurMorgenEssen():''}${kurPlanListe(0)}</div>`;
   }
   const ab=kurAbschnitt(tag); if(!ab)return '';
   const li=a=>(a||[]).map(x=>`<li>${esc(x)}</li>`).join('');
   const fort=tag<=30?`Tag ${tag} von 30 · Kur bis ${tagKurz(addDays(set.kurStart,29))}`:(tag<=67?`Tag ${tag} von 67 · Darm-Präparate bis ${tagKurz(addDays(set.kurStart,66))}`:`Tag ${tag} seit Kurstart`);
   const pct=Math.min(100,Math.round(tag/(tag<=30?30:67)*100));
   const meds=ab.medsZeigen===false?[]:medsToday().filter(x=>!x.paused);
+  const menue=tag<=kurMenueEnde()?kurMenue()?.[tag]:null,SM={m:'f',mi:'m',a:'a'};
   const rows=(ab.ablauf||[]).map(r=>{
     const t=r.slot?zeitPlus(slotZeit(r.slot),r.plus):(r.zeit||'');
     const ms=(r.slot&&!r.plus)?meds.filter(x=>x.slot===r.slot):[];
-    return `<div class="dk-row"><span class="dk-t">${esc(t)}</span><div>${esc(r.was)}${ms.length?`<div class="dk-med">💊 ${ms.map(x=>esc(x.name+' '+x.menge+' '+x.einheit)).join(' · ')}</div>`:''}</div></div>`;}).join('');
+    const sl=!r.plus&&SM[r.slot],g=menue&&sl&&menue[sl]?kurGericht(menue[sl],{halb:menue.typ==='halb',box:sl==='m'&&menue.box,buero:sl==='m'&&menue.buero,doppelt:sl==='a'&&menue.doppelt,tausch:!(sl==='m'&&menue.box),tag,slot:sl}):'';
+    return `<div class="dk-row"><span class="dk-t">${esc(t)}</span><div style="flex:1">${esc(r.was)}${g}${ms.length?`<div class="dk-med">💊 ${ms.map(x=>esc(x.name+' '+x.menge+' '+x.einheit)).join(' · ')}</div>`:''}</div></div>`;}).join('');
   const morgen=kurAbschnitt(tag+1);
   return `<div class="card dk ${esc(ab.art||'')}">
     <div class="dk-top"><div class="dk-tag"><small>Tag</small>${tag}</div><div><b>${esc(ab.titelHeute)}</b><div style="font-size:14.5px;margin-top:2px">${esc(ab.kurz||'')}</div></div></div>
     <div class="dk-bar"><i style="width:${pct}%"></i></div><div class="hint">${fort}</div>
-    <h3>So läuft dein Tag</h3>${ab.art==='detox'?'<div class="dk-tipp" style="margin:0 0 8px">⏸ Alle anderen Präparate pausieren – nur die Shakes.</div>':''}${rows}
+    <h3>So läuft dein Tag</h3>${ab.art==='detox'?'<div class="dk-tipp" style="margin:0 0 8px">⏸ Alle anderen Präparate pausieren – nur die Shakes.</div>':''}${rows}${menue&&menue.buero?'<div class="hint" style="margin-top:6px">🏢 Bürotag laut Plan – im Homeoffice isst du dasselbe daheim.</div>':''}
+    ${kurPraeparateBox(TK)}${kurVorbereitenBox(tag)}
     ${ab.regeln?.length?`<h3>Wichtig heute</h3><ul class="dk-list">${li(ab.regeln)}</ul>`:''}
     <div class="dk-grid"><div class="dk-ok"><b>✅ Erlaubt</b><ul>${li(ab.erlaubt)}</ul></div><div class="dk-no"><b>⛔ Nicht erlaubt</b><ul>${li(ab.verboten)}</ul></div></div>
     ${ab.trinken?.length?`<div class="dk-box">💧 <b>Trinken</b><ul class="dk-list">${li(ab.trinken)}</ul></div>`:''}
@@ -585,8 +591,148 @@ function darmkurKarte(){ // Tageskarte für „Heute“ – leer, wenn kein darm
     ${kurPlanListe(tag)}
     <div class="hint" style="margin-top:10px">Quelle: ${esc(ab.quelle||dk.quelle||'')}</div></div>`;
 }
+function kurPraeparateBox(datum){ // was heute zu nehmen ist – Kur-Präparate (Pflicht) getrennt von den Dauer-Präparaten
+  const p=kurPraeparateAm(datum);
+  if(p.detox)return '<div class="dk-box">💊 <b>Präparate heute</b><div style="margin-top:3px">⏸ Keine – auch keine Dauer- und Sport-Präparate. Nur die 7 Shakes.</div></div>';
+  if(!p.kur.length&&!p.dauer.length&&!p.bedarf.length)return '';
+  return `<div class="dk-box">💊 <b>Präparate heute</b> <span class="hint">– abhaken unten bei „Präparate“</span><ul class="dk-list">${p.kur.length?`<li>🌱 <b>Wegen der Kur (Pflicht):</b> ${p.kur.map(esc).join(' · ')}</li>`:''}${p.dauer.length?`<li>💊 <b>Dauer-Präparate:</b> ${p.dauer.map(esc).join(' · ')}</li>`:''}${p.bedarf.length?`<li>➕ <b>Nur bei Bedarf</b> (laut Plan optional): ${p.bedarf.map(esc).join(' · ')}</li>`:''}</ul></div>`;
+}
+function kurVorbereitenBox(tag){ const v=kurVorbereiten(tag); return v.length?`<div class="dk-prep">🧑‍🍳 <b>Heute vorbereiten</b><ul>${v.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''; }
+function kurMorgenEssen(){ const d=kurMenue()?.[1]; if(!d||!d.f)return '';
+  return `<div class="dk-box">🍽 <b>Morgen essen (½ Portion)</b><ul class="dk-list">${[['f','Früh'],['m','Mittag'],['a','Abend']].filter(([s])=>d[s]).map(([s,k])=>`<li>${k}: ${esc(REZ(d[s]).name)}${s==='a'&&d.doppelt?' – doppelt kochen, Hälfte in die Box':''}</li>`).join('')}</ul></div>`; }
 function kurStartAusPlan(){ // Startdatum aus dem Plan übernehmen, solange in der App keines von Hand gesetzt wurde
   if(!set.kurStart&&!set.kurStartManuell&&plan?.darmkur?.start){set.kurStart=plan.darmkur.start;saveSet();}
+}
+/* ---------- Kur-Speiseplan ----------
+   Tagestyp je Abschnitt (plan.darmkur.abschnitte[].menue): halb · fluessig · keins · weich · normal.
+   Bürotage (plan.darmkur.buerotage, 0 = Sonntag): am Vorabend doppelt kochen, Mittag = Box vom Vorabend.
+   Auswahl per Zufall mit festem Startwert (Kurstart + Mischung) – bleibt also stabil; einzelne Gerichte
+   tauscht man per 🔀 (gemerkt in gp_kurmenue). Fleisch max. 2× pro Kalenderwoche, keine Wiederholung in ~3 Tagen. */
+function zufallsGenerator(text){let h=1779033703^text.length;for(let i=0;i<text.length;i++){h=Math.imul(h^text.charCodeAt(i),3432918353);h=h<<13|h>>>19;}
+  return ()=>{h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);h^=h>>>16;return (h>>>0)/4294967296;};}
+function kurMenueTyp(tag){return kurAbschnitt(tag)?.menue||null;}
+function istBuerotag(datum){return (plan?.darmkur?.buerotage||[]).includes(new Date(datum+'T00:00:00').getDay());}
+function kurMenueEnde(){return plan?.darmkur?.menueBisTag||30;}
+function kurPool(typ,slot){ // Rezepte, die an diesem Tagestyp für Frühstück (f) bzw. Mittag/Abend erlaubt sind
+  const ohne=(plan?.darmkur?.ohneRezepte||[]).map(x=>x.id||x);
+  const ok=r=>rezOk(r)&&!ohne.includes(r.id);
+  if(typ==='fluessig'||typ==='weich')return REZEPTE.filter(r=>ok(r)&&(r.kur||[]).includes(typ)&&(slot==='f')===(r.typ==='f'));
+  if(slot==='f'){const fx=plan?.darmkur?.fruehstueck;return (fx?fx.map(REZ):REZEPTE.filter(r=>r.typ==='f')).filter(r=>r.id&&ok(r)&&!(r.kur||[]).includes('fluessig'));}
+  return REZEPTE.filter(r=>ok(r)&&r.typ===slot);
+}
+function kurKandidaten(tag,slot){ // {liste, doppelt}: Auswahl für ein Gericht; Abendessen vor einem Bürotag muss in die Box passen
+  const typ=kurMenueTyp(tag);if(!typ||typ==='keins')return {liste:[],doppelt:false};
+  if(slot!=='a')return {liste:kurPool(typ,slot),doppelt:false};
+  const datum=addDays(set.kurStart,tag-1),mt=kurMenueTyp(tag+1);
+  if(tag<kurMenueEnde()&&mt&&mt!=='keins'&&istBuerotag(addDays(datum,1))){
+    const morgen=new Set([...kurPool(mt,'m'),...kurPool(mt,'a')].map(r=>r.id));
+    const l=[...kurPool(typ,'a'),...kurPool(typ,'m')].filter(r=>r.box&&morgen.has(r.id));
+    return {liste:[...new Map(l.map(r=>[r.id,r])).values()],doppelt:true};
+  }
+  return {liste:kurPool(typ,'a'),doppelt:false};
+}
+let kurMenueCache=null;
+function kurMenue(){ // {tag: {tag, datum, typ, buero, f, m, a, box, doppelt}} für Tag 1 bis menueBisTag
+  if(!plan?.darmkur||!set.kurStart)return null;
+  const tausch=LS.get('gp_kurmenue',{}),mischung=LS.get('gp_kurmischung',0);
+  const key=[set.kurStart,mischung,JSON.stringify(tausch),REZEPTE.length].join('|');
+  if(kurMenueCache?.key===key&&kurMenueCache.dk===plan.darmkur)return kurMenueCache.tage;
+  const rnd=zufallsGenerator(set.kurStart+'#'+mischung);const tage={},zuletzt=[],fleisch={};
+  for(let t=1;t<=kurMenueEnde();t++){
+    const datum=addDays(set.kurStart,t-1),typ=kurMenueTyp(t);
+    if(!typ||typ==='keins'){tage[t]={tag:t,datum,typ:typ||'keins',buero:istBuerotag(datum)};continue;}
+    const d={tag:t,datum,typ,buero:istBuerotag(datum)},wk=mondayOf(datum);fleisch[wk]=fleisch[wk]||0;
+    const wahl=(slot,liste,extra)=>{const s=tausch[datum+'_'+slot];if(s&&liste.some(r=>r.id===s))return s;
+      const f=r=>!extra||extra(r);
+      let c=liste.filter(r=>f(r)&&!zuletzt.slice(-6).includes(r.id)&&!(r.fleisch&&fleisch[wk]>=2));
+      if(!c.length)c=liste.filter(r=>f(r)&&!(r.fleisch&&fleisch[wk]>=2));if(!c.length)c=liste.filter(f);if(!c.length)return null;
+      return c[Math.floor(rnd()*c.length)].id;};
+    const fp=kurPool(typ,'f'),fs=tausch[datum+'_f'];
+    d.f=fs&&fp.some(r=>r.id===fs)?fs:((typ==='normal'||typ==='halb')&&fp.length?fp[(t-1)%fp.length].id:wahl('f',fp)); // Hafer-Frühstücke der Reihe nach
+    const gestern=tage[t-1];
+    if(d.buero&&gestern?.doppelt&&gestern.a){d.m=gestern.a;d.box=true;}
+    else d.m=wahl('m',kurPool(typ,'m'),r=>r.id!==d.f);
+    if(d.m&&REZ(d.m).fleisch)fleisch[wk]++; // die Box zählt als eigene Fleisch-Mahlzeit
+    if(d.m&&!d.box)zuletzt.push(d.m);
+    const ka=kurKandidaten(t,'a');d.a=wahl('a',ka.liste,r=>r.id!==d.m&&!(ka.doppelt&&r.fleisch&&fleisch[wk]>=1));d.doppelt=ka.doppelt&&!!d.a;
+    if(d.a){zuletzt.push(d.a);if(REZ(d.a).fleisch)fleisch[wk]++;}
+    tage[t]=d;
+  }
+  kurMenueCache={key,dk:plan.darmkur,tage};return tage;
+}
+function kurTausch(tag,slot){
+  const d=kurMenue()?.[tag];if(!d)return;
+  const c=kurKandidaten(tag,slot).liste.filter(r=>![d.f,d.m,d.a].includes(r.id));
+  if(!c.length){toast('Kein weiteres passendes Gericht');return;}
+  const t=LS.get('gp_kurmenue',{});t[d.datum+'_'+slot]=c[Math.floor(Math.random()*c.length)].id;LS.set('gp_kurmenue',t);
+}
+function kurSpeiseplanAktiv(){ // ab 7 Tage vor dem Start bis zum letzten Tag mit Speiseplan
+  if(!plan?.darmkur?.abschnitte?.some(a=>a.menue)||!set.kurStart)return false;
+  const t=daysBetween(set.kurStart,HEUTE)+1;return t>=-6&&t<=kurMenueEnde();
+}
+function kurEinkaufsBloecke(){ // Einkauf je Block: neuer Block an jedem Einkaufstag (Standard Samstag – sonntags ist zu)
+  const tage=kurMenue();if(!tage)return [];const ek=plan.darmkur.einkaufstag??6;const bl=[];let cur=null;
+  Object.values(tage).sort((a,b)=>a.tag-b.tag).forEach(d=>{const wd=new Date(d.datum+'T00:00:00').getDay();
+    if(!cur||wd===ek){cur={tage:[]};bl.push(cur);}if(d.f||d.m||d.a)cur.tage.push(d);});
+  return bl.filter(b=>b.tage.length).map(b=>({tage:b.tage,von:b.tage[0].tag,bis:b.tage[b.tage.length-1].tag,datum:b.tage[0].datum}));
+}
+function kurEinkaufsListe(b){ // Zutaten mit Anzahl Mahlzeiten (doppelt gekochtes Abendessen zählt 2×, die Box nicht extra)
+  const agg={};const add=(id,n)=>REZ(id).zutaten.forEach(z=>{(agg[z.n]=agg[z.n]||{n:z.n,kat:z.kat||'Sonstiges',port:0}).port+=n;});
+  b.tage.forEach(d=>{if(d.f)add(d.f,1);if(d.m&&!d.box)add(d.m,1);if(d.a)add(d.a,d.doppelt?2:1);});
+  return Object.values(agg);
+}
+function kurEinkaufsDatum(b){ // wann einkaufen: am ersten Tag des Blocks – fällt der auf einen Sonntag, schon vorher
+  const wd=new Date(b.datum+'T00:00:00').getDay();
+  return wd===0?'bis Samstag '+tagKurz(addDays(b.datum,-1))+' (sonntags zu) – sonst was daheim ist':'am '+tagKurz(b.datum);
+}
+function kurGericht(id,o){ // ein Gericht als Kärtchen (Heute-Karte und Kur-Wochenplan)
+  const r=REZ(id);if(!r.id)return '';
+  const badges=[o.halb?'½ Portion':'',o.box?'🥡 Box vom Vorabend – aufwärmen':'',o.buero&&!o.box?'🏢 zum Mitnehmen':'',o.doppelt?'×2 kochen – Hälfte in die Box':''].filter(Boolean).map(t=>`<span class="badge">${t}</span>`).join(' ');
+  return `<div class="dk-meal"><b>🍽 ${esc(r.name)}</b> ${badges}<small>${esc(r.zutaten.map(z=>z.n).join(', '))}</small>
+    ${r.tipp?`<details><summary>Zubereitung</summary><small>${esc(r.tipp)}</small></details>`:''}
+    ${o.tausch?`<button class="dk-swap" data-kt="${o.tag}" data-ks="${o.slot}">🔀 anderes Gericht</button>`:''}</div>`;
+}
+function kurVorbereiten(tag){ // was heute für morgen zu tun ist
+  const tage=kurMenue();if(!tage)return [];const d=tage[tag],m=tage[tag+1],out=[];
+  if(d?.doppelt)out.push('🥡 Abendessen doppelt kochen – die Hälfte in eine Box. Morgen Mittag im Büro aufwärmen (im Homeoffice daheim).');
+  if(m?.buero&&m.m&&!m.box&&m.typ!=='keins')out.push('🏢 Morgen Bürotag: '+REZ(m.m).name+' heute vorbereiten und mitnehmen.');
+  if(m?.typ==='keins'&&d?.typ!=='keins')out.push('🥤 Ab morgen nur Shakes – heute Abend Shaker und Tagespackung bereitstellen.');
+  if(m?.typ==='keins'&&m.buero)out.push('🏢 Morgen Bürotag mit Shakes: Shaker, Tagespackung und Wasserflasche einpacken.');
+  const bl=kurEinkaufsBloecke(),wd=k=>new Date(k+'T00:00:00').getDay();
+  const bh=bl.find(x=>x.von===tag),bm=bl.find(x=>x.von===tag+1);
+  if(bh&&wd(bh.datum)!==0)out.unshift(`🛒 Heute einkaufen für Tag ${bh.von}–${bh.bis} – Liste unter Essen › Einkauf.`);
+  if(bm)out.push(wd(bm.datum)===0?`🛒 Heute noch einkaufen für Tag ${bm.von}–${bm.bis} – morgen ist Sonntag. Liste unter Essen › Einkauf.`:`🛒 Morgen einkaufen für Tag ${bm.von}–${bm.bis} – Liste unter Essen › Einkauf.`);
+  return out;
+}
+function renderKurWoche(){ // Essen › Wochenplan während der Kur: die nächsten 7 Kurtage
+  const tage=kurMenue();const start=Math.max(1,daysBetween(set.kurStart,HEUTE)+1);
+  $('woche-info').textContent='Darmkur · ab Tag '+start;
+  let h='';
+  for(let t=start;t<start+7&&t<=kurMenueEnde();t++){const d=tage[t];const ab=kurAbschnitt(t);
+    h+=`<div class="day"><h3>${esc(tagKurz(d.datum))} · Tag ${t} – ${esc(ab?.titelHeute||'')}${d.buero?' · 🏢 Büro':''}${t===daysBetween(set.kurStart,HEUTE)+1?' · heute':''}</h3>`;
+    if(d.typ==='keins'){h+='<div class="meal"><span class="k">ganzer Tag</span><div class="n">🥤 Nur die 7 Shakes – keine feste Nahrung</div></div></div>';continue;}
+    h+=[['f','Früh'],['m','Mittag'],['a','Abend']].map(([s,k])=>d[s]?`<div class="meal"><span class="k">${k}</span><div class="n">${kurGericht(d[s],{halb:d.typ==='halb',box:s==='m'&&d.box,doppelt:s==='a'&&d.doppelt,tausch:!(s==='m'&&d.box),tag:t,slot:s})}</div></div>`:'').join('')+'</div>';
+  }
+  $('woche').innerHTML=h;
+  $('woche-neu').textContent='↻ Kur-Speiseplan neu mischen';
+  $('woche').querySelectorAll('.dk-swap').forEach(b=>b.onclick=()=>{kurTausch(+b.dataset.kt,b.dataset.ks);renderWoche();renderEinkauf();});
+}
+let kurEinkaufsBlock=null;
+function renderKurEinkauf(){ // Essen › Einkauf während der Kur: je Einkaufsblock
+  const bl=kurEinkaufsBloecke();if(!bl.length){$('einkauf').innerHTML='<div class="empty">Kein Speiseplan.</div>';return;}
+  const heuteTag=daysBetween(set.kurStart,HEUTE)+1;
+  if(!bl.some(b=>b.von===kurEinkaufsBlock))kurEinkaufsBlock=(bl.find(b=>b.bis>=heuteTag)||bl[bl.length-1]).von;
+  const b=bl.find(x=>x.von===kurEinkaufsBlock);const shop=LS.get('gp_kurshop',{});
+  const cats={};kurEinkaufsListe(b).forEach(i=>{(cats[i.kat]=cats[i.kat]||[]).push(i);});
+  const order=['Gemüse','Obst','Eiweiß','Milchprodukte','Getreide & Beilagen','Nüsse & Samen','Öle & Gewürze','Getränke','Sonstiges'];
+  let h=`<div class="tabs k-seg" id="kur-bloecke">${bl.map(x=>`<button data-v="${x.von}" class="${x.von===b.von?'on':''}">Tag ${x.von}${x.bis>x.von?'–'+x.bis:''}</button>`).join('')}</div>
+    <div class="hint" style="margin-bottom:6px">Einkaufen ${esc(kurEinkaufsDatum(b))}. Für ${b.tage.length} Tag${b.tage.length>1?'e':''} mit Essen; Zahl = Anzahl Mahlzeiten.</div>`;
+  Object.keys(cats).sort((x,y)=>order.indexOf(x)-order.indexOf(y)).forEach(c=>{
+    h+=`<h3>${c}</h3>`+cats[c].sort((x,y)=>x.n.localeCompare(y.n)).map(i=>{const k='kur'+b.von+'_'+i.n;const d=!!shop[k];
+      return `<div class="chk ${d?'done':''}" data-k="${esc(k)}"><div class="box">${d?'✓':''}</div><div class="lbl"><b>${esc(i.n)}</b><span>für ${i.port} Mahlzeit${i.port>1?'en':''}</span></div></div>`;}).join('');});
+  $('einkauf').innerHTML=h;
+  $('kur-bloecke').querySelectorAll('button').forEach(x=>x.onclick=()=>{kurEinkaufsBlock=+x.dataset.v;renderKurEinkauf();});
+  $('einkauf').querySelectorAll('.chk').forEach(el=>el.onclick=()=>{const s=LS.get('gp_kurshop',{});s[el.dataset.k]=!s[el.dataset.k];LS.set('gp_kurshop',s);renderKurEinkauf();});
 }
 function entry(k){ if(!log[k])log[k]={hals:null,bauch:null,stress:null,schlaf:null,gewicht:null,notiz:'',meds:{},atmen:{},sport:false}; return log[k]; }
 function saveLog(){ LS.set('gp_log',log); }
@@ -772,6 +918,7 @@ function renderHeute(){
   if(plan){const pausen=plan.praeparate.filter(m=>{const ph=medPhase(m);return ph&&!['nu','m','mi','a','n'].some(s=>ph[s]>0)&&ph.notiz&&!(set.medOverride[m.id]||{}).aus;});
     if(pausen.length)b+=`<div class="banner info" style="font-size:13px">${pausen.map(m=>'⏸ <b>'+esc(m.name)+'</b>: '+esc(medPhase(m).notiz)).join('<br>')}</div>`;}
   $('heute-banner').innerHTML=b;
+  $('heute-banner').querySelectorAll('.dk-swap').forEach(x=>x.onclick=()=>{kurTausch(+x.dataset.kt,x.dataset.ks);renderHeute();});
   renderWhoop();
   renderKoerper();
   renderTraining(e);
@@ -1119,16 +1266,22 @@ const pool=t=>REZEPTE.filter(r=>r.typ===t&&rezOk(r));
 let week=LS.get('gp_week',null);
 function ensureWeek(){ if(!week||week.monday!==mondayOf(HEUTE)){week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});} }
 function renderWoche(){
+  const kur=kurSpeiseplanAktiv();
+  $('woche-hint').textContent=kur?'Darmkur: nur was am jeweiligen Kurtag erlaubt ist. An Bürotagen: Abend davor doppelt kochen, Mittag aus der Box. 🔀 tauscht ein Gericht.':'FODMAP-arm, Fleisch max. 2× pro Woche (Rind/Huhn), Abendessen leicht. Tipp auf ↻ tauscht ein Gericht.';
+  if(kur)return renderKurWoche();
+  $('woche-neu').textContent='↻ Ganze Woche neu mischen';
   ensureWeek();
   $('woche-info').textContent='ab '+fmtDate(week.monday)+' · Fleisch '+week.days.flatMap(x=>[x.f,x.m,x.a]).filter(id=>id&&REZ(id).fleisch).length+'×';
   const todayIdx=daysBetween(week.monday,HEUTE);
   $('woche').innerHTML=week.days.map((d,i)=>`<div class="day"><h3>${DAYS[i]}${i===todayIdx?' · heute':''}</h3>${['f','m','a'].map(t=>{const r=REZ(d[t]);return `<div class="meal"><span class="k">${{f:'Früh',m:'Mittag',a:'Abend'}[t]}</span><div class="n">${r.name} ${(r.tags||[]).map(x=>`<span class="badge" style="font-size:10px">${{schnell:'⚡ schnell',tm:'TM',buero:'🏢 Büro',vorkochen:'🥡 vorkochen'}[x]||x}</span>`).join(' ')}<small>${r.zutaten.map(z=>z.n).join(', ')}</small>${r.tipp?`<small style="color:var(--p)">👨‍🍳 ${r.tipp}</small>`:''}</div><button data-d="${i}" data-t="${t}">↻</button></div>`}).join('')}</div>`).join('');
   $('woche').querySelectorAll('.meal button').forEach(b=>b.onclick=()=>{const di=+b.dataset.d,t=b.dataset.t;const d=week.days[di];const used=week.days.flatMap(x=>[x.f,x.m,x.a]);const meat=week.days.flatMap((x,i)=>['f','m','a'].filter(tt=>!(i===di&&tt===t)).map(tt=>x[tt])).filter(id=>id&&REZ(id).fleisch).length;const nx=pick(pool(t),used,r=>!(r.fleisch&&meat>=2));if(nx===null){toast('Kein weiteres passendes Rezept');return;}d[t]=nx;LS.set('gp_week',week);renderWoche();renderEinkauf();});
 }
-$('woche-neu').onclick=()=>{week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});renderWoche();renderEinkauf();toast('Neue Woche gemischt');};
+$('woche-neu').onclick=()=>{if(kurSpeiseplanAktiv()){LS.set('gp_kurmischung',(LS.get('gp_kurmischung',0)||0)+1);LS.set('gp_kurmenue',{});LS.set('gp_kurshop',{});renderWoche();renderEinkauf();renderHeute();toast('Kur-Speiseplan neu gemischt');return;}week=genWeek();LS.set('gp_week',week);LS.set('gp_shop',{});renderWoche();renderEinkauf();toast('Neue Woche gemischt');};
 
 /* ---------- ESSEN: Einkaufsliste ---------- */
 function renderEinkauf(){
+  const kur=kurSpeiseplanAktiv();$('einkauf-titel').textContent=kur?'für die Darmkur':'aus dem Wochenplan';
+  if(kur)return renderKurEinkauf();
   ensureWeek();
   const shop=LS.get('gp_shop',{});
   const agg={};
@@ -1143,7 +1296,7 @@ function renderEinkauf(){
   $('einkauf').innerHTML=html;
   $('einkauf').querySelectorAll('.chk').forEach(el=>el.onclick=()=>{const s=LS.get('gp_shop',{});s[el.dataset.k]=!s[el.dataset.k];LS.set('gp_shop',s);renderEinkauf();});
 }
-$('einkauf-reset').onclick=()=>{LS.set('gp_shop',{});renderEinkauf();};
+$('einkauf-reset').onclick=()=>{LS.set(kurSpeiseplanAktiv()?'gp_kurshop':'gp_shop',{});renderEinkauf();};
 
 /* ---------- ESSEN: Tipps ---------- */
 function renderTipps(){
@@ -1569,7 +1722,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.data
 $('kosten-open').onclick=()=>gotoPage('kosten');
 document.querySelectorAll('.tabs:not(.zeitraum)').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.11.07-2045';
+const APP_VERSION='v2026.11.07-2100';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 kurStartAusPlan();
 renderHeute();

@@ -27,6 +27,11 @@
   "darmkur": {
     "start": "JJJJ-MM-TT (Tag 1 der Kur; wird übernommen, solange in der App unter Mehr kein Datum von Hand gesetzt ist)",
     "quelle": "Woher die Inhalte stammen (wird klein unter der Karte gezeigt)",
+    "menueBisTag": 30,
+    "buerotage": [1, 4],
+    "einkaufstag": 6,
+    "fruehstueck": ["f9", "f7"],
+    "ohneRezepte": [{ "id": "a2", "grund": "Warum dieses Rezept in der Kur nicht vorkommt" }],
     "vorlagen": {
       "normal": {
         "art": "normal",

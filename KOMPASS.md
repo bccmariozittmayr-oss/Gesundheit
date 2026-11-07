@@ -34,6 +34,7 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 - Darmkur: Tag 1–2 Reduzieren, 3–6 Detox (alle anderen Präparate pausiert), 7–8 Aufbau, bis 67 Monat 1–2, bis 128 Monat 3–4, danach Erhaltung.
 - Dosis-Korrekturen in der App (Mehr → Dosierung) überschreiben nur die laufende Phase; Änderungen am Plan gehören in die JSON.
 - `darmkur` (seit 07.11.2026) = Tagesablauf je Kurtag für die Karte „Darmkur heute“ auf Heute: Uhrzeiten (aus den Einnahmezeiten), Essen, Erlaubt/Nicht erlaubt, Trinken, Bewegung, „Morgen vorbereiten“, Gesamtübersicht mit Präparaten. `start` setzt das Kur-Startdatum, solange in der App keines von Hand gesetzt ist. Struktur: `mein-plan.beispiel.json`. 💡-Tipps = nicht aus den Unterlagen.
+- Kur-Speiseplan (seit 07.11.2026): je Abschnitt `menue` = halb · fluessig · keins · weich · normal; dazu `menueBisTag`, `buerotage` (0 = So), `einkaufstag`, `fruehstueck`, `ohneRezepte`. Rezepte tragen in daten.js `kur` (fluessig/weich) und `box` (taugt zum Aufwärmen). Auswahl per festem Zufall ab Kurstart (stabil auf allen Geräten); 🔀 tauscht (`gp_kurmenue`), „neu mischen“ zählt `gp_kurmischung` hoch. Vor einem Bürotag wird abends doppelt gekocht, Mittag = Box. Fleisch max. 2× je Kalenderwoche (Box zählt mit). Einkauf in Blöcken ab dem Einkaufstag (`gp_kurshop`). Wochenplan und Einkauf schalten ab 7 Tage vor dem Start bis Tag `menueBisTag` auf die Kur-Ansicht.
 - Nach Planänderung: `node werkzeuge/plan-verschluesseln.js <mein-plan.json> <PLAN-PASSWORT.txt>` – der Salt bleibt gleich, die App lädt den neuen Plan beim nächsten Öffnen ohne Passwort nach. `--neuer-salt` nur nach Passwortwechsel (dann App neu entsperren, WHOOP/Withings neu abholen).
 
 ## Test
@@ -44,6 +45,7 @@ Code öffentlich, Daten privat. **Keine Gesundheitsdaten ins Repo.** Alles Pers�
 `test/whoop-test.js <Ausgabeordner>` – prüft Entsperren, Nachladen von whoop.enc.json ohne Passwort (Schlüssel in IndexedDB) und die WHOOP-Karten mit Testdaten.
 `test/kosten-test.js <Ausgabeordner> <rechnungen.json> [<Passwortdatei>]` – prüft die Kosten-Seite: Knopf, Kennzahlen, Filter, Aufgliederung, Listen, Tooltip, Entschlüsseln.
 `test/darmkur-test.js <Ausgabeordner> <mein-plan.json> [<Passwortdatei> <alter plan.enc.json>]` – prüft die Darmkur-Karte an 11 Stichtagen, Detox-Pausen (auch Sport-Shakes), Trainingshinweis, Übersicht, Startdatum aus dem Plan und das Nachladen ohne Passwort.
+`test/speiseplan-test.js <Ausgabeordner> <mein-plan.json>` – prüft den Kur-Speiseplan: Kost je Kurtag, gesperrte Rezepte, Bürotage mit Box, Fleisch-Grenze, Abwechslung, Einkaufsblöcke, Tauschen/Mischen, Anzeige auf Heute, Wochenplan, Einkauf.
 `test/smoke-test.js` (Playwright aus dbcc-360-crm; Aufruf: `node test/smoke-test.js <Ausgabeordner>`) – lädt den echten Plan, klickt alle Seiten, prüft Phasen an 8 Stichtagen. Vor jedem Merge laufen lassen.
 
 ## Offen

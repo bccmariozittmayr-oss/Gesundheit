@@ -80,7 +80,17 @@ const REZEPTE=[
  {id:'a7',typ:'a',name:'Gedünstete Forelle mit Fisolen und Kartoffeln',zutaten:[Z('Forellenfilet',E),Z('Grüne Bohnen / Fisolen',G),Z('Kartoffeln',G),Z('Zitrone',O),Z('Butter',M)]},
  {id:'a8',typ:'a',name:'Tomaten-Gurken-Salat mit Cottage Cheese und glutenfreiem Brot',zutaten:[Z('Tomaten',G),Z('Gurke',G),Z('Cottage Cheese laktosefrei',M),Z('Glutenfreies Brot (Buchweizen/Reis)',K),Z('Olivenöl',OE),Z('Schnittlauch',G)]},
  {id:'a9',typ:'a',name:'Kürbis-Kartoffel-Püree mit gebratener Hühnerbrust',fleisch:true,zutaten:[Z('Hühnerbrust',E),Z('Kürbis',G),Z('Kartoffeln',G),Z('Butter',M),Z('Muskat',OE)]},
- {id:'a10',typ:'a',name:'Reis-Gemüse-Pfanne mit Ei',zutaten:[Z('Reis',K),Z('Karotten',G),Z('Fenchel',G),Z('Zucchini',G),Z('Eier',E),Z('Ingwer',G),Z('Rapsöl',OE)]}
+ {id:'a10',typ:'a',name:'Reis-Gemüse-Pfanne mit Ei',zutaten:[Z('Reis',K),Z('Karotten',G),Z('Fenchel',G),Z('Zucchini',G),Z('Eier',E),Z('Ingwer',G),Z('Rapsöl',OE)]},
+ // Darmkur: Flüssiges (Reduziertag 2, Aufbautag 1) und Weiches (Aufbautag 2) – kur: an welchen Kurtagen erlaubt, box: aufwärmbar fürs Büro
+ {id:'k1',typ:'f',name:'Beeren-Smoothie mit laktosefreiem Joghurt',kur:['fluessig'],zutaten:[Z('Heidelbeeren / Himbeeren',O),Z('Banane (unreif)',O),Z('Laktosefreies Joghurt',M)],tags:['schnell','buero'],tipp:'150 g Beeren (TK geht), ½ Banane, 150 g Joghurt, 150 ml Wasser mixen. Im Schraubglas mitnehmen.'},
+ {id:'k2',typ:'f',name:'Kiwi-Ananas-Smoothie mit Ingwer',kur:['fluessig'],zutaten:[Z('Kiwi',O),Z('Ananas',O),Z('Ingwer',G)],tags:['schnell','buero'],tipp:'2 Kiwi, 2 Scheiben Ananas, 1 cm Ingwer, 200 ml Wasser mixen.'},
+ {id:'k3',typ:'f',name:'Laktosefreies Joghurt mit Erdbeeren und Heidelbeeren',kur:['fluessig'],zutaten:[Z('Laktosefreies Joghurt',M),Z('Erdbeeren',O),Z('Heidelbeeren / Himbeeren',O)],tags:['schnell','buero'],tipp:'200 g Joghurt, eine Handvoll Beeren. Im Glas mitnehmen.'},
+ {id:'k4',typ:'m',name:'Karotten-Ingwer-Cremesuppe',kur:['fluessig','weich'],box:true,zutaten:[Z('Karotten',G),Z('Kartoffeln',G),Z('Ingwer',G),Z('Olivenöl',OE)],tags:['vorkochen','tm'],tipp:'3 Portionen: 500 g Karotten, 1 große Kartoffel, 2 cm Ingwer, 1 l Wasser, Salz – 20 Min. kochen, pürieren, 1 EL Olivenöl. TM: 20 Min/100°/Stufe 1, dann 1 Min/Stufe 8. Keine fertige Suppenwürze (meist mit Zwiebel). Hält 3 Tage im Kühlschrank.'},
+ {id:'k5',typ:'m',name:'Kürbis-Kartoffel-Cremesuppe mit Ingwer',kur:['fluessig','weich'],box:true,zutaten:[Z('Kürbis',G),Z('Kartoffeln',G),Z('Ingwer',G),Z('Olivenöl',OE)],tags:['vorkochen','tm'],tipp:'3 Portionen: 600 g Hokkaido (mit Schale), 1 Kartoffel, 2 cm Ingwer, 900 ml Wasser, Salz – 20 Min. kochen, pürieren. TM: 20 Min/100°/Stufe 1, dann 1 Min/Stufe 8. Ohne Kokosmilch.'},
+ {id:'k6',typ:'a',name:'Zucchini-Kartoffel-Cremesuppe mit Schnittlauch',kur:['fluessig','weich'],box:true,zutaten:[Z('Zucchini',G),Z('Kartoffeln',G),Z('Schnittlauch',G),Z('Olivenöl',OE)],tags:['vorkochen','tm'],tipp:'3 Portionen: 2 Zucchini, 2 Kartoffeln, 800 ml Wasser, Salz – 15 Min. kochen, pürieren, Schnittlauch drauf. TM: 15 Min/100°/Stufe 1, dann 1 Min/Stufe 8.'},
+ {id:'k7',typ:'a',name:'Klare Gemüsesuppe mit Karotte, Fenchel und Kartoffel',kur:['fluessig','weich'],box:true,zutaten:[Z('Karotten',G),Z('Fenchel',G),Z('Kartoffeln',G),Z('Petersilie',OE)],tags:['vorkochen'],tipp:'3 Portionen: 2 Karotten, ½ Fenchel, 2 Kartoffeln klein würfeln, 1,2 l Wasser, Salz, 25 Min. köcheln. Am Aufbautag 1 nur die Brühe oder püriert.'},
+ {id:'k8',typ:'m',name:'Kartoffel-Karotten-Püree mit gedünstetem Kabeljau',kur:['weich'],box:true,zutaten:[Z('Kabeljaufilet',E),Z('Kartoffeln',G),Z('Karotten',G),Z('Butter',M)],tags:['tm'],tipp:'TM: Kartoffeln + Karotten in den Varoma, Kabeljau oben drauf, 25 Min/Varoma/Stufe 1. Gemüse mit etwas Butter zerdrücken.'},
+ {id:'k9',typ:'m',name:'Hühnersuppe mit Reis und Karotten',fleisch:true,kur:['weich'],box:true,zutaten:[Z('Hühnerbrust',E),Z('Karotten',G),Z('Reis',K),Z('Ingwer',G),Z('Petersilie',OE)],tags:['vorkochen'],tipp:'3 Portionen: 300 g Hühnerbrust mit 2 Karotten und 2 cm Ingwer in 1,2 l Wasser 25 Min. köcheln, Huhn zerzupfen, 100 g Reis mitkochen. Ohne Zwiebel, ohne Suppenwürze.'}
 ];
 
 /* Steht immer auf der Einkaufsliste als Erinnerung „Vorrat prüfen" */
@@ -125,7 +135,7 @@ const REZEPT_TIPPS={
  m5:{tags:[],tipp:'Aubergine in Würfeln mit Tomaten 15 Min. schmoren, Zander 3 Min. je Seite. Polenta: 1:4 mit Wasser.'},
  m6:{tags:['vorkochen'],tipp:'Blech mit Gemüse ins Rohr, 25 Min. bei 200°. Ei zum Schluss in der Pfanne. Reste = Frühstück.'},
  m7:{tags:['buero','vorkochen'],tipp:'Quinoa (1:2 Wasser, 15 Min.) auf Vorrat. Tofu knusprig anbraten. Kalt als Büro-Bowl perfekt.'},
- m8:{tags:[],tipp:'Kartoffelspalten mit Öl und Paprikapulver 30 Min. bei 200°, Keulen daneben aufs Blech.'},
+ m8:{tags:[],tipp:'Kartoffelspalten mit Öl, Rosmarin und Salz 30 Min. bei 200°, Keulen daneben aufs Blech.'},
  m9:{tags:['schnell'],tipp:'Reis vom Vortag, Fenchel und Karotten fein hobeln, alles 8 Min. in der Pfanne, Forelle drauflegen.'},
  m10:{tags:['tm','vorkochen'],tipp:'TM: Kohlrabi + Kartoffel + 500 ml Wasser 18 Min/100°/Stufe 1, pürieren 1 Min/Stufe 8, Milch dazu.'},
  m11:{tags:['tm','vorkochen'],tipp:'TM: Fleisch anbraten 5 Min/120°/Linkslauf, Gemüse + Tomaten + 300 ml Wasser 60 Min/100°/Linkslauf. Ohne Zwiebel – Kümmel gibt den Geschmack.'},
@@ -142,6 +152,10 @@ const REZEPT_TIPPS={
  a10:{tags:['schnell'],tipp:'Reis vom Vortag, Gemüse fein würfeln, alles 8 Min. in der Pfanne, Ei drüberschlagen.'}
 };
 REZEPTE.forEach(r=>Object.assign(r,REZEPT_TIPPS[r.id]||{}));
+/* Darmkur: weich = am Aufbautag 2 erlaubt; box = lässt sich vorkochen und im Büro aufwärmen (oder kalt essen) */
+const REZEPT_KUR={f7:{kur:['weich']},f9:{kur:['weich']},m2:{kur:['weich'],box:true},a5:{kur:['weich'],box:true},a7:{kur:['weich'],box:true},a9:{kur:['weich'],box:true},
+ m1:{box:true},m4:{box:true},m5:{box:true},m6:{box:true},m7:{box:true},m9:{box:true},m11:{box:true},m12:{box:true},a10:{box:true}};
+REZEPTE.forEach(r=>Object.assign(r,REZEPT_KUR[r.id]||{}));
 
 const TIPPS=[
  {titel:'Grundtricks FODMAP-arm kochen',punkte:[
