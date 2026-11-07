@@ -54,6 +54,21 @@ main{padding:8px 16px 24px;max-width:720px;margin:0 auto}
 .dk-tipp{background:var(--warn2);border-radius:12px;padding:10px 12px;font-size:14px;margin-top:10px}
 .dk-plan{font-size:13.5px}.dk-plan>div{padding:8px 0;border-top:1px solid var(--line)}.dk-plan .jetzt{background:var(--p2);border-radius:10px;padding:8px;border-top:0}
 .dk-plan b{font-size:14px}
+/* Kosten */
+.k-seg{margin:6px 0 8px}.k-seg button{font-size:13px;padding:7px 4px}
+.k-stat{grid-template-columns:1fr 1fr;margin-top:12px}.k-stat b{font-size:22px}
+.k-chartbox{position:relative}.k-chart{width:100%;height:auto;display:block}.k-ax{font-size:10px;fill:var(--mut)}
+.k-tip{display:none;position:absolute;top:0;background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.18);padding:8px 10px;font-size:12.5px;pointer-events:none;white-space:nowrap}
+.k-tip i,.k-leg i,.k-n i,.k-pos i,.k-supp i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.k-leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--txt);margin-bottom:6px}
+.k-z{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.k-v{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.k-bar{grid-column:1/-1;height:6px;border-radius:3px;background:var(--bg)}.k-bar span{display:block;height:100%;border-radius:3px}
+.k-det{border-top:1px solid var(--line);margin:0}.k-det summary{display:flex;justify-content:space-between;gap:10px;font-weight:500;font-size:14.5px;padding:10px 0}
+.k-det summary span:last-child{font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.k-pos{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:5px 0 5px 4px}.k-pos span:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+.k-supp{display:grid;grid-template-columns:1fr 44px 74px 80px;gap:6px;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px;align-items:center}
+.k-supp span:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}.k-head{font-size:11.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;border-top:0;padding-top:0}
 button{font:inherit;cursor:pointer}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;padding:13px 18px;background:var(--p);color:#fff;font-weight:600;font-size:16px;transition:transform .1s,opacity .15s}
 .btn:active{transform:scale(.97);opacity:.85}
@@ -329,6 +344,7 @@ table.bf td:first-child{font-weight:600}
 
 <!-- ================= MEHR ================= -->
 <section class="page" id="p-mehr">
+  <div class="card"><button class="btn full" id="kosten-open" style="margin-top:0">💶 Meine Gesundheitskosten</button><div class="hint" id="kosten-knopf-info" style="margin-top:6px;text-align:center"></div></div>
   <div class="card">
     <h2>Mein Plan <small id="plan-stand"></small></h2>
     <div id="plan-status" class="hint" style="margin-bottom:8px"></div>
@@ -389,6 +405,7 @@ table.bf td:first-child{font-weight:600}
 
 </main>
 
+<section class="page" id="p-kosten"><div id="kosten-inhalt"></div></section>
 <nav>
   <button class="on" data-p="heute"><span class="i">☀️</span>Heute</button>
   <button data-p="essen"><span class="i">🥗</span>Essen</button>
@@ -1339,6 +1356,7 @@ $('plan-unlock').onclick=async()=>{
     $('plan-pw').value='';toast('Plan entsperrt ✓ (Stand '+(f.stand||'')+')');renderMehr();
     whoopLaden(true).then(()=>renderMehr());
     koerperLaden(true).then(()=>{renderMehr();renderHeute();});
+    kostenLaden(true).then(()=>renderKostenKnopf());
   }catch(e){toast(/OperationError|decrypt/i.test(String(e))||e.name==='OperationError'?'Passwort falsch':'Fehlgeschlagen: '+(e.message||e));}
   btn.disabled=false;btn.textContent='🔓 Plan entsperren';
 };
@@ -1393,13 +1411,151 @@ async function planLaden(){
   catch(e){return false;} // Schlüssel passt nicht (neues Passwort/Salt) – dann bleibt der alte Plan, Entsperren unter „Mehr“
 }
 function planAuto(){planLaden().then(neu=>{if(neu){renderHeute();toast('Plan aktualisiert ✓');}});}
-document.addEventListener('visibilitychange',()=>{if(document.hidden)stopScan();if(!document.hidden){tagesWechselPruefen();checkReminders();planAuto();whoopAuto();koerperAuto();}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopScan();if(!document.hidden){tagesWechselPruefen();checkReminders();planAuto();whoopAuto();koerperAuto();kostenAuto();}});
 function whoopAuto(){if(!navigator.onLine||Date.now()-whoopLetzterCheck<30*60000)return;const alt=whoop?.stand;whoopLaden(true).then(ok=>{if(ok&&whoop?.stand!==alt)renderHeute();});}
 function koerperAuto(){if(!navigator.onLine||Date.now()-koerperLetzterCheck<30*60000)return;const alt=koerper?.stand;koerperLaden(true).then(ok=>{if(ok&&koerper?.stand!==alt)renderHeute();});}
 
+/* ---------- Kosten (Rechnungen) ----------
+   Daten: kosten.enc.json (verschlüsselt, gleicher Schlüssel wie der Plan). Klartext rechnungen.json
+   liegt nur privat. Erzeugt mit werkzeuge/kosten-verschluesseln.js. Farben: geprüfte Reihenfolge,
+   Bezeichnung steht immer daneben (Legende, Tabelle) – nie Farbe allein. */
+let kosten=LS.get('gp_kosten',null);
+let kostenFilter=Object.assign({zeit:'alle',bereich:'alle',nach:'kat'},LS.get('gp_kosten_f',{}));
+const KAT={untersuchung:{n:'Untersuchungen',c:'#2a78d6',b:'arzt'},behandlung:{n:'Arzttermine & Behandlung',c:'#eb6834',b:'arzt'},
+  supplements:{n:'Supplements',c:'#1baf7a',b:'supp'},darmkur:{n:'Darmkur',c:'#eda100',b:'supp'},sport:{n:'Sport-Supplements',c:'#e87ba4',b:'supp'},
+  sonstiges:{n:'Sonstiges',c:'#8a8a8e',b:'supp'}};
+const KAT_ORDNUNG=Object.keys(KAT);
+const eur=v=>(v||0).toLocaleString('de-AT',{style:'currency',currency:'EUR'});
+const eur0=v=>(v||0).toLocaleString('de-AT',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const monatName=k=>new Date(k+'-01T00:00:00').toLocaleDateString('de-AT',{month:'short',year:'2-digit'});
+function kostenFehler(k){if(!k||!Array.isArray(k.rechnungen))return 'rechnungen fehlt';return null;}
+let kostenLetzterCheck=0;
+async function kostenLaden(leise){
+  const key=await KDB.get();if(!key)return false;
+  try{const r=await fetch('kosten.enc.json?v='+Date.now());if(!r.ok)return false;const f=await r.json();kostenLetzterCheck=Date.now();
+    if(kosten&&LS.get('gp_kosten_iv',null)===f.iv)return true;
+    const k=await entschluessele(key,f);if(kostenFehler(k))return false;
+    kosten=k;LS.set('gp_kosten',k);LS.set('gp_kosten_iv',f.iv);if(!leise)toast('Rechnungen aktualisiert ✓');return true;}
+  catch(e){return false;}
+}
+function kostenAuto(){if(!navigator.onLine||Date.now()-kostenLetzterCheck<30*60000)return;kostenLaden(true).then(()=>{if($('p-kosten').classList.contains('on'))renderKosten();renderKostenKnopf();});}
+function kostenPositionen(){ // alle Positionen flach, gefiltert nach Zeitraum und Bereich
+  if(!kosten)return [];
+  const f=kostenFilter;const heute=HEUTE;
+  const ab=f.zeit==='3m'?addDays(heute,-91):f.zeit==='12m'?addDays(heute,-365):null;
+  return kosten.rechnungen.flatMap(r=>r.positionen.map(p=>({...p,datum:r.datum,nr:r.nr,art:r.art,monat:r.datum.slice(0,7)})))
+    .filter(p=>(f.zeit==='alle'||(ab?p.datum>=ab:p.datum.startsWith(f.zeit)))&&(f.bereich==='alle'||(KAT[p.kat]||KAT.sonstiges).b===f.bereich));
+}
+function renderKostenKnopf(){
+  const el=$('kosten-knopf-info');if(!el)return;
+  if(!kosten){el.textContent='Erscheint, sobald der Plan entsperrt ist.';return;}
+  const s=kosten.rechnungen.reduce((a,r)=>a+r.brutto,0);
+  el.textContent=kosten.rechnungen.length+' Rechnungen · bisher '+eur(s);
+}
+function kostenSegment(name,opts,wert){
+  return `<div class="tabs k-seg" data-f="${name}">${opts.map(([v,t])=>`<button data-v="${esc(v)}" class="${v===wert?'on':''}">${esc(t)}</button>`).join('')}</div>`;
+}
+function renderKosten(){
+  const box=$('kosten-inhalt');
+  if(!kosten){box.innerHTML='<div class="card"><div class="empty">Noch keine Rechnungsdaten. Unter <b>Mehr</b> den Plan entsperren – dann lädt die App die Rechnungen mit.</div></div>';return;}
+  const f=kostenFilter;const pos=kostenPositionen();
+  const jahre=[...new Set(kosten.rechnungen.map(r=>r.datum.slice(0,4)))].sort();
+  const sum=a=>a.reduce((s,p)=>s+p.brutto,0);
+  const gesamt=sum(pos),arzt=sum(pos.filter(p=>KAT[p.kat]?.b==='arzt')),supp=gesamt-arzt;
+  const mitListe=pos.filter(p=>p.listeBrutto!=null),rabatt=mitListe.reduce((s,p)=>s+(p.listeBrutto-p.brutto),0);
+  const rechnungsNr=new Set(pos.map(p=>p.nr));
+  // Monate von der ersten Rechnung bis zum aktuellen Monat (lückenlos, auch Monate ohne Ausgaben)
+  let monate=[];if(pos.length){let m=pos.map(p=>p.monat).sort()[0];const bis=HEUTE.slice(0,7);while(m<=bis){monate.push(m);const d=new Date(m+'-01T00:00:00');d.setMonth(d.getMonth()+1);m=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}}
+  const proMonat=monate.length?gesamt/monate.length:0;
+
+  let h=`<div class="card"><button class="btn ghost sm" id="kosten-zurueck" style="margin:-6px 0 4px -8px">‹ Mehr</button>
+    ${kostenSegment('zeit',[['alle','Alles'],...jahre.map(j=>[j,j]),['3m','3 Monate'],['12m','12 Monate']],f.zeit)}
+    ${kostenSegment('bereich',[['alle','Alles'],['arzt','Ärztlich'],['supp','Supplements']],f.bereich)}
+    <div class="stat k-stat">
+      <div><b>${eur0(gesamt)}</b><span>Gesamt</span></div>
+      <div><b>${eur0(arzt)}</b><span>Ärztliche Leistungen</span></div>
+      <div><b>${eur0(supp)}</b><span>Supplements</span></div>
+      <div><b>${eur0(proMonat)}</b><span>Ø pro Monat (${monate.length} Mon.)</span></div>
+      <div><b>${rechnungsNr.size}</b><span>Rechnungen</span></div>
+      <div><b>${eur0(rabatt)}</b><span>Rabatt erhalten*</span></div>
+    </div>
+    <div class="hint">* nur wo der Listenpreis auf der Rechnung steht.</div></div>`;
+
+  if(!pos.length){box.innerHTML=h+'<div class="card"><div class="empty">Keine Ausgaben in diesem Zeitraum.</div></div>';kostenEvents();return;}
+
+  // Kategorien im Filter, feste Reihenfolge
+  const kats=KAT_ORDNUNG.filter(k=>pos.some(p=>p.kat===k));
+  // Diagramm: Ausgaben pro Monat, gestapelt nach Kategorie
+  const W=340,H=170,L=44,B=22,T=8,bw=Math.min(36,(W-L-8)/monate.length-8);
+  const proM=monate.map(m=>{const o={m,sum:0};kats.forEach(k=>{o[k]=sum(pos.filter(p=>p.monat===m&&p.kat===k));o.sum+=o[k];});return o;});
+  const max=Math.max(...proM.map(o=>o.sum),1);const stufe=[100,200,250,500,1000,2000,2500,5000].find(s=>max/s<=4)||10000;const top=Math.ceil(max/stufe)*stufe;
+  const y=v=>T+(H-T-B)*(1-v/top);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" class="k-chart" role="img" aria-label="Ausgaben pro Monat">`;
+  for(let v=0;v<=top;v+=stufe)svg+=`<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="rgba(60,60,67,${v?0.1:0.3})"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" class="k-ax">${eur0(v).replace(/\s?€/,'')}</text>`;
+  proM.forEach((o,i)=>{const slot=(W-L)/monate.length;const x=L+slot*i+(slot-bw)/2;let acc=0;
+    const seg=kats.filter(k=>o[k]>0);
+    seg.forEach((k,j)=>{const y1=y(acc+o[k]),y0=y(acc);const hgt=Math.max(1,y0-y1-(j<seg.length-1?2:0));const oben=j===seg.length-1;
+      svg+=oben?`<path d="M${x},${y1+hgt} V${y1+4} Q${x},${y1} ${x+4},${y1} H${x+bw-4} Q${x+bw},${y1} ${x+bw},${y1+4} V${y1+hgt} Z" fill="${KAT[k].c}"/>`:`<rect x="${x}" y="${y1+2}" width="${bw}" height="${hgt}" fill="${KAT[k].c}"/>`;acc+=o[k];});
+    svg+=`<text x="${x+bw/2}" y="${H-6}" text-anchor="middle" class="k-ax">${monatName(o.m)}</text>`;
+    svg+=`<rect x="${L+slot*i}" y="${T}" width="${slot}" height="${H-T-B}" fill="transparent" class="k-hit" data-i="${i}"/>`;});
+  svg+='</svg>';
+  const legende=`<div class="k-leg">${kats.map(k=>`<span><i style="background:${KAT[k].c}"></i>${esc(KAT[k].n)}</span>`).join('')}</div>`;
+  h+=`<div class="card"><h2>Ausgaben pro Monat</h2>${legende}<div class="k-chartbox">${svg}<div class="k-tip" id="k-tip"></div></div></div>`;
+
+  // Aufgliedern nach …
+  const gruppen={kat:p=>KAT[p.kat]?.n||p.kat,gruppe:p=>p.gruppe||'–',leistung:p=>p.leistung||p.text,monat:p=>monatName(p.monat),rechnung:p=>p.datum.split('-').reverse().join('.')+' · '+p.art+' '+p.nr};
+  const farbe={kat:p=>KAT[p.kat]?.c};
+  const agg={};pos.forEach(p=>{const k=gruppen[f.nach](p);(agg[k]=agg[k]||{n:k,sum:0,stk:0,kat:p.kat,sort:f.nach==='monat'?p.monat:f.nach==='rechnung'?p.datum:''});agg[k].sum+=p.brutto;agg[k].stk+=p.menge||1;});
+  let zeilen=Object.values(agg).filter(a=>a.sum>0);
+  zeilen.sort((a,b)=>a.sort&&b.sort?b.sort.localeCompare(a.sort):b.sum-a.sum);
+  const zmax=Math.max(...zeilen.map(a=>a.sum));
+  h+=`<div class="card"><h2>Aufgliedern nach</h2>${kostenSegment('nach',[['kat','Bereich'],['gruppe','Gruppe'],['leistung','Leistung'],['monat','Monat'],['rechnung','Rechnung']],f.nach)}
+    <div class="k-tab">${zeilen.map(a=>`<div class="k-z"><div class="k-n">${f.nach==='kat'?`<i style="background:${KAT[a.kat]?.c}"></i>`:''}${esc(a.n)}${f.nach==='leistung'&&a.stk>1?` <small class="hint">${a.stk}×</small>`:''}</div>
+      <div class="k-v">${eur(a.sum)} <small class="hint">${Math.round(a.sum/gesamt*100)} %</small></div>
+      <div class="k-bar"><span style="width:${(a.sum/zmax*100).toFixed(1)}%;background:${f.nach==='kat'?KAT[a.kat]?.c:'var(--p)'}"></span></div></div>`).join('')}</div></div>`;
+
+  // Untersuchungen im Detail
+  const unters=pos.filter(p=>KAT[p.kat]?.b==='arzt');
+  if(unters.length){const gr={};unters.forEach(p=>{(gr[p.gruppe]=gr[p.gruppe]||[]).push(p);});
+    h+=`<div class="card"><h2>Was wurde untersucht <small>${eur(sum(unters))}</small></h2>${Object.entries(gr).sort((a,b)=>sum(b[1])-sum(a[1])).map(([g,ps])=>`<details class="k-det"><summary><span>${esc(g)}</span><span>${eur(sum(ps))}</span></summary>
+      ${ps.map(p=>`<div class="k-pos"><span>${esc(p.leistung)}<small class="hint"> · ${fmtDate(p.datum)}</small></span><span>${p.brutto?eur(p.brutto):'<small class="hint">inkl.</small>'}</span></div>`).join('')}</details>`).join('')}</div>`;}
+
+  // Supplements je Produkt
+  const supps=pos.filter(p=>KAT[p.kat]?.b==='supp');
+  if(supps.length){const pr={};supps.forEach(p=>{const o=pr[p.leistung]=pr[p.leistung]||{n:p.leistung,kat:p.kat,stk:0,sum:0,letzt:''};o.stk+=p.menge||1;o.sum+=p.brutto;if(p.datum>o.letzt)o.letzt=p.datum;});
+    h+=`<div class="card"><h2>Supplements je Produkt <small>${eur(sum(supps))}</small></h2><div class="k-supp k-head"><span>Produkt</span><span>Pack.</span><span>Ø Preis</span><span>Summe</span></div>
+      ${Object.values(pr).sort((a,b)=>b.sum-a.sum).map(o=>`<div class="k-supp"><span><i style="background:${KAT[o.kat].c}"></i>${esc(o.n)}<small class="hint"><br>zuletzt ${fmtDate(o.letzt)}</small></span><span>${o.stk}</span><span>${eur(o.sum/o.stk)}</span><span><b>${eur(o.sum)}</b></span></div>`).join('')}</div>`;}
+
+  // SVS
+  const svs=kosten.rechnungen.filter(r=>r.svs?.status==='vorbereitet');const offen=kosten.rechnungen.filter(r=>r.svs?.status==='nein');
+  if(svs.length||offen.length)h+=`<div class="card"><h2>Sozialversicherung (SVS)</h2><div style="font-size:14.5px">Für die Einreichung vorbereitet: <b>${eur(svs.reduce((s,r)=>s+r.brutto,0))}</b> (${svs.length} Honorarnoten).<br>Erstattung: ${svs.some(r=>r.svs.erstattet!=null)?'<b>'+eur(svs.reduce((s,r)=>s+(r.svs.erstattet||0),0))+'</b>':'noch nicht erfasst'}.</div>
+    ${offen.length?`<div class="hint" style="margin-top:6px">Nicht in der SVS-Mappe: ${offen.map(r=>'Honorarnote '+esc(r.nr)+' ('+eur(r.brutto)+')').join(', ')}.</div>`:''}</div>`;
+
+  // Alle Rechnungen
+  const rs=kosten.rechnungen.filter(r=>rechnungsNr.has(r.nr)).sort((a,b)=>b.datum.localeCompare(a.datum));
+  h+=`<div class="card"><h2>Alle Rechnungen <small>${rs.length}</small></h2>${rs.map(r=>`<details class="k-det"><summary><span>${fmtDate(r.datum)} · ${esc(r.art)} ${esc(r.nr)}<small class="hint"><br>${esc(r.aussteller)}${r.svs?.status==='vorbereitet'?' · SVS':''}</small></span><span>${eur(r.brutto)}</span></summary>
+    ${r.positionen.map(p=>`<div class="k-pos"><span><i style="background:${(KAT[p.kat]||KAT.sonstiges).c}"></i>${p.menge>1?p.menge+'× ':''}${esc(p.leistung)}</span><span>${p.brutto?eur(p.brutto):'<small class="hint">inkl.</small>'}</span></div>`).join('')}
+    <div class="hint" style="margin-top:6px">Bezahlt: ${esc(r.bezahlt||'unbekannt')} · Datei: ${esc(r.datei||'')}${r.hinweis?'<br>'+esc(r.hinweis):''}</div></details>`).join('')}</div>`;
+
+  h+=`<div class="card"><h2>Neue Rechnung?</h2><div style="font-size:14.5px">Mit der OneDrive-App scannen und im Ordner <b>Die Fitmacher › Rechnungen neu</b> ablegen. Dann Claude sagen: <b>„Rechnungen einlesen“</b> – ab dem nächsten Öffnen ist sie hier drin.</div>
+    <div class="hint" style="margin-top:6px">Stand ${fmtDate(kosten.stand||HEUTE)} · ${esc(kosten.quelle||'')}</div></div>`;
+  box.innerHTML=h;kostenEvents(proM,kats);
+}
+function kostenEvents(proM,kats){
+  $('kosten-zurueck').onclick=()=>gotoPage('mehr');
+  document.querySelectorAll('#kosten-inhalt .k-seg').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{kostenFilter[t.dataset.f]=b.dataset.v;LS.set('gp_kosten_f',kostenFilter);renderKosten();}));
+  const tip=$('k-tip');if(!tip||!proM)return;
+  const zeig=el=>{const o=proM[+el.dataset.i];if(!o.sum){tip.style.display='none';return;}
+    tip.innerHTML=`<b>${monatName(o.m)}: ${eur(o.sum)}</b>`+kats.filter(k=>o[k]>0).map(k=>`<div><i style="background:${KAT[k].c}"></i>${esc(KAT[k].n)} ${eur(o[k])}</div>`).join('');
+    const box=el.closest('.k-chartbox').getBoundingClientRect(),r=el.getBoundingClientRect();tip.style.display='block';
+    tip.style.left=Math.max(0,Math.min(box.width-tip.offsetWidth,r.left-box.left+r.width/2-tip.offsetWidth/2))+'px';};
+  document.querySelectorAll('#kosten-inhalt .k-hit').forEach(el=>{el.onmouseenter=()=>zeig(el);el.onclick=()=>zeig(el);});
+  document.querySelector('#kosten-inhalt .k-chart').onmouseleave=()=>{tip.style.display='none';};
+}
+
 /* ---------- Navigation ---------- */
-const PAGES={heute:renderHeute,essen:()=>{renderAmpel();renderWoche();renderEinkauf();renderTipps();renderRegeln();},atmen:renderExList,verlauf:()=>{renderVerlauf();renderPlan();renderBefunde();renderTermine();},mehr:renderMehr};
-const TITLES={heute:'Heute',essen:'Essen',atmen:'Atmen',verlauf:'Verlauf',mehr:'Mehr'};
+const PAGES={heute:renderHeute,essen:()=>{renderAmpel();renderWoche();renderEinkauf();renderTipps();renderRegeln();},atmen:renderExList,verlauf:()=>{renderVerlauf();renderPlan();renderBefunde();renderTermine();},mehr:()=>{renderMehr();renderKostenKnopf();},kosten:()=>{renderKosten();kostenLaden(true).then(neu=>{if(neu)renderKosten();});}};
+const TITLES={heute:'Heute',essen:'Essen',atmen:'Atmen',verlauf:'Verlauf',mehr:'Mehr',kosten:'Kosten'};
 function gotoPage(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.toggle('on',x.id==='p-'+p));
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
@@ -1407,13 +1563,14 @@ function gotoPage(p){
   if(p!=='essen')stopScan();PAGES[p]();window.scrollTo(0,0);
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.dataset.p));
+$('kosten-open').onclick=()=>gotoPage('kosten');
 document.querySelectorAll('.tabs:not(.zeitraum)').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.11.07-1830';
+const APP_VERSION='v2026.11.07-2015';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 kurStartAusPlan();
 renderHeute();
-if(plan){planAuto();whoopAuto();koerperAuto();}else if(whoop||koerper)renderHeute();
+if(plan){planAuto();whoopAuto();koerperAuto();kostenAuto();}else if(whoop||koerper)renderHeute();
 /* Demo-Start: ?demo=1 lädt Demo-Plan und Beispiel-Verlauf (für Vorführungen). Ein vorhandener echter Plan wird nur nach Rückfrage ersetzt. */
 (async()=>{ if(!/[?&]demo=1/.test(location.search))return;
   try{ if(plan&&!plan._hinweis&&!confirm('Demo-Modus: Der geladene Plan und das Protokoll werden durch Demo-Daten ersetzt. Fortfahren?'))return;
