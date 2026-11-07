@@ -1527,13 +1527,16 @@ function renderKosten(){
       ${Object.values(pr).sort((a,b)=>b.sum-a.sum).map(o=>`<div class="k-supp"><span><i style="background:${KAT[o.kat].c}"></i>${esc(o.n)}<small class="hint"><br>zuletzt ${fmtDate(o.letzt)}</small></span><span>${o.stk}</span><span>${eur(o.sum/o.stk)}</span><span><b>${eur(o.sum)}</b></span></div>`).join('')}</div>`;}
 
   // SVS
-  const svs=kosten.rechnungen.filter(r=>r.svs?.status==='vorbereitet');const offen=kosten.rechnungen.filter(r=>r.svs?.status==='nein');
-  if(svs.length||offen.length)h+=`<div class="card"><h2>Sozialversicherung (SVS)</h2><div style="font-size:14.5px">Für die Einreichung vorbereitet: <b>${eur(svs.reduce((s,r)=>s+r.brutto,0))}</b> (${svs.length} Honorarnoten).<br>Erstattung: ${svs.some(r=>r.svs.erstattet!=null)?'<b>'+eur(svs.reduce((s,r)=>s+(r.svs.erstattet||0),0))+'</b>':'noch nicht erfasst'}.</div>
-    ${offen.length?`<div class="hint" style="margin-top:6px">Nicht in der SVS-Mappe: ${offen.map(r=>'Honorarnote '+esc(r.nr)+' ('+eur(r.brutto)+')').join(', ')}.</div>`:''}</div>`;
+  const svsAlle=kosten.rechnungen.filter(r=>r.svs);
+  if(svsAlle.length){const grp=st=>svsAlle.filter(r=>r.svs.status===st),summe=a=>a.reduce((s,r)=>s+r.brutto,0);
+    const ein=grp('eingereicht'),vor=grp('vorbereitet'),nein=grp('nein');const erst=ein.reduce((s,r)=>s+(r.svs.erstattet||0),0);const erfasst=ein.some(r=>r.svs.erstattet!=null);
+    h+=`<div class="card"><h2>Sozialversicherung (SVS)</h2><div style="font-size:14.5px">${ein.length?`Eingereicht: <b>${eur(summe(ein))}</b> (${ein.length} Honorarnoten)<br>Erstattet: <b>${erfasst?eur(erst):'noch nicht erfasst'}</b>${erfasst?` · selbst getragen: <b>${eur(summe(ein)-erst)}</b>`:''}`:''}
+      ${vor.length?`<div>Vorbereitet, noch nicht eingereicht: ${eur(summe(vor))}</div>`:''}</div>
+      ${nein.length?`<div class="hint" style="margin-top:6px">Nicht eingereicht: ${nein.map(r=>'Honorarnote '+esc(r.nr)+' ('+eur(r.brutto)+')').join(', ')}.</div>`:''}</div>`;}
 
   // Alle Rechnungen
   const rs=kosten.rechnungen.filter(r=>rechnungsNr.has(r.nr)).sort((a,b)=>b.datum.localeCompare(a.datum));
-  h+=`<div class="card"><h2>Alle Rechnungen <small>${rs.length}</small></h2>${rs.map(r=>`<details class="k-det"><summary><span>${fmtDate(r.datum)} · ${esc(r.art)} ${esc(r.nr)}<small class="hint"><br>${esc(r.aussteller)}${r.svs?.status==='vorbereitet'?' · SVS':''}</small></span><span>${eur(r.brutto)}</span></summary>
+  h+=`<div class="card"><h2>Alle Rechnungen <small>${rs.length}</small></h2>${rs.map(r=>`<details class="k-det"><summary><span>${fmtDate(r.datum)} · ${esc(r.art)} ${esc(r.nr)}<small class="hint"><br>${esc(r.aussteller)}${r.svs?' · SVS '+esc(r.svs.status):''}</small></span><span>${eur(r.brutto)}</span></summary>
     ${r.positionen.map(p=>`<div class="k-pos"><span><i style="background:${(KAT[p.kat]||KAT.sonstiges).c}"></i>${p.menge>1?p.menge+'× ':''}${esc(p.leistung)}</span><span>${p.brutto?eur(p.brutto):'<small class="hint">inkl.</small>'}</span></div>`).join('')}
     <div class="hint" style="margin-top:6px">Bezahlt: ${esc(r.bezahlt||'unbekannt')} · Datei: ${esc(r.datei||'')}${r.hinweis?'<br>'+esc(r.hinweis):''}</div></details>`).join('')}</div>`;
 
@@ -1566,7 +1569,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.data
 $('kosten-open').onclick=()=>gotoPage('kosten');
 document.querySelectorAll('.tabs:not(.zeitraum)').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.11.07-2015';
+const APP_VERSION='v2026.11.07-2045';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 kurStartAusPlan();
 renderHeute();
