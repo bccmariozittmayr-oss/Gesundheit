@@ -173,6 +173,7 @@ table.bf td:first-child{font-weight:600}
 .empty{text-align:center;color:var(--mut);padding:20px 10px;font-size:14px}
 .progress{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:6px 0 2px}
 .progress i{display:block;height:100%;background:var(--ok)}
+body.gast .nur-eigen{display:none!important}
 </style>
 </head>
 <body>
@@ -347,11 +348,11 @@ table.bf td:first-child{font-weight:600}
 
 <!-- ================= MEHR ================= -->
 <section class="page" id="p-mehr">
-  <div class="card"><button class="btn full" id="kosten-open" style="margin-top:0">💶 Meine Gesundheitskosten</button><div class="hint" id="kosten-knopf-info" style="margin-top:6px;text-align:center"></div></div>
+  <div class="card nur-eigen"><button class="btn full" id="kosten-open" style="margin-top:0">💶 Meine Gesundheitskosten</button><div class="hint" id="kosten-knopf-info" style="margin-top:6px;text-align:center"></div></div>
   <div class="card">
     <h2>Mein Plan <small id="plan-stand"></small></h2>
     <div id="plan-status" class="hint" style="margin-bottom:8px"></div>
-    <div class="lbl-sm">Passwort (steht in deiner Datei PLAN-PASSWORT.txt)</div>
+    <div class="lbl-sm">Passwort</div>
     <input type="password" id="plan-pw" autocomplete="off" placeholder="Wort-Wort-Wort-Wort-Zahl">
     <button class="btn full" id="plan-unlock">🔓 Plan entsperren</button>
     <div class="hint" style="margin-top:8px">Der Plan liegt verschlüsselt in der App und wird nur mit deinem Passwort auf diesem Gerät lesbar. Das Passwort wird nicht gespeichert.</div>
@@ -359,7 +360,7 @@ table.bf td:first-child{font-weight:600}
     <input type="file" id="plan-file" accept=".json,application/json" style="display:none">
     <button class="btn sec full" id="plan-load">📂 mein-plan.json laden</button></details>
   </div>
-  <div class="card">
+  <div class="card nur-eigen">
     <h2>WHOOP <small id="whoop-stand"></small></h2>
     <div id="whoop-status" class="hint" style="margin-bottom:8px"></div>
     <button class="btn sec full" id="whoop-refresh">🔄 WHOOP-Werte jetzt holen</button>
@@ -368,7 +369,7 @@ table.bf td:first-child{font-weight:600}
     <button class="btn sec full" id="whoop-load">📂 whoop.json laden</button></details>
     <div class="hint" style="margin-top:8px">Die Werte holt das Werkzeug <code>whoop-abholen.js</code> am Laptop von WHOOP und legt sie verschlüsselt in der App ab. Nach dem Entsperren des Plans lädt die App sie automatisch nach – der Schlüssel bleibt nur auf diesem Gerät.</div>
   </div>
-  <div class="card">
+  <div class="card nur-eigen">
     <h2>Körperwerte <small id="koerper-stand"></small></h2>
     <div id="koerper-status" class="hint" style="margin-bottom:8px"></div>
     <button class="btn sec full" id="koerper-refresh">🔄 Waagenwerte jetzt holen</button>
@@ -761,6 +762,10 @@ const KDB={open:()=>new Promise((res,rej)=>{const q=indexedDB.open('gp_keys',1);
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 async function schluesselAus(pw,f){const enc=new TextEncoder();const base=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);
   return crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(f.salt),iterations:f.iterations,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);}
+const PLAN_STD='plan.enc.json';
+function planDatei(){return LS.get('gp_planquelle',PLAN_STD);}
+function istGast(){return planDatei()!==PLAN_STD;}
+function gastModus(){document.body.classList.toggle('gast',istGast());}
 async function entschluessele(key,f){return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(f.iv)},key,b64(f.data))));}
 function whoopFehler(w){if(!w||typeof w!=='object'||!w.tage||typeof w.tage!=='object')return 'tage fehlt';return null;}
 function uebernehmeWhoop(w){const err=whoopFehler(w);if(err)throw new Error(err);whoop=w;LS.set('gp_whoop',whoop);
@@ -775,7 +780,7 @@ function whoopInsProtokoll(k){ // Schlaf, Sport und Gewicht aus WHOOP in den Tag
 }
 let whoopLetzterCheck=0;
 async function whoopLaden(leise){ // holt whoop.enc.json und entschlüsselt sie mit dem gespeicherten Schlüssel
-  const key=await KDB.get();if(!key){if(!leise)toast('Zuerst unter „Mehr" den Plan entsperren');return false;}
+  if(istGast())return false;const key=await KDB.get();if(!key){if(!leise)toast('Zuerst unter „Mehr" den Plan entsperren');return false;}
   try{const r=await fetch('whoop.enc.json?v='+Date.now());if(!r.ok){if(!leise)toast('whoop.enc.json noch nicht vorhanden');return false;}const f=await r.json();
     if(whoop&&whoop.stand===f.stand){whoopLetzterCheck=Date.now();return true;}
     uebernehmeWhoop(await entschluessele(key,f));whoopLetzterCheck=Date.now();if(!leise)toast('WHOOP aktualisiert ✓');return true;}
@@ -794,7 +799,7 @@ function koerperInsProtokoll(k){ // Waagengewicht in den Tag k übernehmen (Hand
 }
 let koerperLetzterCheck=0;
 async function koerperLaden(leise){
-  const key=await KDB.get();if(!key){if(!leise)toast('Zuerst unter „Mehr" den Plan entsperren');return false;}
+  if(istGast())return false;const key=await KDB.get();if(!key){if(!leise)toast('Zuerst unter „Mehr" den Plan entsperren');return false;}
   try{const r=await fetch('withings.enc.json?v='+Date.now());if(!r.ok){if(!leise)toast('withings.enc.json noch nicht vorhanden');return false;}const f=await r.json();
     if(koerper&&koerper.stand===f.stand){koerperLetzterCheck=Date.now();return true;}
     uebernehmeKoerper(await entschluessele(key,f));koerperLetzterCheck=Date.now();if(!leise)toast('Körperwerte aktualisiert ✓');return true;}
@@ -1501,15 +1506,23 @@ $('plan-unlock').onclick=async()=>{
   const pw=$('plan-pw').value.trim();if(!pw){toast('Passwort eingeben');return;}
   const btn=$('plan-unlock');btn.disabled=true;btn.textContent='Entschlüssle …';
   try{
-    const r=await fetch('plan.enc.json?v='+Date.now());if(!r.ok)throw new Error('plan.enc.json fehlt');const f=await r.json();
-    const key=await schluesselAus(pw,f);
-    uebernehmePlan(await entschluessele(key,f));
+    /* Das Passwort entscheidet, welcher Plan aufgeht: zuerst der eigene, dann die Kurpläne für Freunde.
+       Ein Link für alle – wichtig am iPhone, wo die App am Home-Bildschirm ohne Link-Zusatz startet. */
+    let liste=[];try{const rl=await fetch('plaene/liste.json?v='+Date.now());if(rl.ok)liste=await rl.json();}catch(e){}
+    let key=null,f=null,p=null,datei=null;
+    for(const d of [PLAN_STD,...liste.filter(x=>/^plaene\/[a-z0-9-]+\.enc\.json$/.test(x))]){
+      try{const r=await fetch(d+'?v='+Date.now());if(!r.ok)continue;const ff=await r.json();const k=await schluesselAus(pw,ff);p=await entschluessele(k,ff);key=k;f=ff;datei=d;break;}
+      catch(e){if(!(e&&e.name==='OperationError'))throw e;}
+    }
+    if(!p)throw Object.assign(new Error('Passwort falsch'),{name:'OperationError'});
+    LS.set('gp_planquelle',datei);gastModus();
+    uebernehmePlan(p);
     await KDB.set(key); // für das Nachladen von whoop.enc.json ohne erneute Passworteingabe
     LS.set('gp_plan_iv',f.iv);
     $('plan-pw').value='';toast('Plan entsperrt ✓ (Stand '+(f.stand||'')+')');renderMehr();
-    whoopLaden(true).then(()=>renderMehr());
+    if(!istGast()){whoopLaden(true).then(()=>renderMehr());
     koerperLaden(true).then(()=>{renderMehr();renderHeute();});
-    kostenLaden(true).then(()=>renderKostenKnopf());
+    kostenLaden(true).then(()=>renderKostenKnopf());}
   }catch(e){toast(/OperationError|decrypt/i.test(String(e))||e.name==='OperationError'?'Passwort falsch':'Fehlgeschlagen: '+(e.message||e));}
   btn.disabled=false;btn.textContent='🔓 Plan entsperren';
 };
@@ -1558,7 +1571,7 @@ let planLetzterCheck=0;
 async function planLaden(){
   if(!navigator.onLine||Date.now()-planLetzterCheck<30*60000)return false;
   const key=await KDB.get();if(!key)return false;
-  try{const r=await fetch('plan.enc.json?v='+Date.now());if(!r.ok)return false;const f=await r.json();planLetzterCheck=Date.now();
+  try{const r=await fetch(planDatei()+'?v='+Date.now());if(!r.ok)return false;const f=await r.json();planLetzterCheck=Date.now();
     if(LS.get('gp_plan_iv',null)===f.iv)return false;
     uebernehmePlan(await entschluessele(key,f),true);LS.set('gp_plan_iv',f.iv);return true;}
   catch(e){return false;} // Schlüssel passt nicht (neues Passwort/Salt) – dann bleibt der alte Plan, Entsperren unter „Mehr“
@@ -1584,7 +1597,7 @@ const monatName=k=>new Date(k+'-01T00:00:00').toLocaleDateString('de-AT',{month:
 function kostenFehler(k){if(!k||!Array.isArray(k.rechnungen))return 'rechnungen fehlt';return null;}
 let kostenLetzterCheck=0;
 async function kostenLaden(leise){
-  const key=await KDB.get();if(!key)return false;
+  if(istGast())return false;const key=await KDB.get();if(!key)return false;
   try{const r=await fetch('kosten.enc.json?v='+Date.now());if(!r.ok)return false;const f=await r.json();kostenLetzterCheck=Date.now();
     if(kosten&&LS.get('gp_kosten_iv',null)===f.iv)return true;
     const k=await entschluessele(key,f);if(kostenFehler(k))return false;
@@ -1722,7 +1735,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>gotoPage(b.data
 $('kosten-open').onclick=()=>gotoPage('kosten');
 document.querySelectorAll('.tabs:not(.zeitraum)').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.sub!=='scan')stopScan();t.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const sec=t.parentElement;sec.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.sub));}));
 
-const APP_VERSION='v2026.11.07-2100';
+const APP_VERSION='v2026.11.08-1232';
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;location.reload();});}
 kurStartAusPlan();
 renderHeute();
@@ -1737,6 +1750,7 @@ if(plan){planAuto();whoopAuto();koerperAuto();kostenAuto();}else if(whoop||koerp
       wd.tage=t2;wd.stand=new Date().toISOString();uebernehmeWhoop(wd);}
     history.replaceState(null,'',location.pathname); renderHeute();renderMehr(); toast('Demo geladen ✓'); }
   catch(e){toast('Demo nicht geladen: '+(e.message||e));} })();
+gastModus();
 if(!plan)setTimeout(()=>toast('Tipp: unter „Mehr" den Plan entsperren'),800);
 </script>
 </body>

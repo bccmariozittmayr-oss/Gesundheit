@@ -4,7 +4,9 @@
    Die Passwortdatei enthält nur das Passwort (eine Zeile) und bleibt außerhalb des Repos.
    Der Salt der bestehenden plan.enc.json wird weiterverwendet: Dann bleibt der Schlüssel gleich,
    whoop.enc.json und withings.enc.json bleiben lesbar und die App lädt den neuen Plan ohne
-   Passworteingabe nach. Nur mit --neuer-salt wird ein neuer erzeugt (z. B. nach Passwortwechsel). */
+   Passworteingabe nach. Nur mit --neuer-salt wird ein neuer erzeugt (z. B. nach Passwortwechsel).
+   Mit --ziel=plaene/<name>.enc.json entsteht ein Kurplan für Freunde (eigenes Passwort, eigener Salt;
+   Datei zusätzlich in plaene/liste.json eintragen, Erzeugung: werkzeuge/kurplan-freund.js). */
 const fs = require('fs');
 const path = require('path');
 const { webcrypto } = require('crypto');
@@ -12,6 +14,8 @@ const subtle = webcrypto.subtle;
 
 const args = process.argv.slice(2).filter(a => !a.startsWith('--'));
 const neuerSalt = process.argv.includes('--neuer-salt');
+const zielArg = (process.argv.find(a => a.startsWith('--ziel=')) || '').slice(7);
+if (zielArg && !/^plaene\/[a-z0-9-]+\.enc\.json$/.test(zielArg)) { console.error('--ziel muss plaene/<name>.enc.json sein'); process.exit(1); }
 const [planPfad, pwPfad] = args;
 if (!planPfad || !pwPfad) { console.error('Aufruf: node plan-verschluesseln.js <mein-plan.json> <passwort.txt>'); process.exit(1); }
 const plan = fs.readFileSync(planPfad, 'utf8');
@@ -21,13 +25,13 @@ if (pw.length < 12) { console.error('Passwort zu kurz (mindestens 12 Zeichen).')
 
 (async () => {
   const enc = new TextEncoder();
-  const ziel = path.join(__dirname, '..', 'plan.enc.json');
+  const ziel = path.join(__dirname, '..', zielArg || 'plan.enc.json');
   let alt = null;
   try { alt = JSON.parse(fs.readFileSync(ziel, 'utf8')); } catch (e) { /* noch keine Datei */ }
   const salt = (!neuerSalt && alt && alt.salt) ? new Uint8Array(Buffer.from(alt.salt, 'base64')) : webcrypto.getRandomValues(new Uint8Array(16));
   const iv = webcrypto.getRandomValues(new Uint8Array(12)); // immer neu – nie zweimal derselbe
   const iterations = (!neuerSalt && alt && alt.iterations) ? alt.iterations : 300000;
-  console.log((!neuerSalt && alt && alt.salt) ? 'Salt der bestehenden plan.enc.json weiterverwendet' : 'neuer Salt erzeugt – App muss neu entsperrt werden, WHOOP/Withings neu abholen');
+  console.log((!neuerSalt && alt && alt.salt) ? 'Salt der bestehenden Datei weiterverwendet' : zielArg ? 'neuer Salt für ' + zielArg : 'neuer Salt erzeugt – App muss neu entsperrt werden, WHOOP/Withings neu abholen');
   const base = await subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveKey']);
   const key = await subtle.deriveKey({ name: 'PBKDF2', salt, iterations, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
   const ct = new Uint8Array(await subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plan)));
